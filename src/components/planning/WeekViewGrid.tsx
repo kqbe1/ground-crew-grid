@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDragScroll } from "@/hooks/useDragScroll";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { MessageSquare, CheckCircle2, Package, Phone } from "lucide-react";
@@ -26,6 +27,7 @@ interface WeekViewGridProps {
 
 export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick, onCellClick, onRefresh }: WeekViewGridProps) {
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
+  const dragScrollRef = useDragScroll();
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
@@ -101,7 +103,7 @@ export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick,
       </div>
 
       {/* Worker columns grid */}
-      <div className="border border-border rounded-xl overflow-auto bg-card shadow-sm">
+      <div ref={dragScrollRef} className="border border-border rounded-xl overflow-auto bg-card shadow-sm cursor-grab">
         <div className="grid" style={{ gridTemplateColumns: `80px repeat(${Math.max(workers.length, 1)}, 180px)`, minWidth: `${80 + Math.max(workers.length, 1) * 180}px` }}>
           {/* Header row - worker avatars */}
           <div className="sticky top-0 bg-muted/50 border-b border-border p-3 z-10" />
