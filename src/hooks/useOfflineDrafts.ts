@@ -17,6 +17,8 @@ export interface OfflineDraft {
   client_absent: boolean;
   signature_data: string | null;
   signed_at: string | null;
+  photos_before: string[] | null;
+  photos_after: string[] | null;
   is_draft: boolean;
   created_at: string;
   synced: boolean;
