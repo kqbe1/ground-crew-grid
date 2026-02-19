@@ -1,18 +1,21 @@
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday } from "date-fns";
-import { fr } from "date-fns/locale";
-import { INTERVENTION_TYPE_COLORS, INTERVENTION_TYPE_LABELS, TASK_STATUS_LABELS } from "@/lib/constants";
+import { useState } from "react";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isToday } from "date-fns";
+import { INTERVENTION_TYPE_COLORS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { MessageSquare, CheckCircle2, Package } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface MonthViewCalendarProps {
   currentDate: Date;
   tasks: any[];
   onTaskClick: (task: any) => void;
   onDayClick: (date: Date) => void;
+  onRefresh: () => void;
 }
 
-export default function MonthViewCalendar({ currentDate, tasks, onTaskClick, onDayClick }: MonthViewCalendarProps) {
+export default function MonthViewCalendar({ currentDate, tasks, onTaskClick, onDayClick, onRefresh }: MonthViewCalendarProps) {
+  const [dragOverDay, setDragOverDay] = useState<string | null>(null);
+
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -36,9 +39,29 @@ export default function MonthViewCalendar({ currentDate, tasks, onTaskClick, onD
     return tasks.filter((t) => t.scheduled_date === dateStr);
   };
 
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    e.dataTransfer.setData("taskId", taskId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetDate: Date) => {
+    e.preventDefault();
+    setDragOverDay(null);
+    const taskId = e.dataTransfer.getData("taskId");
+    if (!taskId) return;
+
+    const newDate = format(targetDate, "yyyy-MM-dd");
+    const { error } = await supabase.from("work_tasks").update({ scheduled_date: newDate }).eq("id", taskId);
+    if (error) {
+      toast.error("Erreur lors du déplacement");
+      return;
+    }
+    toast.success("Tâche déplacée");
+    onRefresh();
+  };
+
   return (
     <div className="border border-border rounded-lg overflow-hidden bg-card">
-      {/* Day names header */}
       <div className="grid grid-cols-7 bg-muted">
         {dayNames.map((name) => (
           <div key={name} className="p-2 text-center text-sm font-semibold text-muted-foreground border-b border-border">
@@ -47,21 +70,25 @@ export default function MonthViewCalendar({ currentDate, tasks, onTaskClick, onD
         ))}
       </div>
 
-      {/* Calendar grid */}
       {weeks.map((week, wi) => (
         <div key={wi} className="grid grid-cols-7">
           {week.map((d) => {
             const dayTasks = getTasksForDay(d);
             const inMonth = isSameMonth(d, currentDate);
+            const dateStr = format(d, "yyyy-MM-dd");
             return (
               <div
                 key={d.toISOString()}
                 className={cn(
                   "border-b border-r border-border min-h-[100px] p-1 cursor-pointer transition-colors hover:bg-muted/50",
                   !inMonth && "bg-muted/30",
-                  isToday(d) && "bg-primary/5"
+                  isToday(d) && "bg-primary/5",
+                  dragOverDay === dateStr && "bg-primary/10"
                 )}
                 onClick={() => onDayClick(d)}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverDay(dateStr); }}
+                onDragLeave={() => setDragOverDay(null)}
+                onDrop={(e) => handleDrop(e, d)}
               >
                 <div className={cn(
                   "text-sm font-medium mb-1 w-7 h-7 flex items-center justify-center rounded-full",
@@ -74,9 +101,11 @@ export default function MonthViewCalendar({ currentDate, tasks, onTaskClick, onD
                   {dayTasks.slice(0, 3).map((task) => (
                     <div
                       key={task.id}
+                      draggable
+                      onDragStart={(e) => { e.stopPropagation(); handleDragStart(e, task.id); }}
                       onClick={(e) => { e.stopPropagation(); onTaskClick(task); }}
                       className={cn(
-                        "rounded px-1.5 py-0.5 text-xs truncate cursor-pointer",
+                        "rounded px-1.5 py-0.5 text-xs truncate cursor-grab active:cursor-grabbing select-none",
                         INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre"
                       )}
                     >
