@@ -93,6 +93,34 @@ export function generateFichePdf(sheet: any): jsPDF {
   addLine("Signé :", sheet.signature_data ? "Oui" : "Non");
   addLine("Envoyé :", sheet.sent_to_client ? "Oui" : "Non");
 
+  // Photos avant
+  if (sheet.photos_before && Array.isArray(sheet.photos_before) && sheet.photos_before.length > 0) {
+    addSection("Photos avant intervention");
+    for (const photo of sheet.photos_before) {
+      try {
+        if (y + 65 > 280) { doc.addPage(); y = 20; }
+        doc.addImage(photo, "JPEG", margin, y, 50, 50);
+        y += 55;
+      } catch {
+        addLine("", "(photo non intégrable)");
+      }
+    }
+  }
+
+  // Photos après
+  if (sheet.photos_after && Array.isArray(sheet.photos_after) && sheet.photos_after.length > 0) {
+    addSection("Photos après intervention");
+    for (const photo of sheet.photos_after) {
+      try {
+        if (y + 65 > 280) { doc.addPage(); y = 20; }
+        doc.addImage(photo, "JPEG", margin, y, 50, 50);
+        y += 55;
+      } catch {
+        addLine("", "(photo non intégrable)");
+      }
+    }
+  }
+
   // Signature image
   if (sheet.signature_data) {
     addSection("Signature client");
