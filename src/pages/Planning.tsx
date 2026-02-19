@@ -10,6 +10,7 @@ import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, TASK_STATUS_LABELS 
 import { cn } from "@/lib/utils";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
 import TaskDetailDialog from "@/components/planning/TaskDetailDialog";
+import WeekViewGrid from "@/components/planning/WeekViewGrid";
 import { toast } from "sonner";
 
 type ViewMode = "day" | "week" | "month";
@@ -246,8 +247,25 @@ export default function Planning() {
         </div>
       )}
 
-      {/* Week/Month - Simple list view */}
-      {viewMode !== "day" && (
+      {/* Week View - Grid */}
+      {viewMode === "week" && (
+        <WeekViewGrid
+          currentDate={currentDate}
+          tasks={tasks}
+          onTaskClick={(task) => setSelectedTask(task)}
+          onCellClick={(date, hour) => {
+            setClickContext({ hour });
+            setCurrentDate(date);
+            setTimeout(() => {
+              document.querySelector<HTMLButtonElement>('[data-create-task-trigger]')?.click();
+            }, 0);
+          }}
+          onRefresh={refreshTasks}
+        />
+      )}
+
+      {/* Month - Simple list view */}
+      {viewMode === "month" && (
         <div className="space-y-2">
           {tasks.length === 0 ? (
             <Card>
