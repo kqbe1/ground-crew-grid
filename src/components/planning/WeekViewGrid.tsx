@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useDragScroll } from "@/hooks/useDragScroll";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -26,6 +26,7 @@ interface WeekViewGridProps {
 
 export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick, onCellClick, onRefresh }: WeekViewGridProps) {
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
+  const [dragOverDay, setDragOverDay] = useState<number | null>(null);
   const dragScrollRef = useDragScroll();
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -39,6 +40,43 @@ export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick,
   const selectedDay = days[selectedDayIndex];
   const selectedDateStr = format(selectedDay, "yyyy-MM-dd");
   const dayTasks = tasks.filter((t) => t.scheduled_date === selectedDateStr);
+
+  // When dragging over a day tab, auto-switch to that day after a short delay
+  const dragSwitchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleDayDragEnter = (dayIndex: number) => {
+    setDragOverDay(dayIndex);
+    if (dragSwitchTimerRef.current) clearTimeout(dragSwitchTimerRef.current);
+    dragSwitchTimerRef.current = setTimeout(() => {
+      setSelectedDayIndex(dayIndex);
+    }, 400);
+  };
+
+  const handleDayDragLeave = () => {
+    setDragOverDay(null);
+    if (dragSwitchTimerRef.current) clearTimeout(dragSwitchTimerRef.current);
+  };
+
+  const handleDayDrop = async (e: React.DragEvent, dayIndex: number) => {
+    e.preventDefault();
+    setDragOverDay(null);
+    if (dragSwitchTimerRef.current) clearTimeout(dragSwitchTimerRef.current);
+    const taskId = e.dataTransfer.getData("taskId");
+    if (!taskId) return;
+
+    const targetDate = format(days[dayIndex], "yyyy-MM-dd");
+    const { error } = await supabase.from("work_tasks").update({
+      scheduled_date: targetDate,
+    }).eq("id", taskId);
+
+    if (error) {
+      toast.error("Erreur lors du déplacement");
+      return;
+    }
+    setSelectedDayIndex(dayIndex);
+    toast.success("Tâche déplacée au " + format(days[dayIndex], "EEEE d", { locale: fr }));
+    onRefresh();
+  };
 
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
     e.dataTransfer.setData("taskId", taskId);
@@ -77,12 +115,17 @@ export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick,
             <button
               key={day.toISOString()}
               onClick={() => setSelectedDayIndex(i)}
+              onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+              onDragEnter={() => handleDayDragEnter(i)}
+              onDragLeave={handleDayDragLeave}
+              onDrop={(e) => handleDayDrop(e, i)}
               className={cn(
                 "flex-1 min-w-[80px] px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-center",
                 selectedDayIndex === i
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "hover:bg-muted",
-                isToday(day) && selectedDayIndex !== i && "ring-1 ring-primary/50"
+                isToday(day) && selectedDayIndex !== i && "ring-1 ring-primary/50",
+                dragOverDay === i && selectedDayIndex !== i && "ring-2 ring-primary bg-primary/10"
               )}
             >
               <div className="capitalize text-xs">{format(day, "EEE", { locale: fr })}</div>
