@@ -300,11 +300,11 @@ export default function Planning() {
                               setSelectedTask(task);
                             }}
                             className={cn(
-                              "absolute inset-x-1 rounded-xl px-2.5 py-2 text-xs cursor-grab active:cursor-grabbing overflow-hidden z-[1] select-none border border-white/20 shadow-md flex flex-col gap-0.5",
+                              "absolute inset-x-1 rounded-xl px-2.5 py-1.5 text-xs cursor-grab active:cursor-grabbing z-[1] select-none border border-white/20 shadow-md flex flex-col gap-0.5",
                               INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre"
                             )}
                             style={{
-                              height: `${Math.max((task.duration_minutes / 60) * 96, 80)}px`,
+                              minHeight: `${Math.max((task.duration_minutes / 60) * 96, 80)}px`,
                             }}
                           >
                             <div className="font-bold truncate text-[13px] leading-tight">{task.title}</div>
