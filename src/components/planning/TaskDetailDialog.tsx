@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS, TASK_STATUS_LABELS } from "@/lib/constants";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface TaskDetailDialogProps {
@@ -17,8 +20,12 @@ interface TaskDetailDialogProps {
 }
 
 export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetailDialogProps) {
+  const { role } = useAuth();
+  const canEdit = role === "admin" || role === "secretariat";
+
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [title, setTitle] = useState("");
   const [interventionType, setInterventionType] = useState("");
@@ -50,7 +57,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
   }, [task]);
 
   useEffect(() => {
-    if (!task) return;
+    if (!task || !canEdit) return;
     const fetchData = async () => {
       const [w, c] = await Promise.all([
         supabase.from("profiles").select("id, full_name").eq("is_active", true),
@@ -60,7 +67,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
       setClients(c.data ?? []);
     };
     fetchData();
-  }, [task]);
+  }, [task, canEdit]);
 
   const handleSave = async () => {
     if (!task) return;
@@ -84,6 +91,19 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
     }
     toast.success("Tâche mise à jour");
     setEditing(false);
+    onUpdated();
+  };
+
+  const handleDelete = async () => {
+    if (!task) return;
+    setDeleting(true);
+    const { error } = await supabase.from("work_tasks").delete().eq("id", task.id);
+    setDeleting(false);
+    if (error) {
+      toast.error("Erreur: " + error.message);
+      return;
+    }
+    toast.success("Tâche supprimée");
     onUpdated();
   };
 
@@ -145,7 +165,33 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
                 <p className="text-sm">{task.memo_secretariat}</p>
               </div>
             )}
-            <Button onClick={() => setEditing(true)} className="w-full">Modifier</Button>
+
+            {canEdit && (
+              <div className="flex gap-2">
+                <Button onClick={() => setEditing(true)} className="flex-1">Modifier</Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Supprimer cette tâche ?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Cette action est irréversible. La tâche « {task.title} » sera définitivement supprimée.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        {deleting ? "Suppression..." : "Supprimer"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
