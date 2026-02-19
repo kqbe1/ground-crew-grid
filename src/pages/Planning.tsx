@@ -1,13 +1,14 @@
-import { useEffect, useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState, useCallback } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, ChevronRight, Plus, MessageSquare, CheckCircle2, Package } from "lucide-react";
-import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths, isSameDay } from "date-fns";
+import { ChevronLeft, ChevronRight, MessageSquare, CheckCircle2, Package } from "lucide-react";
+import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, TASK_STATUS_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -18,6 +19,9 @@ export default function Planning() {
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [tasks, setTasks] = useState<any[]>([]);
   const [workers, setWorkers] = useState<any[]>([]);
+  const [clickContext, setClickContext] = useState<{ hour?: number; workerId?: string }>({});
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refreshTasks = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   useEffect(() => {
     const fetchWorkers = async () => {
@@ -61,7 +65,7 @@ export default function Planning() {
       }
     };
     fetchTasks();
-  }, [currentDate, viewMode]);
+  }, [currentDate, viewMode, refreshKey]);
 
   const navigate = (direction: "prev" | "next") => {
     const fn = direction === "next"
@@ -108,6 +112,12 @@ export default function Planning() {
           <Button variant="outline" size="icon" onClick={() => navigate("next")}>
             <ChevronRight className="w-4 h-4" />
           </Button>
+          <CreateTaskDialog
+            defaultDate={currentDate}
+            defaultHour={clickContext.hour}
+            defaultWorkerId={clickContext.workerId}
+            onCreated={refreshTasks}
+          />
         </div>
       </div>
 
@@ -137,7 +147,18 @@ export default function Planning() {
                     (t) => t.assigned_to === w.id && t.start_time && parseInt(t.start_time.split(":")[0]) === hour
                   );
                   return (
-                    <div key={`cell-${hour}-${w.id}`} className="border-b border-l border-border h-16 p-0.5 relative">
+                    <div
+                      key={`cell-${hour}-${w.id}`}
+                      className="border-b border-l border-border h-16 p-0.5 relative cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => {
+                        setClickContext({ hour, workerId: w.id });
+                        // Small delay so state is set before dialog reads it
+                        setTimeout(() => {
+                          const btn = document.querySelector<HTMLButtonElement>('[data-create-task-trigger]');
+                          btn?.click();
+                        }, 0);
+                      }}
+                    >
                       {hourTasks.map((task) => (
                         <div
                           key={task.id}
