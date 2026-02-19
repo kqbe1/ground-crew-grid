@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
-import { Package, AlertTriangle } from "lucide-react";
+import { Package, AlertTriangle, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import CreateOrderDialog from "@/components/commandes/CreateOrderDialog";
+import OrderDetailDialog from "@/components/commandes/OrderDetailDialog";
 
 const statusColors: Record<string, string> = {
   demandee: "bg-order-demandee text-white",
@@ -25,27 +28,38 @@ const urgencyColors: Record<string, string> = {
 export default function Commandes() {
   const [orders, setOrders] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("all");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
-  useEffect(() => {
-    const fetch = async () => {
-      const query = supabase
-        .from("parts_orders")
-        .select("*, clients(name), work_tasks(title), profiles!parts_orders_requested_by_fkey(full_name)")
-        .order("created_at", { ascending: false });
-      if (activeTab !== "all") {
-        query.eq("status", activeTab as "demandee" | "commandee" | "recue" | "cloturee");
-      }
-      const { data } = await query;
-      setOrders(data ?? []);
-    };
-    fetch();
+  const fetchOrders = useCallback(async () => {
+    const query = supabase
+      .from("parts_orders")
+      .select("*, clients(name), work_tasks(title), profiles!parts_orders_requested_by_fkey(full_name)")
+      .order("created_at", { ascending: false });
+    if (activeTab !== "all") {
+      query.eq("status", activeTab as "demandee" | "commandee" | "recue" | "cloturee");
+    }
+    const { data } = await query;
+    setOrders(data ?? []);
   }, [activeTab]);
+
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  const handleOrderUpdated = () => {
+    setSelectedOrder(null);
+    fetchOrders();
+  };
 
   return (
     <div className="p-6 space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">Commandes & Pièces</h1>
-        <p className="text-muted-foreground">{orders.length} commande(s)</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Commandes & Pièces</h1>
+          <p className="text-muted-foreground">{orders.length} commande(s)</p>
+        </div>
+        <Button onClick={() => setCreateOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" /> Nouvelle commande
+        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -60,7 +74,11 @@ export default function Commandes() {
 
       <div className="space-y-2">
         {orders.map((order) => (
-          <Card key={order.id} className={cn("animate-slide-in", urgencyColors[order.urgency])}>
+          <Card
+            key={order.id}
+            className={cn("animate-slide-in cursor-pointer hover:shadow-md transition-shadow", urgencyColors[order.urgency])}
+            onClick={() => setSelectedOrder(order)}
+          >
             <CardContent className="py-3 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
                 <Package className="w-4 h-4 text-primary" />
@@ -92,6 +110,9 @@ export default function Commandes() {
           </div>
         )}
       </div>
+
+      <CreateOrderDialog open={createOpen} onOpenChange={setCreateOpen} onSaved={fetchOrders} />
+      <OrderDetailDialog open={!!selectedOrder} onOpenChange={(o) => { if (!o) setSelectedOrder(null); }} order={selectedOrder} onUpdated={handleOrderUpdated} />
     </div>
   );
 }
