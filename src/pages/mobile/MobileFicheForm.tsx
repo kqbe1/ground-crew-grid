@@ -12,6 +12,7 @@ import { useOfflineDrafts } from "@/hooks/useOfflineDrafts";
 import { toast } from "sonner";
 import { ArrowLeft, Send, Save, WifiOff } from "lucide-react";
 import SignatureCanvas from "@/components/mobile/SignatureCanvas";
+import PhotoCapture from "@/components/mobile/PhotoCapture";
 
 export default function MobileFicheForm() {
   const { taskId } = useParams();
@@ -25,6 +26,8 @@ export default function MobileFicheForm() {
   const [finalStatus, setFinalStatus] = useState("termine");
   const [clientPresent, setClientPresent] = useState(true);
   const [signatureData, setSignatureData] = useState("");
+  const [photosBefore, setPhotosBefore] = useState<string[]>([]);
+  const [photosAfter, setPhotosAfter] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (isDraft: boolean) => {
@@ -44,6 +47,8 @@ export default function MobileFicheForm() {
       client_absent: !clientPresent,
       signature_data: signatureData || null,
       signed_at: signatureData ? new Date().toISOString() : null,
+      photos_before: photosBefore.length > 0 ? photosBefore : null,
+      photos_after: photosAfter.length > 0 ? photosAfter : null,
       is_draft: isDraft,
     });
 
@@ -95,6 +100,11 @@ export default function MobileFicheForm() {
               placeholder="Décrivez les travaux réalisés..."
               rows={4}
             />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 border-t pt-3">
+            <PhotoCapture label="📸 Photos AVANT" photos={photosBefore} onPhotosChange={setPhotosBefore} />
+            <PhotoCapture label="📸 Photos APRÈS" photos={photosAfter} onPhotosChange={setPhotosAfter} />
           </div>
 
           <div className="space-y-1.5">
