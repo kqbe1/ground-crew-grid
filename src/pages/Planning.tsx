@@ -9,6 +9,8 @@ import { fr } from "date-fns/locale";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, TASK_STATUS_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
+import TaskDetailDialog from "@/components/planning/TaskDetailDialog";
+import { toast } from "sonner";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -23,6 +25,12 @@ export default function Planning() {
   const [refreshKey, setRefreshKey] = useState(0);
   const refreshTasks = useCallback(() => setRefreshKey((k) => k + 1), []);
 
+  // Detail dialog
+  const [selectedTask, setSelectedTask] = useState<any | null>(null);
+
+  // Drag state
+  const [dragOverCell, setDragOverCell] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchWorkers = async () => {
       const { data } = await supabase
@@ -36,9 +44,8 @@ export default function Planning() {
 
   useEffect(() => {
     const fetchTasks = async () => {
-      let dateFilter: string;
       if (viewMode === "day") {
-        dateFilter = format(currentDate, "yyyy-MM-dd");
+        const dateFilter = format(currentDate, "yyyy-MM-dd");
         const { data } = await supabase
           .from("work_tasks")
           .select("*, clients(name), client_sites(address), profiles!work_tasks_assigned_to_fkey(full_name)")
@@ -79,6 +86,42 @@ export default function Planning() {
     : viewMode === "week"
     ? `Semaine du ${format(startOfWeek(currentDate, { weekStartsOn: 1 }), "d MMM", { locale: fr })}`
     : format(currentDate, "MMMM yyyy", { locale: fr });
+
+  // --- Drag & Drop handlers ---
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    e.dataTransfer.setData("taskId", taskId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, cellKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverCell(cellKey);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverCell(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, hour: number, workerId: string) => {
+    e.preventDefault();
+    setDragOverCell(null);
+    const taskId = e.dataTransfer.getData("taskId");
+    if (!taskId) return;
+
+    const newTime = `${String(hour).padStart(2, "0")}:00`;
+    const { error } = await supabase.from("work_tasks").update({
+      assigned_to: workerId,
+      start_time: newTime,
+    }).eq("id", taskId);
+
+    if (error) {
+      toast.error("Erreur lors du déplacement");
+      return;
+    }
+    toast.success("Tâche déplacée");
+    refreshTasks();
+  };
 
   return (
     <div className="p-6 space-y-4">
@@ -138,32 +181,47 @@ export default function Planning() {
 
             {/* Time rows */}
             {HOURS.map((hour) => (
-              <>
-                <div key={`time-${hour}`} className="border-b border-border p-1 text-xs text-muted-foreground text-right pr-2 h-16 flex items-start justify-end pt-1">
+              <div key={`row-${hour}`} className="contents">
+                <div className="border-b border-border p-1 text-xs text-muted-foreground text-right pr-2 h-16 flex items-start justify-end pt-1">
                   {hour}:00
                 </div>
                 {workers.map((w) => {
+                  const cellKey = `${hour}-${w.id}`;
                   const hourTasks = tasks.filter(
                     (t) => t.assigned_to === w.id && t.start_time && parseInt(t.start_time.split(":")[0]) === hour
                   );
                   return (
                     <div
-                      key={`cell-${hour}-${w.id}`}
-                      className="border-b border-l border-border h-16 p-0.5 relative cursor-pointer hover:bg-muted/50 transition-colors"
+                      key={`cell-${cellKey}`}
+                      className={cn(
+                        "border-b border-l border-border h-16 p-0.5 relative cursor-pointer transition-colors",
+                        dragOverCell === cellKey ? "bg-primary/10" : "hover:bg-muted/50"
+                      )}
                       onClick={() => {
+                        if (hourTasks.length > 0) return; // don't create if tasks exist
                         setClickContext({ hour, workerId: w.id });
-                        // Small delay so state is set before dialog reads it
                         setTimeout(() => {
-                          const btn = document.querySelector<HTMLButtonElement>('[data-create-task-trigger]');
-                          btn?.click();
+                          document.querySelector<HTMLButtonElement>('[data-create-task-trigger]')?.click();
                         }, 0);
                       }}
+                      onDragOver={(e) => handleDragOver(e, cellKey)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, hour, w.id)}
                     >
                       {hourTasks.map((task) => (
                         <div
                           key={task.id}
+                          draggable
+                          onDragStart={(e) => {
+                            e.stopPropagation();
+                            handleDragStart(e, task.id);
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTask(task);
+                          }}
                           className={cn(
-                            "absolute inset-x-0.5 rounded-md px-1.5 py-0.5 text-xs cursor-pointer overflow-hidden",
+                            "absolute inset-x-0.5 rounded-md px-1.5 py-0.5 text-xs cursor-grab active:cursor-grabbing overflow-hidden z-[1] select-none",
                             INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre"
                           )}
                           style={{
@@ -182,7 +240,7 @@ export default function Planning() {
                     </div>
                   );
                 })}
-              </>
+              </div>
             ))}
           </div>
         </div>
@@ -199,7 +257,7 @@ export default function Planning() {
             </Card>
           ) : (
             tasks.map((task) => (
-              <Card key={task.id} className="animate-slide-in">
+              <Card key={task.id} className="animate-slide-in cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedTask(task)}>
                 <CardContent className="py-3 flex items-center gap-3">
                   <Badge className={cn("text-xs", INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre")}>
                     {INTERVENTION_TYPE_LABELS[task.intervention_type] || task.intervention_type}
@@ -220,6 +278,16 @@ export default function Planning() {
           )}
         </div>
       )}
+
+      {/* Task Detail Dialog */}
+      <TaskDetailDialog
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onUpdated={() => {
+          setSelectedTask(null);
+          refreshTasks();
+        }}
+      />
     </div>
   );
 }
