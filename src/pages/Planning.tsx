@@ -253,9 +253,10 @@ export default function Planning() {
         <WeekViewGrid
           currentDate={currentDate}
           tasks={tasks}
+          workers={workers}
           onTaskClick={(task) => setSelectedTask(task)}
-          onCellClick={(date, hour) => {
-            setClickContext({ hour });
+          onCellClick={(date, hour, workerId) => {
+            setClickContext({ hour, workerId });
             setCurrentDate(date);
             setTimeout(() => {
               document.querySelector<HTMLButtonElement>('[data-create-task-trigger]')?.click();
