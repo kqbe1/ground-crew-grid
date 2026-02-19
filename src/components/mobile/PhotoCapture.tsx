@@ -1,6 +1,33 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, X } from "lucide-react";
+import { Camera, X, Loader2 } from "lucide-react";
+
+const MAX_DIMENSION = 1200;
+const JPEG_QUALITY = 0.7;
+
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", JPEG_QUALITY));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
 
 interface PhotoCaptureProps {
   label: string;
@@ -11,22 +38,26 @@ interface PhotoCaptureProps {
 
 export default function PhotoCapture({ label, photos, onPhotosChange, maxPhotos = 5 }: PhotoCaptureProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [compressing, setCompressing] = useState(false);
 
-  const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach((file) => {
-      if (photos.length >= maxPhotos) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const dataUrl = ev.target?.result as string;
-        onPhotosChange([...photos, dataUrl]);
-      };
-      reader.readAsDataURL(file);
-    });
+    setCompressing(true);
+    const newPhotos = [...photos];
+    for (const file of Array.from(files)) {
+      if (newPhotos.length >= maxPhotos) break;
+      try {
+        const compressed = await compressImage(file);
+        newPhotos.push(compressed);
+      } catch {
+        // skip failed compressions
+      }
+    }
+    onPhotosChange(newPhotos);
+    setCompressing(false);
 
-    // Reset input so same file can be re-selected
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -71,9 +102,14 @@ export default function PhotoCapture({ label, photos, onPhotosChange, maxPhotos 
             size="sm"
             className="w-full"
             onClick={() => inputRef.current?.click()}
+            disabled={compressing}
           >
-            <Camera className="w-4 h-4 mr-1.5" />
-            Prendre une photo ({photos.length}/{maxPhotos})
+            {compressing ? (
+              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+            ) : (
+              <Camera className="w-4 h-4 mr-1.5" />
+            )}
+            {compressing ? "Compression..." : `Prendre une photo (${photos.length}/${maxPhotos})`}
           </Button>
         </>
       )}
