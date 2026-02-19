@@ -7,16 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Send, Save } from "lucide-react";
+import { useOfflineDrafts } from "@/hooks/useOfflineDrafts";
+import { toast } from "sonner";
+import { ArrowLeft, Send, Save, WifiOff, Wifi } from "lucide-react";
 
 export default function MobileFicheForm() {
   const { taskId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { save, isOnline } = useOfflineDrafts();
 
   const [arrivalTime, setArrivalTime] = useState("");
   const [departureTime, setDepartureTime] = useState("");
@@ -32,13 +32,13 @@ export default function MobileFicheForm() {
 
     const now = new Date().toISOString().split("T")[0];
 
-    const { error } = await supabase.from("intervention_sheets").insert({
+    const result = await save({
       work_task_id: taskId,
       worker_id: user.id,
       arrival_time: arrivalTime ? `${now}T${arrivalTime}:00` : null,
       departure_time: departureTime ? `${now}T${departureTime}:00` : null,
       description,
-      final_status: finalStatus as any,
+      final_status: finalStatus,
       client_present: clientPresent,
       client_absent: !clientPresent,
       signature_data: signatureData || null,
@@ -46,22 +46,30 @@ export default function MobileFicheForm() {
       is_draft: isDraft,
     });
 
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    } else {
-      // Update task status
-      await supabase.from("work_tasks").update({ status: finalStatus as any }).eq("id", taskId);
-      toast({ title: isDraft ? "Brouillon sauvegardé" : "Fiche envoyée ✓" });
-      navigate("/mobile");
-    }
     setSubmitting(false);
+
+    if (result.synced) {
+      toast.success(isDraft ? "Brouillon sauvegardé" : "Fiche envoyée ✓");
+    } else {
+      toast.success("Sauvegardé localement — sera envoyé au retour réseau", {
+        icon: <WifiOff className="w-4 h-4" />,
+      });
+    }
+    navigate("/mobile");
   };
 
   return (
     <div className="p-4 space-y-4">
-      <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-        <ArrowLeft className="w-4 h-4 mr-1" /> Retour
-      </Button>
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-4 h-4 mr-1" /> Retour
+        </Button>
+        {!isOnline && (
+          <div className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-[hsl(var(--color-replanifier))]/10 text-[hsl(var(--color-replanifier))]">
+            <WifiOff className="w-3 h-3" /> Hors ligne
+          </div>
+        )}
+      </div>
 
       <h1 className="text-xl font-bold">Fiche d'intervention</h1>
 
