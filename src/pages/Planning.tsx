@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
 import TaskDetailDialog from "@/components/planning/TaskDetailDialog";
 import WeekViewGrid from "@/components/planning/WeekViewGrid";
+import MonthViewCalendar from "@/components/planning/MonthViewCalendar";
 import { toast } from "sonner";
 
 type ViewMode = "day" | "week" | "month";
@@ -264,37 +265,17 @@ export default function Planning() {
         />
       )}
 
-      {/* Month - Simple list view */}
+      {/* Month - Calendar view */}
       {viewMode === "month" && (
-        <div className="space-y-2">
-          {tasks.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                Aucune tâche pour cette période
-              </CardContent>
-            </Card>
-          ) : (
-            tasks.map((task) => (
-              <Card key={task.id} className="animate-slide-in cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedTask(task)}>
-                <CardContent className="py-3 flex items-center gap-3">
-                  <Badge className={cn("text-xs", INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre")}>
-                    {INTERVENTION_TYPE_LABELS[task.intervention_type] || task.intervention_type}
-                  </Badge>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{task.title}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {format(new Date(task.scheduled_date), "EEE d MMM", { locale: fr })} · {task.start_time?.slice(0, 5)} · {task.clients?.name}
-                    </div>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {task.profiles?.full_name}
-                  </div>
-                  <Badge variant="outline">{TASK_STATUS_LABELS[task.status]}</Badge>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+        <MonthViewCalendar
+          currentDate={currentDate}
+          tasks={tasks}
+          onTaskClick={(task) => setSelectedTask(task)}
+          onDayClick={(date) => {
+            setCurrentDate(date);
+            setViewMode("day");
+          }}
+        />
       )}
 
       {/* Task Detail Dialog */}
