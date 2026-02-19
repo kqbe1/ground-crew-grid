@@ -280,10 +280,12 @@ export default function Planning() {
                       onDrop={(e) => handleDrop(e, hour, w.id)}
                     >
                       {hourTasks.map((task) => {
-                        const endMinutes = (parseInt(task.start_time.split(":")[0]) * 60 + parseInt(task.start_time.split(":")[1] || "0")) + task.duration_minutes;
+                        const startH = parseInt(task.start_time.split(":")[0]);
+                        const startM = parseInt(task.start_time.split(":")[1] || "0");
+                        const endMinutes = (startH * 60 + startM) + task.duration_minutes;
                         const endHour = Math.floor(endMinutes / 60);
                         const endMin = endMinutes % 60;
-                        const timeRange = `${task.start_time?.slice(0, 5)} - ${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
+                        const timeRange = `${task.start_time?.slice(0, 5)} – ${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
 
                         return (
                           <div
@@ -298,34 +300,34 @@ export default function Planning() {
                               setSelectedTask(task);
                             }}
                             className={cn(
-                              "absolute inset-x-1 rounded-lg px-2 py-1.5 text-xs cursor-grab active:cursor-grabbing overflow-hidden z-[1] select-none border border-white/20 shadow-sm",
+                              "absolute inset-x-1 rounded-xl px-2.5 py-2 text-xs cursor-grab active:cursor-grabbing overflow-hidden z-[1] select-none border border-white/20 shadow-md flex flex-col gap-0.5",
                               INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre"
                             )}
                             style={{
-                              height: `${Math.max((task.duration_minutes / 60) * 96, 28)}px`,
+                              height: `${Math.max((task.duration_minutes / 60) * 96, 80)}px`,
                             }}
                           >
-                            <div className="font-bold truncate">{task.title}</div>
-                            <div className="truncate opacity-90 text-[10px]">{timeRange}</div>
+                            <div className="font-bold truncate text-[13px] leading-tight">{task.title}</div>
+                            <div className="font-semibold opacity-90 text-[11px]">{timeRange}</div>
                             {task.clients?.name && (
-                              <div className="truncate opacity-80 mt-0.5">{task.clients.name}</div>
+                              <div className="truncate opacity-90 text-[11px] mt-0.5">{task.clients.name}</div>
                             )}
                             {(task.client_sites?.address || task.clients?.address_intervention) && (
-                              <div className="truncate opacity-70 text-[10px]">
+                              <div className="truncate opacity-75 text-[10px]">
                                 {task.client_sites?.address || task.clients?.address_intervention}
                               </div>
                             )}
                             {task.clients?.phone && (
-                              <div className="truncate opacity-70 text-[10px] flex items-center gap-0.5">
-                                <Phone className="w-2.5 h-2.5" />
+                              <div className="truncate opacity-80 text-[10px] flex items-center gap-1">
+                                <Phone className="w-2.5 h-2.5 shrink-0" />
                                 {task.clients.phone}
                               </div>
                             )}
-                            <div className="flex items-center gap-1 mt-0.5">
+                            <div className="flex items-center gap-1 mt-auto pt-0.5">
                               {task.memo_secretariat && <MessageSquare className="w-3 h-3 opacity-80" />}
                               {task.status === "termine" && <CheckCircle2 className="w-3 h-3 opacity-80" />}
                               {task.status === "piece_a_commander" && <Package className="w-3 h-3 opacity-80" />}
-                              <Badge variant="outline" className="text-[9px] h-4 px-1 bg-white/20 border-white/30 text-white ml-auto">
+                              <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-white/20 border-white/30 text-white ml-auto rounded-md font-semibold">
                                 {INTERVENTION_TYPE_LABELS[task.intervention_type]?.split(" ").pop()}
                               </Badge>
                             </div>
