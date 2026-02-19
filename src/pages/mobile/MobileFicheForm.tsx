@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { useOfflineDrafts } from "@/hooks/useOfflineDrafts";
 import { toast } from "sonner";
-import { ArrowLeft, Send, Save, WifiOff, Wifi } from "lucide-react";
+import { ArrowLeft, Send, Save, WifiOff } from "lucide-react";
+import SignatureCanvas from "@/components/mobile/SignatureCanvas";
 
 export default function MobileFicheForm() {
   const { taskId } = useParams();
@@ -123,9 +124,7 @@ export default function MobileFicheForm() {
             {clientPresent && (
               <div className="space-y-1.5">
                 <Label>Signature du client</Label>
-                <div className="border-2 border-dashed border-border rounded-lg h-32 flex items-center justify-center text-muted-foreground text-sm">
-                  Zone de signature (à implémenter)
-                </div>
+                <SignatureCanvas value={signatureData} onSignatureChange={setSignatureData} />
               </div>
             )}
           </div>
