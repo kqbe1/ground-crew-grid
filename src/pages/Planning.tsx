@@ -7,6 +7,9 @@ import { ChevronLeft, ChevronRight, MessageSquare, CheckCircle2, Package } from 
 import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, TASK_STATUS_LABELS } from "@/lib/constants";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
 import TaskDetailDialog from "@/components/planning/TaskDetailDialog";
@@ -18,11 +21,14 @@ type ViewMode = "day" | "week" | "month";
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 6); // 6h - 18h
 
+const ALL_INTERVENTION_TYPES = Object.keys(INTERVENTION_TYPE_LABELS);
+
 export default function Planning() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [tasks, setTasks] = useState<any[]>([]);
   const [workers, setWorkers] = useState<any[]>([]);
+  const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set());
   const [clickContext, setClickContext] = useState<{ hour?: number; workerId?: string }>({});
   const [refreshKey, setRefreshKey] = useState(0);
   const refreshTasks = useCallback(() => setRefreshKey((k) => k + 1), []);
@@ -125,6 +131,19 @@ export default function Planning() {
     refreshTasks();
   };
 
+  const filteredTasks = hiddenTypes.size > 0
+    ? tasks.filter((t) => !hiddenTypes.has(t.intervention_type))
+    : tasks;
+
+  const toggleType = (type: string) => {
+    setHiddenTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
+  };
+
   return (
     <div className="p-6 space-y-4">
       {/* Header */}
@@ -132,7 +151,37 @@ export default function Planning() {
         <div>
           <h1 className="text-2xl font-bold">Planning</h1>
           <p className="text-muted-foreground capitalize">{dateLabel}</p>
-        </div>
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="icon" className="relative">
+                <Filter className="w-4 h-4" />
+                {hiddenTypes.size > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center">
+                    {hiddenTypes.size}
+                  </span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-2 bg-popover z-50" align="end">
+              <div className="text-sm font-semibold mb-2 px-2">Filtrer par type</div>
+              {ALL_INTERVENTION_TYPES.map((type) => (
+                <label key={type} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                  <Checkbox
+                    checked={!hiddenTypes.has(type)}
+                    onCheckedChange={() => toggleType(type)}
+                  />
+                  <span className={cn("w-2 h-2 rounded-full", INTERVENTION_TYPE_COLORS[type])} />
+                  {INTERVENTION_TYPE_LABELS[type]}
+                </label>
+              ))}
+              {hiddenTypes.size > 0 && (
+                <Button variant="ghost" size="sm" className="w-full mt-1" onClick={() => setHiddenTypes(new Set())}>
+                  Tout afficher
+                </Button>
+              )}
+            </PopoverContent>
+          </Popover>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-border overflow-hidden">
             {(["day", "week", "month"] as ViewMode[]).map((mode) => (
@@ -189,7 +238,7 @@ export default function Planning() {
                 </div>
                 {workers.map((w) => {
                   const cellKey = `${hour}-${w.id}`;
-                  const hourTasks = tasks.filter(
+                  const hourTasks = filteredTasks.filter(
                     (t) => t.assigned_to === w.id && t.start_time && parseInt(t.start_time.split(":")[0]) === hour
                   );
                   return (
@@ -252,7 +301,7 @@ export default function Planning() {
       {viewMode === "week" && (
         <WeekViewGrid
           currentDate={currentDate}
-          tasks={tasks}
+          tasks={filteredTasks}
           workers={workers}
           onTaskClick={(task) => setSelectedTask(task)}
           onCellClick={(date, hour, workerId) => {
@@ -270,7 +319,7 @@ export default function Planning() {
       {viewMode === "month" && (
         <MonthViewCalendar
           currentDate={currentDate}
-          tasks={tasks}
+          tasks={filteredTasks}
           onTaskClick={(task) => setSelectedTask(task)}
           onDayClick={(date) => {
             setCurrentDate(date);
