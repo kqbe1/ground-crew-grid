@@ -22,6 +22,7 @@ import MobileFiches from "@/pages/mobile/MobileFiches";
 import MobilePieces from "@/pages/mobile/MobilePieces";
 import MobileProfil from "@/pages/mobile/MobileProfil";
 import NotFound from "@/pages/NotFound";
+import Install from "@/pages/Install";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/install" element={<Install />} />
 
             {/* Webapp Admin/Secrétariat */}
             <Route element={<AppLayout />}>
