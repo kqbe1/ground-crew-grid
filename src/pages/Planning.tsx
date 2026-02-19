@@ -3,18 +3,18 @@ import { useDragScroll } from "@/hooks/useDragScroll";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, ChevronRight, MessageSquare, CheckCircle2, Package, Filter, Phone } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
-import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, TASK_STATUS_LABELS } from "@/lib/constants";
+import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
 import TaskDetailDialog from "@/components/planning/TaskDetailDialog";
 import WeekViewGrid from "@/components/planning/WeekViewGrid";
 import MonthViewCalendar from "@/components/planning/MonthViewCalendar";
+import DraggableTaskCard from "@/components/planning/DraggableTaskCard";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -117,13 +117,14 @@ export default function Planning() {
     setDragOverCell(null);
   };
 
-  const handleDrop = async (e: React.DragEvent, hour: number, workerId: string) => {
+  const handleDrop = async (e: React.DragEvent, hour: number, quarter: number, workerId: string) => {
     e.preventDefault();
     setDragOverCell(null);
     const taskId = e.dataTransfer.getData("taskId");
     if (!taskId) return;
 
-    const newTime = `${String(hour).padStart(2, "0")}:00`;
+    const minutes = quarter * 15;
+    const newTime = `${String(hour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
     const { error } = await supabase.from("work_tasks").update({
       assigned_to: workerId,
       start_time: newTime,
@@ -259,80 +260,51 @@ export default function Planning() {
                   {String(hour).padStart(2, "0")}:00
                 </div>
                 {workers.map((w) => {
-                  const cellKey = `${hour}-${w.id}`;
                   const hourTasks = filteredTasks.filter(
                     (t) => t.assigned_to === w.id && t.start_time && parseInt(t.start_time.split(":")[0]) === hour
                   );
                   return (
                     <div
-                      key={`cell-${cellKey}`}
-                      className={cn(
-                        "border-b border-l border-border h-24 p-1 relative cursor-pointer transition-colors",
-                        dragOverCell === cellKey ? "bg-primary/10" : "hover:bg-muted/30"
-                      )}
-                      onClick={() => {
-                        if (hourTasks.length > 0) return;
-                        setClickContext({ hour, workerId: w.id });
-                        setTimeout(() => {
-                          document.querySelector<HTMLButtonElement>('[data-create-task-trigger]')?.click();
-                        }, 0);
-                      }}
-                      onDragOver={(e) => handleDragOver(e, cellKey)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, hour, w.id)}
+                      key={`cell-${hour}-${w.id}`}
+                      className="border-b border-l border-border h-24 relative"
                     >
-                      {hourTasks.map((task) => {
-                        const startH = parseInt(task.start_time.split(":")[0]);
-                        const startM = parseInt(task.start_time.split(":")[1] || "0");
-                        const endMinutes = (startH * 60 + startM) + task.duration_minutes;
-                        const endHour = Math.floor(endMinutes / 60);
-                        const endMin = endMinutes % 60;
-                        const timeRange = `${task.start_time?.slice(0, 5)} – ${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
-
+                      {/* 4 quarter-hour drop zones */}
+                      {[0, 1, 2, 3].map((q) => {
+                        const qKey = `${hour}-${q}-${w.id}`;
                         return (
                           <div
-                            key={task.id}
-                            draggable
-                            onDragStart={(e) => {
-                              e.stopPropagation();
-                              handleDragStart(e, task.id);
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedTask(task);
-                            }}
+                            key={qKey}
                             className={cn(
-                              "absolute inset-x-1 rounded-xl px-2.5 py-1.5 text-xs cursor-grab active:cursor-grabbing z-[1] select-none border border-white/20 shadow-md flex flex-col gap-0.5",
-                              INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre"
+                              "absolute inset-x-0 cursor-pointer transition-colors",
+                              q < 3 && "border-b border-dashed border-border/30",
+                              dragOverCell === qKey ? "bg-primary/10" : "hover:bg-muted/20"
                             )}
-                            style={{
-                              minHeight: `${Math.max((task.duration_minutes / 60) * 96, 80)}px`,
+                            style={{ top: `${q * 25}%`, height: "25%" }}
+                            onClick={() => {
+                              if (hourTasks.length > 0) return;
+                              setClickContext({ hour, workerId: w.id });
+                              setTimeout(() => {
+                                document.querySelector<HTMLButtonElement>('[data-create-task-trigger]')?.click();
+                              }, 0);
                             }}
-                          >
-                            <div className="font-bold truncate text-[13px] leading-tight">{task.title}</div>
-                            <div className="font-semibold opacity-90 text-[11px]">{timeRange}</div>
-                            {task.clients?.name && (
-                              <div className="truncate opacity-90 text-[11px] mt-0.5">{task.clients.name}</div>
-                            )}
-                            {(task.client_sites?.address || task.clients?.address_intervention) && (
-                              <div className="truncate opacity-75 text-[10px]">
-                                {task.client_sites?.address || task.clients?.address_intervention}
-                              </div>
-                            )}
-                            {task.clients?.phone && (
-                              <div className="truncate opacity-80 text-[10px] flex items-center gap-1">
-                                <Phone className="w-2.5 h-2.5 shrink-0" />
-                                {task.clients.phone}
-                              </div>
-                            )}
-                            <div className="flex items-center gap-1 mt-auto pt-0.5">
-                              {task.memo_secretariat && <MessageSquare className="w-3 h-3 opacity-80" />}
-                              {task.status === "termine" && <CheckCircle2 className="w-3 h-3 opacity-80" />}
-                              {task.status === "piece_a_commander" && <Package className="w-3 h-3 opacity-80" />}
-                              <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-white/20 border-white/30 text-white ml-auto rounded-md font-semibold">
-                                {INTERVENTION_TYPE_LABELS[task.intervention_type]?.split(" ").pop()}
-                              </Badge>
-                            </div>
+                            onDragOver={(e) => handleDragOver(e, qKey)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, hour, q, w.id)}
+                          />
+                        );
+                      })}
+                      {/* Task cards */}
+                      {hourTasks.map((task) => {
+                        const startMin = parseInt(task.start_time.split(":")[1] || "0");
+                        const topOffset = (startMin / 60) * 96;
+                        return (
+                          <div key={task.id} className="absolute inset-x-1 z-[2]" style={{ top: `${topOffset}px` }}>
+                            <DraggableTaskCard
+                              task={task}
+                              onDragStart={handleDragStart}
+                              onClick={setSelectedTask}
+                              onResized={refreshTasks}
+                            />
                           </div>
                         );
                       })}
