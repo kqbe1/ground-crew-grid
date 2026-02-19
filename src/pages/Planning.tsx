@@ -1,0 +1,204 @@
+import { useEffect, useState, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { ChevronLeft, ChevronRight, Plus, MessageSquare, CheckCircle2, Package } from "lucide-react";
+import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths, isSameDay } from "date-fns";
+import { fr } from "date-fns/locale";
+import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, TASK_STATUS_LABELS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+
+type ViewMode = "day" | "week" | "month";
+
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 6); // 6h - 18h
+
+export default function Planning() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<ViewMode>("day");
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [workers, setWorkers] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchWorkers = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, worker_level")
+        .eq("is_active", true);
+      setWorkers(data ?? []);
+    };
+    fetchWorkers();
+  }, []);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      let dateFilter: string;
+      if (viewMode === "day") {
+        dateFilter = format(currentDate, "yyyy-MM-dd");
+        const { data } = await supabase
+          .from("work_tasks")
+          .select("*, clients(name), client_sites(address), profiles!work_tasks_assigned_to_fkey(full_name)")
+          .eq("scheduled_date", dateFilter);
+        setTasks(data ?? []);
+      } else if (viewMode === "week") {
+        const start = startOfWeek(currentDate, { weekStartsOn: 1 });
+        const end = addDays(start, 6);
+        const { data } = await supabase
+          .from("work_tasks")
+          .select("*, clients(name), client_sites(address), profiles!work_tasks_assigned_to_fkey(full_name)")
+          .gte("scheduled_date", format(start, "yyyy-MM-dd"))
+          .lte("scheduled_date", format(end, "yyyy-MM-dd"));
+        setTasks(data ?? []);
+      } else {
+        const start = startOfMonth(currentDate);
+        const end = addMonths(start, 1);
+        const { data } = await supabase
+          .from("work_tasks")
+          .select("*, clients(name), client_sites(address), profiles!work_tasks_assigned_to_fkey(full_name)")
+          .gte("scheduled_date", format(start, "yyyy-MM-dd"))
+          .lt("scheduled_date", format(end, "yyyy-MM-dd"));
+        setTasks(data ?? []);
+      }
+    };
+    fetchTasks();
+  }, [currentDate, viewMode]);
+
+  const navigate = (direction: "prev" | "next") => {
+    const fn = direction === "next"
+      ? viewMode === "day" ? addDays : viewMode === "week" ? addWeeks : addMonths
+      : viewMode === "day" ? subDays : viewMode === "week" ? subWeeks : subMonths;
+    setCurrentDate((d) => fn(d, 1));
+  };
+
+  const dateLabel = viewMode === "day"
+    ? format(currentDate, "EEEE d MMMM yyyy", { locale: fr })
+    : viewMode === "week"
+    ? `Semaine du ${format(startOfWeek(currentDate, { weekStartsOn: 1 }), "d MMM", { locale: fr })}`
+    : format(currentDate, "MMMM yyyy", { locale: fr });
+
+  return (
+    <div className="p-6 space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Planning</h1>
+          <p className="text-muted-foreground capitalize">{dateLabel}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            {(["day", "week", "month"] as ViewMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={cn(
+                  "px-3 py-1.5 text-sm font-medium transition-colors",
+                  viewMode === mode ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                )}
+              >
+                {mode === "day" ? "Jour" : mode === "week" ? "Semaine" : "Mois"}
+              </button>
+            ))}
+          </div>
+          <Button variant="outline" size="icon" onClick={() => navigate("prev")}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
+            Aujourd'hui
+          </Button>
+          <Button variant="outline" size="icon" onClick={() => navigate("next")}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Planning Grid - Day View */}
+      {viewMode === "day" && (
+        <div className="border border-border rounded-lg overflow-auto bg-card">
+          <div className="grid" style={{ gridTemplateColumns: `60px repeat(${Math.max(workers.length, 1)}, minmax(180px, 1fr))` }}>
+            {/* Header row */}
+            <div className="sticky top-0 bg-muted border-b border-border p-2 text-xs font-medium text-muted-foreground z-10" />
+            {workers.map((w) => (
+              <div key={w.id} className="sticky top-0 bg-muted border-b border-l border-border p-2 text-sm font-semibold z-10 truncate">
+                {w.full_name}
+                {w.worker_level && (
+                  <Badge variant="outline" className="ml-1 text-xs">{w.worker_level}</Badge>
+                )}
+              </div>
+            ))}
+
+            {/* Time rows */}
+            {HOURS.map((hour) => (
+              <>
+                <div key={`time-${hour}`} className="border-b border-border p-1 text-xs text-muted-foreground text-right pr-2 h-16 flex items-start justify-end pt-1">
+                  {hour}:00
+                </div>
+                {workers.map((w) => {
+                  const hourTasks = tasks.filter(
+                    (t) => t.assigned_to === w.id && t.start_time && parseInt(t.start_time.split(":")[0]) === hour
+                  );
+                  return (
+                    <div key={`cell-${hour}-${w.id}`} className="border-b border-l border-border h-16 p-0.5 relative">
+                      {hourTasks.map((task) => (
+                        <div
+                          key={task.id}
+                          className={cn(
+                            "absolute inset-x-0.5 rounded-md px-1.5 py-0.5 text-xs cursor-pointer overflow-hidden",
+                            INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre"
+                          )}
+                          style={{
+                            height: `${Math.max((task.duration_minutes / 60) * 64, 20)}px`,
+                          }}
+                        >
+                          <div className="font-semibold truncate">{task.title}</div>
+                          <div className="truncate opacity-80">{task.clients?.name}</div>
+                          <div className="flex gap-1 mt-0.5">
+                            {task.memo_secretariat && <MessageSquare className="w-3 h-3" />}
+                            {task.status === "termine" && <CheckCircle2 className="w-3 h-3" />}
+                            {task.status === "piece_a_commander" && <Package className="w-3 h-3" />}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Week/Month - Simple list view */}
+      {viewMode !== "day" && (
+        <div className="space-y-2">
+          {tasks.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                Aucune tâche pour cette période
+              </CardContent>
+            </Card>
+          ) : (
+            tasks.map((task) => (
+              <Card key={task.id} className="animate-slide-in">
+                <CardContent className="py-3 flex items-center gap-3">
+                  <Badge className={cn("text-xs", INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre")}>
+                    {INTERVENTION_TYPE_LABELS[task.intervention_type] || task.intervention_type}
+                  </Badge>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{task.title}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(task.scheduled_date), "EEE d MMM", { locale: fr })} · {task.start_time?.slice(0, 5)} · {task.clients?.name}
+                    </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {task.profiles?.full_name}
+                  </div>
+                  <Badge variant="outline">{TASK_STATUS_LABELS[task.status]}</Badge>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
