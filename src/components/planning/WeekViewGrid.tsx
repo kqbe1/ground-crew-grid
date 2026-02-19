@@ -102,7 +102,7 @@ export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick,
 
       {/* Worker columns grid */}
       <div className="border border-border rounded-xl overflow-auto bg-card shadow-sm">
-        <div className="grid" style={{ gridTemplateColumns: `80px repeat(${Math.max(workers.length, 1)}, minmax(160px, 1fr))` }}>
+        <div className="grid" style={{ gridTemplateColumns: `80px repeat(${Math.max(workers.length, 1)}, 180px)`, minWidth: `${80 + Math.max(workers.length, 1) * 180}px` }}>
           {/* Header row - worker avatars */}
           <div className="sticky top-0 bg-muted/50 border-b border-border p-3 z-10" />
           {workers.map((w) => (
