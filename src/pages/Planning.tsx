@@ -275,6 +275,7 @@ export default function Planning() {
             setCurrentDate(date);
             setViewMode("day");
           }}
+          onRefresh={refreshTasks}
         />
       )}
 
