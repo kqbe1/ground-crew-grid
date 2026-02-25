@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const DB_NAME = "pme-terrain-offline";
 const DB_VERSION = 1;
@@ -123,13 +124,30 @@ export function useOfflineDrafts() {
     return syncedCount;
   }, [refreshDrafts]);
 
-  // Listen for online/offline events
+  const syncAllRef = useRef(syncAll);
+  syncAllRef.current = syncAll;
+
+  // Listen for online/offline events — auto-sync on reconnect
   useEffect(() => {
     const goOnline = () => {
       setIsOnline(true);
-      syncAll();
+      // Small delay to let the network stabilise
+      setTimeout(async () => {
+        const all = await getAllDrafts();
+        const pending = all.filter((d) => !d.synced).length;
+        if (pending === 0) return;
+
+        toast.info("Connexion rétablie — synchronisation…");
+        const count = await syncAllRef.current();
+        if (count && count > 0) {
+          toast.success(`${count} fiche(s) synchronisée(s) automatiquement`);
+        }
+      }, 1500);
     };
-    const goOffline = () => setIsOnline(false);
+    const goOffline = () => {
+      setIsOnline(false);
+      toast.warning("Connexion perdue — mode hors-ligne activé");
+    };
 
     window.addEventListener("online", goOnline);
     window.addEventListener("offline", goOffline);
@@ -139,7 +157,7 @@ export function useOfflineDrafts() {
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
     };
-  }, [syncAll, refreshDrafts]);
+  }, [refreshDrafts]);
 
   const save = useCallback(async (draft: Omit<OfflineDraft, "id" | "synced" | "created_at">) => {
     const fullDraft: OfflineDraft = {
