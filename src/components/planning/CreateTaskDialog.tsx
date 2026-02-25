@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS } from "@/lib/constants";
-import { Plus } from "lucide-react";
+import { Plus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { findOverlaps } from "@/lib/overlapUtils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CreateTaskDialogProps {
   defaultDate: Date;
@@ -36,6 +38,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultWork
 
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  const [existingTasks, setExistingTasks] = useState<any[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -49,6 +52,24 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultWork
     };
     fetchData();
   }, [open]);
+
+  // Fetch tasks for the selected date to check overlaps
+  useEffect(() => {
+    if (!open || !scheduledDate) return;
+    const fetchTasks = async () => {
+      const { data } = await supabase
+        .from("work_tasks")
+        .select("id, assigned_to, scheduled_date, start_time, duration_minutes")
+        .eq("scheduled_date", scheduledDate);
+      setExistingTasks(data ?? []);
+    };
+    fetchTasks();
+  }, [open, scheduledDate]);
+
+  const overlaps = useMemo(() => {
+    if (!assignedTo || !startTime) return [];
+    return findOverlaps(assignedTo, scheduledDate, startTime, durationMinutes, existingTasks);
+  }, [assignedTo, scheduledDate, startTime, durationMinutes, existingTasks]);
 
   // Reset defaults when dialog opens with new context
   useEffect(() => {
@@ -170,8 +191,17 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultWork
             <Textarea value={memoSecretariat} onChange={(e) => setMemoSecretariat(e.target.value)} rows={2} />
           </div>
 
+          {overlaps.length > 0 && (
+            <Alert variant="destructive" className="border-destructive/50">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                ⚠️ Chevauchement détecté : {overlaps.length} tâche{overlaps.length > 1 ? "s" : ""} sur ce créneau pour cet ouvrier.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Button onClick={handleSubmit} disabled={loading} className="w-full">
-            {loading ? "Création..." : "Créer la tâche"}
+            {loading ? "Création..." : overlaps.length > 0 ? "Créer malgré le chevauchement" : "Créer la tâche"}
           </Button>
         </div>
       </DialogContent>

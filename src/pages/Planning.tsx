@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useDragScroll } from "@/hooks/useDragScroll";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { TaskClipboardProvider, useTaskClipboard } from "@/components/planning/TaskClipboardContext";
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from "@/components/ui/context-menu";
 import { useAuth } from "@/hooks/useAuth";
+import { getOverlappingTaskIds, findOverlaps } from "@/lib/overlapUtils";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -138,6 +139,15 @@ function PlanningInner() {
 
     const minutes = quarter * 15;
     const newTime = `${String(hour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+    const droppedTask = tasks.find((t) => t.id === taskId);
+    const duration = droppedTask?.duration_minutes ?? 60;
+    const dateStr = format(currentDate, "yyyy-MM-dd");
+
+    const conflicts = findOverlaps(workerId, dateStr, newTime, duration, tasks, taskId);
+    if (conflicts.length > 0) {
+      toast.warning("⚠️ Chevauchement détecté avec une autre tâche !");
+    }
+
     const { error } = await supabase.from("work_tasks").update({
       assigned_to: workerId,
       start_time: newTime,
@@ -156,6 +166,12 @@ function PlanningInner() {
     const minutes = quarter * 15;
     const newTime = `${String(hour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
     const targetDate = format(date || currentDate, "yyyy-MM-dd");
+
+    const conflicts = findOverlaps(workerId, targetDate, newTime, copiedTask.duration_minutes ?? 60, tasks);
+    if (conflicts.length > 0) {
+      toast.warning("⚠️ Chevauchement détecté avec une autre tâche !");
+    }
+
     const { error } = await supabase.from("work_tasks").insert([{
       ...copiedTask,
       assigned_to: workerId,
@@ -176,6 +192,8 @@ function PlanningInner() {
   const filteredTasks = hiddenTypes.size > 0
     ? tasks.filter((t) => !hiddenTypes.has(t.intervention_type))
     : tasks;
+
+  const overlappingIds = useMemo(() => getOverlappingTaskIds(filteredTasks), [filteredTasks]);
 
   const toggleType = (type: string) => {
     setHiddenTypes((prev) => {
@@ -341,6 +359,7 @@ function PlanningInner() {
                               onDragStart={handleDragStart}
                               onClick={setSelectedTask}
                               onResized={refreshTasks}
+                              hasOverlap={overlappingIds.has(task.id)}
                             />
                           </div>
                         );
