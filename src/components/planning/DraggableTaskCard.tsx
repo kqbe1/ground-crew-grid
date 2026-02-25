@@ -1,10 +1,12 @@
 import { useRef, useCallback } from "react";
-import { MessageSquare, CheckCircle2, Package, Phone, GripVertical } from "lucide-react";
+import { MessageSquare, CheckCircle2, Package, Phone, Copy } from "lucide-react";
 import { INTERVENTION_TYPE_COLORS, INTERVENTION_TYPE_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from "@/components/ui/context-menu";
+import { useTaskClipboard } from "@/components/planning/TaskClipboardContext";
 
 const CELL_HEIGHT = 96; // h-24 = 96px per hour
 const MIN_DURATION = 15;
@@ -20,6 +22,7 @@ interface DraggableTaskCardProps {
 export default function DraggableTaskCard({ task, onDragStart, onClick, onResized }: DraggableTaskCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const resizingRef = useRef(false);
+  const { copyTask } = useTaskClipboard();
   const startYRef = useRef(0);
   const startDurationRef = useRef(0);
 
@@ -78,58 +81,73 @@ export default function DraggableTaskCard({ task, onDragStart, onClick, onResize
     document.addEventListener("pointerup", handleUp);
   }, [task.id, task.duration_minutes, heightPx, onResized]);
 
-  return (
-    <div
-      ref={cardRef}
-      draggable
-      onDragStart={(e) => {
-        if (resizingRef.current) { e.preventDefault(); return; }
-        e.stopPropagation();
-        onDragStart(e, task.id);
-      }}
-      onClick={(e) => {
-        if (resizingRef.current) return;
-        e.stopPropagation();
-        onClick(task);
-      }}
-      className={cn(
-        "absolute inset-x-1 rounded-xl px-2.5 py-1.5 text-xs cursor-grab active:cursor-grabbing z-[1] select-none border border-white/20 shadow-md flex flex-col gap-0.5 overflow-hidden",
-        INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre"
-      )}
-      style={{ height: `${heightPx}px` }}
-    >
-      <div className="font-bold truncate text-[13px] leading-tight">{task.title}</div>
-      <div className="font-semibold opacity-90 text-[11px]">{timeRange}</div>
-      {task.clients?.name && (
-        <div className="truncate opacity-90 text-[11px] mt-0.5">{task.clients.name}</div>
-      )}
-      {(task.client_sites?.address || task.clients?.address_intervention) && (
-        <div className="truncate opacity-75 text-[10px]">
-          {task.client_sites?.address || task.clients?.address_intervention}
-        </div>
-      )}
-      {task.clients?.phone && (
-        <div className="truncate opacity-80 text-[10px] flex items-center gap-1">
-          <Phone className="w-2.5 h-2.5 shrink-0" />
-          {task.clients.phone}
-        </div>
-      )}
-      <div className="flex items-center gap-1 mt-auto pt-0.5">
-        {task.memo_secretariat && <MessageSquare className="w-3 h-3 opacity-80" />}
-        {task.status === "termine" && <CheckCircle2 className="w-3 h-3 opacity-80" />}
-        {task.status === "piece_a_commander" && <Package className="w-3 h-3 opacity-80" />}
-        <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-white/20 border-white/30 text-white ml-auto rounded-md font-semibold">
-          {INTERVENTION_TYPE_LABELS[task.intervention_type]?.split(" ").pop()}
-        </Badge>
-      </div>
+  const handleCopy = useCallback(() => {
+    copyTask(task);
+    toast.success("Tâche copiée — clic droit sur une cellule pour coller");
+  }, [copyTask, task]);
 
-      {/* Resize handle */}
-      <div
-        onPointerDown={handleResizeStart}
-        className="absolute bottom-0 inset-x-0 h-3 cursor-s-resize flex items-center justify-center touch-none"
-      >
-        <div className="w-8 h-1 rounded-full bg-white/40" />
-      </div>
-    </div>
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          ref={cardRef}
+          draggable
+          onDragStart={(e) => {
+            if (resizingRef.current) { e.preventDefault(); return; }
+            e.stopPropagation();
+            onDragStart(e, task.id);
+          }}
+          onClick={(e) => {
+            if (resizingRef.current) return;
+            e.stopPropagation();
+            onClick(task);
+          }}
+          className={cn(
+            "absolute inset-x-1 rounded-xl px-2.5 py-1.5 text-xs cursor-grab active:cursor-grabbing z-[1] select-none border border-white/20 shadow-md flex flex-col gap-0.5 overflow-hidden",
+            INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre"
+          )}
+          style={{ height: `${heightPx}px` }}
+        >
+          <div className="font-bold truncate text-[13px] leading-tight">{task.title}</div>
+          <div className="font-semibold opacity-90 text-[11px]">{timeRange}</div>
+          {task.clients?.name && (
+            <div className="truncate opacity-90 text-[11px] mt-0.5">{task.clients.name}</div>
+          )}
+          {(task.client_sites?.address || task.clients?.address_intervention) && (
+            <div className="truncate opacity-75 text-[10px]">
+              {task.client_sites?.address || task.clients?.address_intervention}
+            </div>
+          )}
+          {task.clients?.phone && (
+            <div className="truncate opacity-80 text-[10px] flex items-center gap-1">
+              <Phone className="w-2.5 h-2.5 shrink-0" />
+              {task.clients.phone}
+            </div>
+          )}
+          <div className="flex items-center gap-1 mt-auto pt-0.5">
+            {task.memo_secretariat && <MessageSquare className="w-3 h-3 opacity-80" />}
+            {task.status === "termine" && <CheckCircle2 className="w-3 h-3 opacity-80" />}
+            {task.status === "piece_a_commander" && <Package className="w-3 h-3 opacity-80" />}
+            <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-white/20 border-white/30 text-white ml-auto rounded-md font-semibold">
+              {INTERVENTION_TYPE_LABELS[task.intervention_type]?.split(" ").pop()}
+            </Badge>
+          </div>
+
+          {/* Resize handle */}
+          <div
+            onPointerDown={handleResizeStart}
+            className="absolute bottom-0 inset-x-0 h-3 cursor-s-resize flex items-center justify-center touch-none"
+          >
+            <div className="w-8 h-1 rounded-full bg-white/40" />
+          </div>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem onClick={handleCopy} className="gap-2">
+          <Copy className="w-4 h-4" />
+          Copier cette tâche
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
