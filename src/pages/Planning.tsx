@@ -3,7 +3,7 @@ import { useDragScroll } from "@/hooks/useDragScroll";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, ClipboardPaste } from "lucide-react";
 import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
@@ -17,6 +17,9 @@ import MonthViewCalendar from "@/components/planning/MonthViewCalendar";
 import DraggableTaskCard from "@/components/planning/DraggableTaskCard";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { TaskClipboardProvider, useTaskClipboard } from "@/components/planning/TaskClipboardContext";
+import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from "@/components/ui/context-menu";
+import { useAuth } from "@/hooks/useAuth";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -33,6 +36,15 @@ function getInitials(name: string) {
 }
 
 export default function Planning() {
+  return (
+    <TaskClipboardProvider>
+      <PlanningInner />
+    </TaskClipboardProvider>
+  );
+}
+
+function PlanningInner() {
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [tasks, setTasks] = useState<any[]>([]);
@@ -41,6 +53,7 @@ export default function Planning() {
   const [clickContext, setClickContext] = useState<{ hour?: number; workerId?: string }>({});
   const [refreshKey, setRefreshKey] = useState(0);
   const refreshTasks = useCallback(() => setRefreshKey((k) => k + 1), []);
+  const { copiedTask, clearClipboard } = useTaskClipboard();
 
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
@@ -135,6 +148,28 @@ export default function Planning() {
       return;
     }
     toast.success("Tâche déplacée");
+    refreshTasks();
+  };
+
+  const handlePaste = async (hour: number, quarter: number, workerId: string, date?: Date) => {
+    if (!copiedTask || !user) return;
+    const minutes = quarter * 15;
+    const newTime = `${String(hour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+    const targetDate = format(date || currentDate, "yyyy-MM-dd");
+    const { error } = await supabase.from("work_tasks").insert([{
+      ...copiedTask,
+      assigned_to: workerId,
+      start_time: newTime,
+      scheduled_date: targetDate,
+      created_by: user.id,
+      status: "planifie" as const,
+    }]);
+    if (error) {
+      toast.error("Erreur lors du collage");
+      return;
+    }
+    toast.success("Tâche collée");
+    clearClipboard();
     refreshTasks();
   };
 
@@ -264,35 +299,37 @@ export default function Planning() {
                     (t) => t.assigned_to === w.id && t.start_time && parseInt(t.start_time.split(":")[0]) === hour
                   );
                   return (
-                    <div
-                      key={`cell-${hour}-${w.id}`}
-                      className="border-b border-l border-border h-24 relative"
-                    >
-                      {/* 4 quarter-hour drop zones */}
-                      {[0, 1, 2, 3].map((q) => {
-                        const qKey = `${hour}-${q}-${w.id}`;
-                        return (
-                          <div
-                            key={qKey}
-                            className={cn(
-                              "absolute inset-x-0 cursor-pointer transition-colors",
-                              q < 3 && "border-b border-dashed border-border/30",
-                              dragOverCell === qKey ? "bg-primary/10" : "hover:bg-muted/20"
-                            )}
-                            style={{ top: `${q * 25}%`, height: "25%" }}
-                            onClick={() => {
-                              if (hourTasks.length > 0) return;
-                              setClickContext({ hour, workerId: w.id });
-                              setTimeout(() => {
-                                document.querySelector<HTMLButtonElement>('[data-create-task-trigger]')?.click();
-                              }, 0);
-                            }}
-                            onDragOver={(e) => handleDragOver(e, qKey)}
-                            onDragLeave={handleDragLeave}
-                            onDrop={(e) => handleDrop(e, hour, q, w.id)}
-                          />
-                        );
-                      })}
+                    <ContextMenu>
+                      <ContextMenuTrigger asChild>
+                        <div
+                          key={`cell-${hour}-${w.id}`}
+                          className="border-b border-l border-border h-24 relative"
+                        >
+                          {/* 4 quarter-hour drop zones */}
+                          {[0, 1, 2, 3].map((q) => {
+                            const qKey = `${hour}-${q}-${w.id}`;
+                            return (
+                              <div
+                                key={qKey}
+                                className={cn(
+                                  "absolute inset-x-0 cursor-pointer transition-colors",
+                                  q < 3 && "border-b border-dashed border-border/30",
+                                  dragOverCell === qKey ? "bg-primary/10" : "hover:bg-muted/20"
+                                )}
+                                style={{ top: `${q * 25}%`, height: "25%" }}
+                                onClick={() => {
+                                  if (hourTasks.length > 0) return;
+                                  setClickContext({ hour, workerId: w.id });
+                                  setTimeout(() => {
+                                    document.querySelector<HTMLButtonElement>('[data-create-task-trigger]')?.click();
+                                  }, 0);
+                                }}
+                                onDragOver={(e) => handleDragOver(e, qKey)}
+                                onDragLeave={handleDragLeave}
+                                onDrop={(e) => handleDrop(e, hour, q, w.id)}
+                              />
+                            );
+                          })}
                       {/* Task cards */}
                       {hourTasks.map((task) => {
                         const startMin = parseInt(task.start_time.split(":")[1] || "0");
@@ -308,7 +345,19 @@ export default function Planning() {
                           </div>
                         );
                       })}
-                    </div>
+                        </div>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        <ContextMenuItem
+                          disabled={!copiedTask}
+                          onClick={() => handlePaste(hour, 0, w.id)}
+                          className="gap-2"
+                        >
+                          <ClipboardPaste className="w-4 h-4" />
+                          Coller la tâche
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
                   );
                 })}
               </div>
@@ -332,6 +381,7 @@ export default function Planning() {
             }, 0);
           }}
           onRefresh={refreshTasks}
+          onPaste={handlePaste}
         />
       )}
 

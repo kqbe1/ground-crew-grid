@@ -8,6 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import DraggableTaskCard from "@/components/planning/DraggableTaskCard";
+import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from "@/components/ui/context-menu";
+import { useTaskClipboard } from "@/components/planning/TaskClipboardContext";
+import { ClipboardPaste } from "lucide-react";
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 6);
 
@@ -22,11 +25,13 @@ interface WeekViewGridProps {
   onTaskClick: (task: any) => void;
   onCellClick: (date: Date, hour: number, workerId?: string) => void;
   onRefresh: () => void;
+  onPaste?: (hour: number, quarter: number, workerId: string, date?: Date) => void;
 }
 
-export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick, onCellClick, onRefresh }: WeekViewGridProps) {
+export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick, onCellClick, onRefresh, onPaste }: WeekViewGridProps) {
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
   const [dragOverDay, setDragOverDay] = useState<number | null>(null);
+  const { copiedTask } = useTaskClipboard();
   const dragScrollRef = useDragScroll();
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -172,46 +177,59 @@ export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick,
                   (t) => t.assigned_to === w.id && t.start_time && parseInt(t.start_time.split(":")[0]) === hour
                 );
                 return (
-                  <div
-                    key={`cell-${hour}-${w.id}`}
-                    className="border-b border-l border-border h-24 relative"
-                  >
-                    {[0, 1, 2, 3].map((q) => {
-                      const qKey = `${hour}-${q}-${w.id}`;
-                      return (
-                        <div
-                          key={qKey}
-                          className={cn(
-                            "absolute inset-x-0 cursor-pointer transition-colors",
-                            q < 3 && "border-b border-dashed border-border/30",
-                            dragOverCell === qKey ? "bg-primary/10" : "hover:bg-muted/20"
-                          )}
-                          style={{ top: `${q * 25}%`, height: "25%" }}
-                          onClick={() => {
-                            if (hourTasks.length > 0) return;
-                            onCellClick(selectedDay, hour, w.id);
-                          }}
-                          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverCell(qKey); }}
-                          onDragLeave={() => setDragOverCell(null)}
-                          onDrop={(e) => handleDrop(e, hour, q, w.id)}
-                        />
-                      );
-                    })}
-                    {hourTasks.map((task) => {
-                      const startMin = parseInt(task.start_time.split(":")[1] || "0");
-                      const topOffset = (startMin / 60) * 96;
-                      return (
-                        <div key={task.id} className="absolute inset-x-1 z-[2]" style={{ top: `${topOffset}px` }}>
-                          <DraggableTaskCard
-                            task={task}
-                            onDragStart={handleDragStart}
-                            onClick={onTaskClick}
-                            onResized={onRefresh}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <ContextMenu key={`cell-${hour}-${w.id}`}>
+                    <ContextMenuTrigger asChild>
+                      <div
+                        className="border-b border-l border-border h-24 relative"
+                      >
+                        {[0, 1, 2, 3].map((q) => {
+                          const qKey = `${hour}-${q}-${w.id}`;
+                          return (
+                            <div
+                              key={qKey}
+                              className={cn(
+                                "absolute inset-x-0 cursor-pointer transition-colors",
+                                q < 3 && "border-b border-dashed border-border/30",
+                                dragOverCell === qKey ? "bg-primary/10" : "hover:bg-muted/20"
+                              )}
+                              style={{ top: `${q * 25}%`, height: "25%" }}
+                              onClick={() => {
+                                if (hourTasks.length > 0) return;
+                                onCellClick(selectedDay, hour, w.id);
+                              }}
+                              onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverCell(qKey); }}
+                              onDragLeave={() => setDragOverCell(null)}
+                              onDrop={(e) => handleDrop(e, hour, q, w.id)}
+                            />
+                          );
+                        })}
+                        {hourTasks.map((task) => {
+                          const startMin = parseInt(task.start_time.split(":")[1] || "0");
+                          const topOffset = (startMin / 60) * 96;
+                          return (
+                            <div key={task.id} className="absolute inset-x-1 z-[2]" style={{ top: `${topOffset}px` }}>
+                              <DraggableTaskCard
+                                task={task}
+                                onDragStart={handleDragStart}
+                                onClick={onTaskClick}
+                                onResized={onRefresh}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem
+                        disabled={!copiedTask || !onPaste}
+                        onClick={() => onPaste?.(hour, 0, w.id, selectedDay)}
+                        className="gap-2"
+                      >
+                        <ClipboardPaste className="w-4 h-4" />
+                        Coller la tâche
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
                 );
               })}
             </div>
