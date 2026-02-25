@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useDragScroll } from "@/hooks/useDragScroll";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -11,6 +11,7 @@ import DraggableTaskCard from "@/components/planning/DraggableTaskCard";
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from "@/components/ui/context-menu";
 import { useTaskClipboard } from "@/components/planning/TaskClipboardContext";
 import { ClipboardPaste } from "lucide-react";
+import { getOverlappingTaskIds, findOverlaps } from "@/lib/overlapUtils";
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 6);
 
@@ -45,6 +46,7 @@ export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick,
   const selectedDay = days[selectedDayIndex];
   const selectedDateStr = format(selectedDay, "yyyy-MM-dd");
   const dayTasks = tasks.filter((t) => t.scheduled_date === selectedDateStr);
+  const overlappingIds = useMemo(() => getOverlappingTaskIds(tasks), [tasks]);
 
   // When dragging over a day tab, auto-switch to that day after a short delay
   const dragSwitchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -96,6 +98,14 @@ export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick,
 
     const minutes = quarter * 15;
     const newTime = `${String(hour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+    const droppedTask = tasks.find((t) => t.id === taskId);
+    const duration = droppedTask?.duration_minutes ?? 60;
+
+    const conflicts = findOverlaps(workerId, selectedDateStr, newTime, duration, tasks, taskId);
+    if (conflicts.length > 0) {
+      toast.warning("⚠️ Chevauchement détecté avec une autre tâche !");
+    }
+
     const { error } = await supabase.from("work_tasks").update({
       assigned_to: workerId,
       start_time: newTime,
@@ -213,6 +223,7 @@ export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick,
                                 onDragStart={handleDragStart}
                                 onClick={onTaskClick}
                                 onResized={onRefresh}
+                                hasOverlap={overlappingIds.has(task.id)}
                               />
                             </div>
                           );

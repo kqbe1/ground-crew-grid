@@ -1,5 +1,5 @@
 import { useRef, useCallback } from "react";
-import { MessageSquare, CheckCircle2, Package, Phone, Copy } from "lucide-react";
+import { MessageSquare, CheckCircle2, Package, Phone, Copy, AlertTriangle } from "lucide-react";
 import { INTERVENTION_TYPE_COLORS, INTERVENTION_TYPE_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +17,10 @@ interface DraggableTaskCardProps {
   onDragStart: (e: React.DragEvent, taskId: string) => void;
   onClick: (task: any) => void;
   onResized: () => void;
+  hasOverlap?: boolean;
 }
 
-export default function DraggableTaskCard({ task, onDragStart, onClick, onResized }: DraggableTaskCardProps) {
+export default function DraggableTaskCard({ task, onDragStart, onClick, onResized, hasOverlap }: DraggableTaskCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const resizingRef = useRef(false);
   const { copyTask } = useTaskClipboard();
@@ -103,12 +104,16 @@ export default function DraggableTaskCard({ task, onDragStart, onClick, onResize
             onClick(task);
           }}
           className={cn(
-            "absolute inset-x-1 rounded-xl px-2.5 py-1.5 text-xs cursor-grab active:cursor-grabbing z-[1] select-none border border-white/20 shadow-md flex flex-col gap-0.5 overflow-hidden",
-            INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre"
+            "absolute inset-x-1 rounded-xl px-2.5 py-1.5 text-xs cursor-grab active:cursor-grabbing z-[1] select-none border shadow-md flex flex-col gap-0.5 overflow-hidden",
+            INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre",
+            hasOverlap ? "border-destructive border-2 ring-2 ring-destructive/30" : "border-white/20"
           )}
           style={{ height: `${heightPx}px` }}
         >
-          <div className="font-bold truncate text-[13px] leading-tight">{task.title}</div>
+          <div className="font-bold truncate text-[13px] leading-tight flex items-center gap-1">
+            {hasOverlap && <AlertTriangle className="w-3.5 h-3.5 text-white shrink-0" />}
+            {task.title}
+          </div>
           <div className="font-semibold opacity-90 text-[11px]">{timeRange}</div>
           {task.clients?.name && (
             <div className="truncate opacity-90 text-[11px] mt-0.5">{task.clients.name}</div>
