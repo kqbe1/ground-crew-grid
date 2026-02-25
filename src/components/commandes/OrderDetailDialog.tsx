@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
+import CreateFollowUpTaskDialog from "./CreateFollowUpTaskDialog";
 
 const statusColors: Record<string, string> = {
   demandee: "bg-order-demandee text-white",
@@ -33,6 +35,8 @@ interface Props {
 }
 
 export default function OrderDetailDialog({ open, onOpenChange, order, onUpdated }: Props) {
+  const [showFollowUp, setShowFollowUp] = useState(false);
+
   if (!order) return null;
 
   const workflow = WORKFLOW[order.status];
@@ -49,9 +53,9 @@ export default function OrderDetailDialog({ open, onOpenChange, order, onUpdated
 
     toast.success(`Statut changé → ${ORDER_STATUS_LABELS[workflow.next]}`);
 
-    // Si on passe à "Reçue", suggérer de créer une suite de travail
+    // Si on passe à "Reçue", proposer de créer une tâche de suite
     if (workflow.next === "recue" && order.client_id) {
-      toast.info("💡 Pièce reçue ! Pensez à planifier la suite du travail pour ce client.", { duration: 6000 });
+      setShowFollowUp(true);
     }
 
     onUpdated();
@@ -186,6 +190,16 @@ export default function OrderDetailDialog({ open, onOpenChange, order, onUpdated
           </Button>
         )}
       </DialogContent>
+
+      <CreateFollowUpTaskDialog
+        open={showFollowUp}
+        onOpenChange={setShowFollowUp}
+        order={order}
+        onCreated={() => {
+          setShowFollowUp(false);
+          onUpdated();
+        }}
+      />
     </Dialog>
   );
 }
