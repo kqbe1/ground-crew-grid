@@ -1,6 +1,7 @@
 import { Outlet, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import AppSidebar from "./AppSidebar";
+import RealtimeOrderNotifications from "./RealtimeOrderNotifications";
 
 export default function AppLayout() {
   const { session, loading, role } = useAuth();
@@ -39,9 +40,14 @@ export default function AppLayout() {
   return (
     <div className="flex h-screen overflow-hidden">
       <AppSidebar />
-      <main className="flex-1 overflow-y-auto">
-        <Outlet />
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="flex items-center justify-end px-4 py-2 border-b border-border bg-background">
+          <RealtimeOrderNotifications />
+        </header>
+        <main className="flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
