@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Search, Phone, Mail, MapPin } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
@@ -43,34 +44,52 @@ export default function Clients() {
         <Input placeholder="Rechercher un client..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {clients.map((client) => (
-          <Card key={client.id} className="hover:shadow-md transition-shadow cursor-pointer animate-slide-in" onClick={() => handleCardClick(client)}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{client.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              {client.phone && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Phone className="w-3.5 h-3.5" /> {client.phone}
-                </div>
-              )}
-              {client.email && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="w-3.5 h-3.5" /> {client.email}
-                </div>
-              )}
-              {client.address_intervention && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="w-3.5 h-3.5" /> <span className="truncate">{client.address_intervention}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-        {clients.length === 0 && (
-          <div className="col-span-full py-12 text-center text-muted-foreground">Aucun client trouvé</div>
-        )}
+      <div className="border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nom</TableHead>
+              <TableHead>Téléphone</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Adresse intervention</TableHead>
+              <TableHead>Région</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {clients.map((client) => (
+              <TableRow key={client.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleCardClick(client)}>
+                <TableCell className="font-medium">{client.name}</TableCell>
+                <TableCell>
+                  {client.phone && (
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <Phone className="w-3.5 h-3.5" /> {client.phone}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {client.email && (
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <Mail className="w-3.5 h-3.5" /> {client.email}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {client.address_intervention && (
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <MapPin className="w-3.5 h-3.5" /> <span className="truncate max-w-[250px] inline-block">{client.address_intervention}</span>
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="text-muted-foreground capitalize">{client.region ?? "—"}</TableCell>
+              </TableRow>
+            ))}
+            {clients.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">Aucun client trouvé</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       {/* Create / Edit dialog */}
