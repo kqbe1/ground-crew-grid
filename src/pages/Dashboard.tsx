@@ -12,6 +12,8 @@ import {
   PieChart, Pie, Cell, Legend,
   AreaChart, Area, CartesianGrid,
 } from "recharts";
+import LegalAlertsPanel from "@/components/dashboard/LegalAlertsPanel";
+import PartsReceivedPanel from "@/components/dashboard/PartsReceivedPanel";
 
 const CHART_COLORS = [
   "hsl(220, 72%, 50%)",
