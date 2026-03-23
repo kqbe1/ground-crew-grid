@@ -8,17 +8,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { WORKER_LEVEL_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
-import { Users, FileText, Plus, Pencil, Trash2 } from "lucide-react";
+import { Users, FileText, Plus, Pencil, Trash2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import CreateEditTemplateDialog from "@/components/admin/CreateEditTemplateDialog";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Admin() {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [templateDialog, setTemplateDialog] = useState(false);
   const [editTemplate, setEditTemplate] = useState<any>(null);
+
+  const isSuperAdmin = role === "super_admin";
 
   const fetchAll = async () => {
     const [usersRes, rolesRes, templatesRes] = await Promise.all([
@@ -39,13 +41,45 @@ export default function Admin() {
   useEffect(() => { fetchAll(); }, []);
 
   // Defense-in-depth: block non-admin access at component level
-  if (role && role !== "admin") {
+  if (role && role !== "admin" && role !== "super_admin") {
     return <Navigate to="/" replace />;
   }
 
-  const assignRole = async (userId: string, role: string) => {
+  const isTargetProtected = (targetRole: string | null) => {
+    return targetRole === "admin" || targetRole === "super_admin";
+  };
+
+  const canModifyUser = (targetUser: any) => {
+    if (isSuperAdmin) return true;
+    // Admin cannot modify admins or super_admins
+    if (isTargetProtected(targetUser.role)) return false;
+    // Admin cannot modify themselves (deactivation)
+    return true;
+  };
+
+  const canToggleActive = (targetUser: any) => {
+    if (isSuperAdmin) {
+      // Super admin cannot deactivate themselves
+      return targetUser.id !== user?.id;
+    }
+    // Admin cannot deactivate themselves or other admins/super_admins
+    if (targetUser.id === user?.id) return false;
+    if (isTargetProtected(targetUser.role)) return false;
+    return true;
+  };
+
+  const canChangeRole = (targetUser: any) => {
+    if (isSuperAdmin) return true;
+    // Admin cannot change role of admins/super_admins
+    if (isTargetProtected(targetUser.role)) return false;
+    // Admin cannot change their own role
+    if (targetUser.id === user?.id) return false;
+    return true;
+  };
+
+  const assignRole = async (userId: string, newRole: string) => {
     await supabase.from("user_roles").delete().eq("user_id", userId);
-    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: role as any });
+    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: newRole as any });
     if (error) { toast.error(error.message); return; }
     toast.success("Rôle mis à jour");
     fetchAll();
@@ -70,9 +104,17 @@ export default function Admin() {
   };
 
   const roleColors: Record<string, string> = {
+    super_admin: "bg-amber-600 text-white",
     admin: "bg-destructive text-destructive-foreground",
     secretariat: "bg-secondary text-secondary-foreground",
     ouvrier: "bg-primary text-primary-foreground",
+  };
+
+  const roleLabels: Record<string, string> = {
+    super_admin: "Super Admin",
+    admin: "Admin",
+    secretariat: "Secrétariat",
+    ouvrier: "Ouvrier",
   };
 
   return (
@@ -95,43 +137,65 @@ export default function Admin() {
               <CardTitle className="text-base">Utilisateurs ({users.length})</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {users.map((user) => (
-                <div key={user.id} className={`flex items-center gap-3 p-3 rounded-lg border ${!user.is_active ? "opacity-50" : ""}`}>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium">{user.full_name}</div>
-                    <div className="text-sm text-muted-foreground">{user.email}</div>
-                  </div>
+              {users.map((u) => {
+                const isProtected = isTargetProtected(u.role);
+                const isSelf = u.id === user?.id;
 
-                  <Select value={user.role || ""} onValueChange={(v) => assignRole(user.id, v)}>
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue placeholder="Rôle..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="secretariat">Secrétariat</SelectItem>
-                      <SelectItem value="ouvrier">Ouvrier</SelectItem>
-                    </SelectContent>
-                  </Select>
+                return (
+                  <div key={u.id} className={`flex items-center gap-3 p-3 rounded-lg border ${!u.is_active ? "opacity-50" : ""}`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium flex items-center gap-2">
+                        {u.full_name}
+                        {u.role === "super_admin" && <ShieldAlert className="w-4 h-4 text-amber-600" />}
+                        {isSelf && <span className="text-xs text-muted-foreground">(vous)</span>}
+                      </div>
+                      <div className="text-sm text-muted-foreground">{u.email}</div>
+                    </div>
 
-                  {user.role === "ouvrier" && (
-                    <Select value={user.worker_level || ""} onValueChange={(v) => updateWorkerLevel(user.id, v)}>
-                      <SelectTrigger className="w-[120px]">
-                        <SelectValue placeholder="Niveau..." />
+                    <Select
+                      value={u.role || ""}
+                      onValueChange={(v) => assignRole(u.id, v)}
+                      disabled={!canChangeRole(u)}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Rôle..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="T0">T0 - Apprenti</SelectItem>
-                        <SelectItem value="T1">T1 - Ouvrier</SelectItem>
-                        <SelectItem value="T2">T2 - Chef</SelectItem>
+                        {isSuperAdmin && <SelectItem value="super_admin">Super Admin</SelectItem>}
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="secretariat">Secrétariat</SelectItem>
+                        <SelectItem value="ouvrier">Ouvrier</SelectItem>
                       </SelectContent>
                     </Select>
-                  )}
 
-                  <div className="flex items-center gap-2">
-                    <Switch checked={user.is_active} onCheckedChange={(v) => toggleActive(user.id, v)} />
-                    {user.role && <Badge className={roleColors[user.role]}>{user.role}</Badge>}
+                    {u.role === "ouvrier" && (
+                      <Select value={u.worker_level || ""} onValueChange={(v) => updateWorkerLevel(u.id, v)}>
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue placeholder="Niveau..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="T0">T0 - Apprenti</SelectItem>
+                          <SelectItem value="T1">T1 - Ouvrier</SelectItem>
+                          <SelectItem value="T2">T2 - Chef</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={u.is_active}
+                        onCheckedChange={(v) => toggleActive(u.id, v)}
+                        disabled={!canToggleActive(u)}
+                      />
+                      {u.role && (
+                        <Badge className={roleColors[u.role] || ""}>
+                          {roleLabels[u.role] || u.role}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         </TabsContent>
