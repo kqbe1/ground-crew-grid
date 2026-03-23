@@ -14,7 +14,7 @@ interface CopiedTask {
   template_id: string | null;
   material_needed: string | null;
   memo_secretariat: string | null;
-  binome_id: string | null;
+  second_assigned_to: string | null;
 }
 
 interface TaskClipboardContextType {
