@@ -1,0 +1,1 @@
+ALTER TABLE public.work_tasks ADD COLUMN second_assigned_to uuid REFERENCES public.profiles(id) DEFAULT NULL;

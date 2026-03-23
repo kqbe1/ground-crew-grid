@@ -563,6 +563,7 @@ export type Database = {
           material_needed: string | null
           memo_secretariat: string | null
           scheduled_date: string
+          second_assigned_to: string | null
           start_time: string
           status: Database["public"]["Enums"]["task_status"]
           template_id: string | null
@@ -585,6 +586,7 @@ export type Database = {
           material_needed?: string | null
           memo_secretariat?: string | null
           scheduled_date: string
+          second_assigned_to?: string | null
           start_time: string
           status?: Database["public"]["Enums"]["task_status"]
           template_id?: string | null
@@ -607,6 +609,7 @@ export type Database = {
           material_needed?: string | null
           memo_secretariat?: string | null
           scheduled_date?: string
+          second_assigned_to?: string | null
           start_time?: string
           status?: Database["public"]["Enums"]["task_status"]
           template_id?: string | null
@@ -655,6 +658,13 @@ export type Database = {
             columns: ["equipment_id"]
             isOneToOne: false
             referencedRelation: "client_equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_tasks_second_assigned_to_fkey"
+            columns: ["second_assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
