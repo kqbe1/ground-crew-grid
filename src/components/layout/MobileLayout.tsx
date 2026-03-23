@@ -41,7 +41,7 @@ export default function MobileLayout() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Offline / pending banner */}
+      <MobileTaskNotifications />
       {(!isOnline || pendingCount > 0) && (
         <div
           className={cn(
