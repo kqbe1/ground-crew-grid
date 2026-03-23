@@ -12,6 +12,8 @@ import {
   PieChart, Pie, Cell, Legend,
   AreaChart, Area, CartesianGrid,
 } from "recharts";
+import LegalAlertsPanel from "@/components/dashboard/LegalAlertsPanel";
+import PartsReceivedPanel from "@/components/dashboard/PartsReceivedPanel";
 
 const CHART_COLORS = [
   "hsl(220, 72%, 50%)",
@@ -293,7 +295,13 @@ export default function Dashboard() {
       </div>
 
       {/* Status pie chart + detail sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Legal alerts */}
+        <LegalAlertsPanel />
+
+        {/* Parts received - to schedule */}
+        <PartsReceivedPanel />
+
         {/* Task status pie */}
         <Card>
           <CardHeader className="pb-2">

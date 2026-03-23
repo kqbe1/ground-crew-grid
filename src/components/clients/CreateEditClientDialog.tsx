@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
@@ -31,6 +32,7 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
     notes_internal: "",
     syndic_keys_codes: "",
     birthday: "",
+    region: "",
   });
 
   useEffect(() => {
@@ -47,12 +49,14 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
         notes_internal: client.notes_internal || "",
         syndic_keys_codes: client.syndic_keys_codes || "",
         birthday: client.birthday || "",
+        region: (client as any).region || "",
       });
     } else {
       setForm({
         name: "", phone: "", phone_secondary: "", email: "",
         address_intervention: "", address_billing: "", contact_syndic: "",
         contact_locataire: "", notes_internal: "", syndic_keys_codes: "", birthday: "",
+        region: "",
       });
     }
   }, [client, open]);
@@ -75,6 +79,7 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
       notes_internal: form.notes_internal || null,
       syndic_keys_codes: form.syndic_keys_codes || null,
       birthday: form.birthday || null,
+      region: (form.region || null) as any,
     };
 
     const { error } = client
@@ -122,6 +127,17 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
           <div className="space-y-2">
             <Label>Date de naissance</Label>
             <Input type="date" value={form.birthday} onChange={(e) => set("birthday", e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Région</Label>
+            <Select value={form.region} onValueChange={(v) => set("region", v)}>
+              <SelectTrigger><SelectValue placeholder="Sélectionner la région" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bruxelles">Bruxelles</SelectItem>
+                <SelectItem value="wallonie">Wallonie</SelectItem>
+                <SelectItem value="flandre">Flandre</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label>Adresse d'intervention</Label>

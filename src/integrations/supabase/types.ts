@@ -179,6 +179,7 @@ export type Database = {
           notes_internal: string | null
           phone: string | null
           phone_secondary: string | null
+          region: Database["public"]["Enums"]["client_region"] | null
           syndic_keys_codes: string | null
           updated_at: string
         }
@@ -195,6 +196,7 @@ export type Database = {
           notes_internal?: string | null
           phone?: string | null
           phone_secondary?: string | null
+          region?: Database["public"]["Enums"]["client_region"] | null
           syndic_keys_codes?: string | null
           updated_at?: string
         }
@@ -211,6 +213,7 @@ export type Database = {
           notes_internal?: string | null
           phone?: string | null
           phone_secondary?: string | null
+          region?: Database["public"]["Enums"]["client_region"] | null
           syndic_keys_codes?: string | null
           updated_at?: string
         }
@@ -682,6 +685,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "secretariat" | "ouvrier"
+      client_region: "bruxelles" | "wallonie" | "flandre"
       energy_type:
         | "gaz"
         | "mazout"
@@ -844,6 +848,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "secretariat", "ouvrier"],
+      client_region: ["bruxelles", "wallonie", "flandre"],
       energy_type: [
         "gaz",
         "mazout",
