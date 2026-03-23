@@ -104,38 +104,21 @@ export default function DraggableTaskCard({ task, onDragStart, onClick, onResize
             onClick(task);
           }}
           className={cn(
-            "absolute inset-x-1 rounded-xl px-2.5 py-1.5 text-xs cursor-grab active:cursor-grabbing z-[1] select-none border shadow-md flex flex-col gap-0.5 overflow-hidden",
+            "absolute inset-x-1 rounded-lg px-2 py-1 text-[11px] cursor-grab active:cursor-grabbing z-[1] select-none border shadow-sm flex flex-col gap-0 overflow-hidden leading-tight",
             INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre",
             hasOverlap ? "border-destructive border-2 ring-2 ring-destructive/30" : "border-white/20"
           )}
           style={{ height: `${heightPx}px` }}
         >
-          <div className="font-bold truncate text-[13px] leading-tight flex items-center gap-1">
-            {hasOverlap && <AlertTriangle className="w-3.5 h-3.5 text-white shrink-0" />}
+          <div className="font-bold truncate text-[11px] leading-tight flex items-center gap-1">
+            {hasOverlap && <AlertTriangle className="w-3 h-3 text-white shrink-0" />}
             {task.title}
           </div>
-          <div className="font-semibold opacity-90 text-[11px]">{timeRange}</div>
           {task.clients?.name && (
-            <div className="truncate opacity-90 text-[11px] mt-0.5">{task.clients.name}</div>
+            <div className="truncate opacity-90 text-[10px]">{task.clients.name}</div>
           )}
-          {(task.client_sites?.address || task.clients?.address_intervention) && (
-            <div className="truncate opacity-75 text-[10px]">
-              {task.client_sites?.address || task.clients?.address_intervention}
-            </div>
-          )}
-          {task.clients?.phone && (
-            <div className="truncate opacity-80 text-[10px] flex items-center gap-1">
-              <Phone className="w-2.5 h-2.5 shrink-0" />
-              {task.clients.phone}
-            </div>
-          )}
-          <div className="flex items-center gap-1 mt-auto pt-0.5">
-            {task.memo_secretariat && <MessageSquare className="w-3 h-3 opacity-80" />}
-            {task.status === "termine" && <CheckCircle2 className="w-3 h-3 opacity-80" />}
-            {task.status === "piece_a_commander" && <Package className="w-3 h-3 opacity-80" />}
-            <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-white/20 border-white/30 text-white ml-auto rounded-md font-semibold">
-              {INTERVENTION_TYPE_LABELS[task.intervention_type]?.split(" ").pop()}
-            </Badge>
+          <div className="truncate opacity-80 text-[10px]">
+            {INTERVENTION_TYPE_LABELS[task.intervention_type]?.split(" ").pop()}
           </div>
 
           {/* Resize handle */}

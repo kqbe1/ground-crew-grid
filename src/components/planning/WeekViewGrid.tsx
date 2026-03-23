@@ -215,7 +215,7 @@ export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick,
                         })}
                         {hourTasks.map((task) => {
                           const startMin = parseInt(task.start_time.split(":")[1] || "0");
-                          const topOffset = (startMin / 60) * 96;
+                          const topOffset = (startMin / 60) * 64;
                           return (
                             <div key={task.id} className="absolute inset-x-1 z-[2]" style={{ top: `${topOffset}px` }}>
                               <DraggableTaskCard
