@@ -309,7 +309,7 @@ function PlanningInner() {
             {/* Time rows */}
             {HOURS.map((hour) => (
               <div key={`row-${hour}`} className="contents">
-                <div className="border-b border-border p-2 text-sm text-muted-foreground text-right pr-3 h-24 flex items-start justify-end pt-2 font-medium">
+                <div className="border-b border-border p-1 text-xs text-muted-foreground text-right pr-2 h-16 flex items-start justify-end pt-1 font-medium">
                   {String(hour).padStart(2, "0")}:00
                 </div>
                 {workers.map((w) => {
