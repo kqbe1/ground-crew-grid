@@ -18,6 +18,7 @@ const Entretiens = lazy(() => import("@/pages/Entretiens"));
 const Commandes = lazy(() => import("@/pages/Commandes"));
 const Fiches = lazy(() => import("@/pages/Fiches"));
 const Admin = lazy(() => import("@/pages/Admin"));
+const Taches = lazy(() => import("@/pages/Taches"));
 const MobileAgenda = lazy(() => import("@/pages/mobile/MobileAgenda"));
 const MobileTaskDetail = lazy(() => import("@/pages/mobile/MobileTaskDetail"));
 const MobileFicheForm = lazy(() => import("@/pages/mobile/MobileFicheForm"));
@@ -56,6 +57,7 @@ const App = () => (
                 <Route path="/commandes" element={<Commandes />} />
                 <Route path="/fiches" element={<Fiches />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/taches" element={<Taches />} />
               </Route>
 
               {/* PWA Mobile Ouvrier */}

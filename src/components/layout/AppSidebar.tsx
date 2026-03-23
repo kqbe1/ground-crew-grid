@@ -6,6 +6,7 @@ import {
   Users,
   Wrench as WrenchIcon,
   Package,
+  ListTodo,
   ClipboardList,
   Settings,
   LogOut,
@@ -22,6 +23,7 @@ const navItems = [
   { to: "/clients", icon: Users, label: "Clients", roles: ["admin", "secretariat"] },
   { to: "/entretiens", icon: WrenchIcon, label: "Entretiens", roles: ["admin", "secretariat"] },
   { to: "/commandes", icon: Package, label: "Commandes", roles: ["admin", "secretariat"] },
+  { to: "/taches", icon: ListTodo, label: "Tâches", roles: ["admin", "secretariat"] },
   { to: "/fiches", icon: ClipboardList, label: "Fiches", roles: ["admin", "secretariat"] },
   { to: "/admin", icon: Settings, label: "Admin", roles: ["admin"] },
 ];
