@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { TaskDetailDialog } from "@/components/planning/TaskDetailDialog";
+import TaskDetailDialog from "@/components/planning/TaskDetailDialog";
 
 const statusLabels: Record<string, string> = {
   planifie: "Planifié",
