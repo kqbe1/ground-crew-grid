@@ -103,6 +103,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
       intervention_type: interventionType as any,
       status: status as any,
       assigned_to: assignedTo || null,
+      second_assigned_to: (secondAssignedTo && secondAssignedTo !== "none") ? secondAssignedTo : null,
       scheduled_date: scheduledDate,
       start_time: startTime,
       duration_minutes: durationMinutes,
