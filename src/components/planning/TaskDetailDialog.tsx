@@ -9,7 +9,31 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { INTERVENTION_TYPE_LABELS, TASK_STATUS_LABELS } from "@/lib/constants";
+import { TASK_STATUS_LABELS } from "@/lib/constants";
+
+const SIMPLIFIED_INTERVENTION_LABELS: Record<string, string> = {
+  depannage: "Dépannage",
+  entretien_gaz: "Entretien",
+  installation: "Installation",
+  rdv_divers: "RDV Divers",
+  autre: "Autre",
+};
+
+// Map simplified selection back to actual enum values
+const SIMPLIFIED_TO_ENUM: Record<string, string> = {
+  depannage: "depannage",
+  entretien: "entretien_gaz",
+  installation: "installation",
+  rdv_divers: "rdv_divers",
+  autre: "autre",
+};
+
+// Map existing enum values to simplified key for display
+function toSimplifiedKey(enumVal: string): string {
+  if (enumVal.startsWith("entretien_")) return "entretien";
+  if (enumVal === "remplacement") return "installation";
+  return enumVal;
+}
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
