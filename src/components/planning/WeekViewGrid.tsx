@@ -13,7 +13,7 @@ import { useTaskClipboard } from "@/components/planning/TaskClipboardContext";
 import { ClipboardPaste } from "lucide-react";
 import { getOverlappingTaskIds, findOverlaps } from "@/lib/overlapUtils";
 
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 6);
+const HOURS = Array.from({ length: 11 }, (_, i) => i + 7); // 7h - 17h
 
 function getInitials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
@@ -179,7 +179,7 @@ export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick,
           {/* Time rows */}
           {HOURS.map((hour) => (
             <div key={`row-${hour}`} className="contents">
-              <div className="border-b border-border p-2 text-sm text-muted-foreground text-right pr-3 h-24 flex items-start justify-end pt-2 font-medium">
+              <div className="border-b border-border p-1 text-xs text-muted-foreground text-right pr-2 h-16 flex items-start justify-end pt-1 font-medium">
                 {String(hour).padStart(2, "0")}:00
               </div>
               {workers.map((w) => {
@@ -190,7 +190,7 @@ export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick,
                   <ContextMenu key={`cell-${hour}-${w.id}`}>
                     <ContextMenuTrigger asChild>
                       <div
-                        className="border-b border-l border-border h-24 relative"
+                        className="border-b border-l border-border h-16 relative"
                       >
                         {[0, 1, 2, 3].map((q) => {
                           const qKey = `${hour}-${q}-${w.id}`;
@@ -215,7 +215,7 @@ export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick,
                         })}
                         {hourTasks.map((task) => {
                           const startMin = parseInt(task.start_time.split(":")[1] || "0");
-                          const topOffset = (startMin / 60) * 96;
+                          const topOffset = (startMin / 60) * 64;
                           return (
                             <div key={task.id} className="absolute inset-x-1 z-[2]" style={{ top: `${topOffset}px` }}>
                               <DraggableTaskCard

@@ -9,7 +9,31 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { INTERVENTION_TYPE_LABELS, TASK_STATUS_LABELS } from "@/lib/constants";
+import { TASK_STATUS_LABELS } from "@/lib/constants";
+
+const SIMPLIFIED_INTERVENTION_LABELS: Record<string, string> = {
+  depannage: "Dépannage",
+  entretien: "Entretien",
+  installation: "Installation",
+  rdv_divers: "RDV Divers",
+  autre: "Autre",
+};
+
+// Map simplified selection back to actual enum values
+const SIMPLIFIED_TO_ENUM: Record<string, string> = {
+  depannage: "depannage",
+  entretien: "entretien_gaz",
+  installation: "installation",
+  rdv_divers: "rdv_divers",
+  autre: "autre",
+};
+
+// Map existing enum values to simplified key for display
+function toSimplifiedKey(enumVal: string): string {
+  if (enumVal.startsWith("entretien_")) return "entretien";
+  if (enumVal === "remplacement") return "installation";
+  return enumVal;
+}
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,6 +55,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
   const [interventionType, setInterventionType] = useState("");
   const [status, setStatus] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
+  const [secondAssignedTo, setSecondAssignedTo] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(60);
@@ -47,6 +72,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
     setInterventionType(task.intervention_type ?? "autre");
     setStatus(task.status ?? "planifie");
     setAssignedTo(task.assigned_to ?? "");
+    setSecondAssignedTo(task.second_assigned_to ?? "");
     setScheduledDate(task.scheduled_date ?? "");
     setStartTime(task.start_time?.slice(0, 5) ?? "08:00");
     setDurationMinutes(task.duration_minutes ?? 60);
@@ -77,6 +103,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
       intervention_type: interventionType as any,
       status: status as any,
       assigned_to: assignedTo || null,
+      second_assigned_to: (secondAssignedTo && secondAssignedTo !== "none") ? secondAssignedTo : null,
       scheduled_date: scheduledDate,
       start_time: startTime,
       duration_minutes: durationMinutes,
@@ -128,7 +155,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <span className="text-sm text-muted-foreground">Type</span>
-                <p>{INTERVENTION_TYPE_LABELS[task.intervention_type] ?? task.intervention_type}</p>
+                <p>{SIMPLIFIED_INTERVENTION_LABELS[toSimplifiedKey(task.intervention_type)] ?? task.intervention_type}</p>
               </div>
               <div>
                 <span className="text-sm text-muted-foreground">Assigné à</span>
@@ -203,11 +230,11 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Type</Label>
-                <Select value={interventionType} onValueChange={setInterventionType}>
+                <Select value={toSimplifiedKey(interventionType)} onValueChange={(v) => setInterventionType(SIMPLIFIED_TO_ENUM[v] || v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {Object.entries(INTERVENTION_TYPE_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                    {Object.entries(SIMPLIFIED_INTERVENTION_LABELS).map(([k, v]) => (
+                      <SelectItem key={k} value={k === "entretien_gaz" ? "entretien" : k}>{v as string}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -225,16 +252,30 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
               </div>
             </div>
 
-            <div>
-              <Label>Assigné à</Label>
-              <Select value={assignedTo} onValueChange={setAssignedTo}>
-                <SelectTrigger><SelectValue placeholder="Non assigné" /></SelectTrigger>
-                <SelectContent>
-                  {workers.map((w) => (
-                    <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Ouvrier principal</Label>
+                <Select value={assignedTo} onValueChange={setAssignedTo}>
+                  <SelectTrigger><SelectValue placeholder="Non assigné" /></SelectTrigger>
+                  <SelectContent>
+                    {workers.map((w) => (
+                      <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Second ouvrier / apprenti</Label>
+                <Select value={secondAssignedTo} onValueChange={setSecondAssignedTo}>
+                  <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Aucun</SelectItem>
+                    {workers.map((w) => (
+                      <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">

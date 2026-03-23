@@ -24,7 +24,7 @@ import { getOverlappingTaskIds, findOverlaps } from "@/lib/overlapUtils";
 
 type ViewMode = "day" | "week" | "month";
 
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 6); // 6h - 18h
+const HOURS = Array.from({ length: 11 }, (_, i) => i + 7); // 7h - 17h
 const ALL_INTERVENTION_TYPES = Object.keys(INTERVENTION_TYPE_LABELS);
 
 function getInitials(name: string) {
@@ -309,7 +309,7 @@ function PlanningInner() {
             {/* Time rows */}
             {HOURS.map((hour) => (
               <div key={`row-${hour}`} className="contents">
-                <div className="border-b border-border p-2 text-sm text-muted-foreground text-right pr-3 h-24 flex items-start justify-end pt-2 font-medium">
+                <div className="border-b border-border p-1 text-xs text-muted-foreground text-right pr-2 h-16 flex items-start justify-end pt-1 font-medium">
                   {String(hour).padStart(2, "0")}:00
                 </div>
                 {workers.map((w) => {
@@ -321,7 +321,7 @@ function PlanningInner() {
                       <ContextMenuTrigger asChild>
                         <div
                           key={`cell-${hour}-${w.id}`}
-                          className="border-b border-l border-border h-24 relative"
+                          className="border-b border-l border-border h-16 relative"
                         >
                           {/* 4 quarter-hour drop zones */}
                           {[0, 1, 2, 3].map((q) => {
@@ -351,7 +351,7 @@ function PlanningInner() {
                       {/* Task cards */}
                       {hourTasks.map((task) => {
                         const startMin = parseInt(task.start_time.split(":")[1] || "0");
-                        const topOffset = (startMin / 60) * 96;
+                        const topOffset = (startMin / 60) * 64;
                         return (
                           <div key={task.id} className="absolute inset-x-1 z-[2]" style={{ top: `${topOffset}px` }}>
                             <DraggableTaskCard
