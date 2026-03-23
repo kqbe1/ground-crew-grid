@@ -44,7 +44,7 @@ export function TaskClipboardProvider({ children }: { children: ReactNode }) {
       template_id: task.template_id,
       material_needed: task.material_needed,
       memo_secretariat: task.memo_secretariat,
-      binome_id: task.binome_id,
+      second_assigned_to: task.second_assigned_to,
     });
   }, []);
 
