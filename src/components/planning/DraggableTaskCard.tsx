@@ -34,7 +34,7 @@ export default function DraggableTaskCard({ task, onDragStart, onClick, onResize
   const endMin = endMinutes % 60;
   const timeRange = `${task.start_time?.slice(0, 5)} – ${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
 
-  const heightPx = Math.max((task.duration_minutes / 60) * CELL_HEIGHT, 60);
+  const heightPx = Math.max((task.duration_minutes / 60) * CELL_HEIGHT, 40);
 
   const handleResizeStart = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
