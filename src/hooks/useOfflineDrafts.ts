@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { uploadPhotos, uploadSignature } from "@/lib/storageUpload";
 
 const DB_NAME = "pme-terrain-offline";
 const DB_VERSION = 1;
