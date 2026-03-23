@@ -45,7 +45,7 @@ export default function Taches() {
       const { data, error } = await supabase
         .from("work_tasks")
         .select("*, clients(name), profiles!work_tasks_assigned_to_fkey(full_name)")
-        .order("created_at", { ascending: false });
+        .order("scheduled_date", { ascending: false });
       if (error) throw error;
       return data;
     },
