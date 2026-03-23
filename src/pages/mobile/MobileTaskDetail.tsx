@@ -16,10 +16,16 @@ export default function MobileTaskDetail() {
     const fetch = async () => {
       const { data } = await supabase
         .from("work_tasks")
-        .select("*, clients(name, phone, email, address_intervention), client_sites(address, name), client_equipment(name, brand, model)")
+        .select("*, client_sites(address, name), client_equipment(name, brand, model)")
         .eq("id", id)
         .maybeSingle();
-      setTask(data);
+      if (data?.client_id) {
+        const { data: clients } = await supabase.rpc("get_my_clients_safe");
+        const client = (clients ?? []).find((c: any) => c.id === data.client_id);
+        setTask({ ...data, clients: client ?? null });
+      } else {
+        setTask({ ...data, clients: null });
+      }
     };
     if (id) fetch();
   }, [id]);

@@ -58,14 +58,24 @@ export default function MobileAgenda() {
   useEffect(() => {
     if (!user) return;
     const fetchTasks = async () => {
-      const { data } = await supabase
-        .from("work_tasks")
-        .select("*, clients(name, phone, address_intervention), client_sites(address)")
-        .eq("assigned_to", user.id)
-        .gte("scheduled_date", dateRange.from)
-        .lte("scheduled_date", dateRange.to)
-        .order("start_time");
-      setTasks((data as Task[]) ?? []);
+      const [tasksRes, clientsRes] = await Promise.all([
+        supabase
+          .from("work_tasks")
+          .select("*, client_sites(address)")
+          .eq("assigned_to", user.id)
+          .gte("scheduled_date", dateRange.from)
+          .lte("scheduled_date", dateRange.to)
+          .order("start_time"),
+        supabase.rpc("get_my_clients_safe"),
+      ]);
+      const clientMap = Object.fromEntries(
+        (clientsRes.data ?? []).map((c: any) => [c.id, c])
+      );
+      const enriched = (tasksRes.data ?? []).map((t: any) => ({
+        ...t,
+        clients: t.client_id ? clientMap[t.client_id] ?? null : null,
+      }));
+      setTasks(enriched as Task[]);
     };
     fetchTasks();
   }, [dateRange, user]);
