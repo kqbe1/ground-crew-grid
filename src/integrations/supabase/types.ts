@@ -704,7 +704,7 @@ export type Database = {
       is_secretariat: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "secretariat" | "ouvrier"
+      app_role: "admin" | "secretariat" | "ouvrier" | "super_admin"
       client_region: "bruxelles" | "wallonie" | "flandre"
       energy_type:
         | "gaz"
@@ -867,7 +867,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "secretariat", "ouvrier"],
+      app_role: ["admin", "secretariat", "ouvrier", "super_admin"],
       client_region: ["bruxelles", "wallonie", "flandre"],
       energy_type: [
         "gaz",
