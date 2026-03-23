@@ -1,10 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-
 /**
  * Upload a base64 data-URL to a Supabase Storage bucket.
- * Returns the public URL of the uploaded file.
+ * Returns the file path (not public URL) for use with signed URLs.
  */
 export async function uploadBase64(
   bucket: "intervention-photos" | "intervention-signatures",
@@ -38,13 +36,18 @@ export async function uploadBase64(
 
   if (error) throw error;
 
-  const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
-  return data.publicUrl;
+  // Return signed URL (1 hour TTL) instead of public URL
+  const { data } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(filePath, 3600);
+
+  if (!data?.signedUrl) throw new Error("Failed to create signed URL");
+  return data.signedUrl;
 }
 
 /**
  * Upload multiple base64 photos to storage.
- * Returns array of public URLs.
+ * Returns array of signed URLs.
  */
 export async function uploadPhotos(
   base64Photos: string[],
@@ -65,7 +68,7 @@ export async function uploadPhotos(
 
 /**
  * Upload a signature data URL to storage.
- * Returns the public URL.
+ * Returns the signed URL.
  */
 export async function uploadSignature(
   base64Signature: string,
