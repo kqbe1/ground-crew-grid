@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,11 +11,12 @@ import { WORKER_LEVEL_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS
 import { Users, FileText, Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import CreateEditTemplateDialog from "@/components/admin/CreateEditTemplateDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Admin() {
+  const { role } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
-
   const [templateDialog, setTemplateDialog] = useState(false);
   const [editTemplate, setEditTemplate] = useState<any>(null);
 
@@ -35,6 +37,11 @@ export default function Admin() {
   };
 
   useEffect(() => { fetchAll(); }, []);
+
+  // Defense-in-depth: block non-admin access at component level
+  if (role && role !== "admin") {
+    return <Navigate to="/" replace />;
+  }
 
   const assignRole = async (userId: string, role: string) => {
     await supabase.from("user_roles").delete().eq("user_id", userId);
