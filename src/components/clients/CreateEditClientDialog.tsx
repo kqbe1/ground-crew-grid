@@ -79,7 +79,7 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
       notes_internal: form.notes_internal || null,
       syndic_keys_codes: form.syndic_keys_codes || null,
       birthday: form.birthday || null,
-      region: form.region || null,
+      region: (form.region || null) as any,
     };
 
     const { error } = client
