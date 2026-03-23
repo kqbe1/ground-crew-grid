@@ -155,14 +155,12 @@ export default function Dashboard() {
   }, []);
 
   const statCards = [
+    { title: "Travaux en attente", value: stats.tasksWaiting, icon: AlertTriangle, color: "text-accent", bg: "bg-accent/10", link: "/planning" },
+    { title: "Entretiens ce mois", value: stats.entretiensThisMonth, icon: Wrench, color: "text-primary", bg: "bg-primary/10", link: "/entretiens" },
+    { title: "Entretiens mois prochain", value: stats.entretiensNextMonth, icon: CalendarDays, color: "text-secondary", bg: "bg-secondary/10", link: "/entretiens" },
     { title: "Pièces demandées", value: stats.partsDemandees, icon: Package, color: "text-[hsl(var(--color-demandee))]", bg: "bg-[hsl(var(--color-demandee))]/10", link: "/commandes" },
     { title: "Pièces commandées", value: stats.partsCommandees, icon: Package, color: "text-[hsl(var(--color-commandee))]", bg: "bg-[hsl(var(--color-commandee))]/10", link: "/commandes" },
     { title: "Pièces reçues", value: stats.partsRecues, icon: Package, color: "text-[hsl(var(--color-recue))]", bg: "bg-[hsl(var(--color-recue))]/10", link: "/commandes" },
-    { title: "Entretiens ce mois", value: stats.entretiensThisMonth, icon: Wrench, color: "text-primary", bg: "bg-primary/10", link: "/entretiens" },
-    { title: "Entretiens mois prochain", value: stats.entretiensNextMonth, icon: CalendarDays, color: "text-secondary", bg: "bg-secondary/10", link: "/entretiens" },
-    { title: "Travaux en attente", value: stats.tasksWaiting, icon: AlertTriangle, color: "text-accent", bg: "bg-accent/10", link: "/planning" },
-    { title: "Clients", value: stats.totalClients, icon: Users, color: "text-primary", bg: "bg-primary/10", link: "/clients" },
-    { title: "Fiches ce mois", value: stats.fichesThisMonth, icon: ClipboardList, color: "text-secondary", bg: "bg-secondary/10", link: "/fiches" },
   ];
 
   const urgencyBorder: Record<string, string> = {
@@ -184,7 +182,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {statCards.map((card) => (
           <Card
             key={card.title}
