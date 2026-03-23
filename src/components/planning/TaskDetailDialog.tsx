@@ -72,6 +72,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
     setInterventionType(task.intervention_type ?? "autre");
     setStatus(task.status ?? "planifie");
     setAssignedTo(task.assigned_to ?? "");
+    setSecondAssignedTo(task.second_assigned_to ?? "");
     setScheduledDate(task.scheduled_date ?? "");
     setStartTime(task.start_time?.slice(0, 5) ?? "08:00");
     setDurationMinutes(task.duration_minutes ?? 60);
