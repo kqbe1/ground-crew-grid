@@ -32,6 +32,7 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
     notes_internal: "",
     syndic_keys_codes: "",
     birthday: "",
+    region: "",
   });
 
   useEffect(() => {
