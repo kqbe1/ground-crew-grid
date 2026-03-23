@@ -57,6 +57,7 @@ const App = () => (
                 <Route path="/commandes" element={<Commandes />} />
                 <Route path="/fiches" element={<Fiches />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/taches" element={<Taches />} />
               </Route>
 
               {/* PWA Mobile Ouvrier */}
