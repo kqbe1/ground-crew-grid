@@ -37,7 +37,7 @@ export default function RealtimeOrderNotifications() {
   }, []);
 
   useEffect(() => {
-    if (role !== "admin" && role !== "secretariat") return;
+    if (role !== "admin" && role !== "secretariat" && role !== "super_admin") return;
 
     // 1. New parts order from ouvrier
     const ordersChannel = supabase
@@ -137,7 +137,7 @@ export default function RealtimeOrderNotifications() {
     };
   }, [role, addNotification]);
 
-  if (role !== "admin" && role !== "secretariat") return null;
+  if (role !== "admin" && role !== "secretariat" && role !== "super_admin") return null;
 
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
