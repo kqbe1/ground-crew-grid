@@ -45,7 +45,7 @@ interface TaskDetailDialogProps {
 
 export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetailDialogProps) {
   const { role } = useAuth();
-  const canEdit = role === "admin" || role === "secretariat";
+  const canEdit = role === "admin" || role === "secretariat" || role === "super_admin";
 
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -131,6 +131,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
       return;
     }
     toast.success("Tâche supprimée");
+    onClose();
     onUpdated();
   };
 
