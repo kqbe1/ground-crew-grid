@@ -142,7 +142,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultWork
               <Select value={interventionType} onValueChange={setInterventionType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {Object.entries(INTERVENTION_TYPE_LABELS).map(([k, v]) => (
+                  {Object.entries(SIMPLIFIED_TYPES).map(([k, v]) => (
                     <SelectItem key={k} value={k}>{v}</SelectItem>
                   ))}
                 </SelectContent>
