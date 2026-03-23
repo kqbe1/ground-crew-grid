@@ -55,6 +55,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
   const [interventionType, setInterventionType] = useState("");
   const [status, setStatus] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
+  const [secondAssignedTo, setSecondAssignedTo] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(60);
