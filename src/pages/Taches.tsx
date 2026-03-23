@@ -37,7 +37,7 @@ const typeLabels: Record<string, string> = {
 
 export default function Taches() {
   const [search, setSearch] = useState("");
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<any | null>(null);
 
   const { data: tasks = [], refetch } = useQuery({
     queryKey: ["all-tasks"],
