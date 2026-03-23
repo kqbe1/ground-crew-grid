@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from "@/components/ui/context-menu";
 import { useTaskClipboard } from "@/components/planning/TaskClipboardContext";
 
-const CELL_HEIGHT = 96; // h-24 = 96px per hour
+const CELL_HEIGHT = 64; // h-16 = 64px per hour
 const MIN_DURATION = 15;
 const STEP = 15;
 
