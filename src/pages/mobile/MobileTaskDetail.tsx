@@ -17,7 +17,15 @@ import { toast } from "sonner";
 export default function MobileTaskDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [task, setTask] = useState<any>(null);
+  const [showPartDialog, setShowPartDialog] = useState(false);
+  const [partName, setPartName] = useState("");
+  const [partRef, setPartRef] = useState("");
+  const [partQty, setPartQty] = useState(1);
+  const [partUrgency, setPartUrgency] = useState<"normal" | "urgent" | "critique">("normal");
+  const [partNotes, setPartNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchTask = async () => {
