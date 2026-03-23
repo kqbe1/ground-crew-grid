@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "crypto";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
