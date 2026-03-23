@@ -35,8 +35,21 @@ interface Task {
 export default function MobileAgenda() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<ViewMode>("jour");
+  const [currentDate, setCurrentDate] = useState(() => {
+    const saved = sessionStorage.getItem("mobile-agenda-date");
+    return saved ? new Date(saved) : new Date();
+  });
+  const [view, setView] = useState<ViewMode>(() => {
+    return (sessionStorage.getItem("mobile-agenda-view") as ViewMode) || "jour";
+  });
+
+  // Persist date & view to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem("mobile-agenda-date", currentDate.toISOString());
+  }, [currentDate]);
+  useEffect(() => {
+    sessionStorage.setItem("mobile-agenda-view", view);
+  }, [view]);
   const [tasks, setTasks] = useState<Task[]>([]);
 
   // Compute date range based on view
