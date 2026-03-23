@@ -56,6 +56,7 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
         name: "", phone: "", phone_secondary: "", email: "",
         address_intervention: "", address_billing: "", contact_syndic: "",
         contact_locataire: "", notes_internal: "", syndic_keys_codes: "", birthday: "",
+        region: "",
       });
     }
   }, [client, open]);
