@@ -128,6 +128,17 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
             <Label>Date de naissance</Label>
             <Input type="date" value={form.birthday} onChange={(e) => set("birthday", e.target.value)} />
           </div>
+          <div className="space-y-2">
+            <Label>Région</Label>
+            <Select value={form.region} onValueChange={(v) => set("region", v)}>
+              <SelectTrigger><SelectValue placeholder="Sélectionner la région" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bruxelles">Bruxelles</SelectItem>
+                <SelectItem value="wallonie">Wallonie</SelectItem>
+                <SelectItem value="flandre">Flandre</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2 md:col-span-2">
             <Label>Adresse d'intervention</Label>
             <Input value={form.address_intervention} onChange={(e) => set("address_intervention", e.target.value)} />
