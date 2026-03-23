@@ -133,12 +133,10 @@ export default function Taches() {
         </div>
       </div>
 
-      {selectedTaskId && (
+      {selectedTask && (
         <TaskDetailDialog
-          taskId={selectedTaskId}
-          open={!!selectedTaskId}
-          onOpenChange={(open) => { if (!open) setSelectedTaskId(null); }}
-          onUpdated={() => refetch()}
+          task={selectedTask}
+          onClose={() => { setSelectedTask(null); refetch(); }}
         />
       )}
     </div>
