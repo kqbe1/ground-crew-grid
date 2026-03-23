@@ -131,6 +131,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
       return;
     }
     toast.success("Tâche supprimée");
+    onClose();
     onUpdated();
   };
 
