@@ -4,7 +4,7 @@ import { Calendar, ClipboardList, Package, User, WifiOff, RefreshCw } from "luci
 import { cn } from "@/lib/utils";
 import { useOfflineDrafts } from "@/hooks/useOfflineDrafts";
 import { toast } from "sonner";
-
+import MobileTaskNotifications from "@/components/mobile/MobileTaskNotifications";
 const mobileNav = [
   { to: "/mobile", icon: Calendar, label: "Agenda" },
   { to: "/mobile/fiches", icon: ClipboardList, label: "Fiches" },
@@ -41,7 +41,7 @@ export default function MobileLayout() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Offline / pending banner */}
+      <MobileTaskNotifications />
       {(!isOnline || pendingCount > 0) && (
         <div
           className={cn(
