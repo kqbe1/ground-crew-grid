@@ -42,33 +42,35 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/install" element={<Install />} />
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/install" element={<Install />} />
 
-            {/* Webapp Admin/Secrétariat */}
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/planning" element={<Planning />} />
-              <Route path="/clients" element={<Clients />} />
-              <Route path="/entretiens" element={<Entretiens />} />
-              <Route path="/commandes" element={<Commandes />} />
-              <Route path="/fiches" element={<Fiches />} />
-              <Route path="/admin" element={<Admin />} />
-            </Route>
+              {/* Webapp Admin/Secrétariat */}
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/planning" element={<Planning />} />
+                <Route path="/clients" element={<Clients />} />
+                <Route path="/entretiens" element={<Entretiens />} />
+                <Route path="/commandes" element={<Commandes />} />
+                <Route path="/fiches" element={<Fiches />} />
+                <Route path="/admin" element={<Admin />} />
+              </Route>
 
-            {/* PWA Mobile Ouvrier */}
-            <Route path="/mobile" element={<MobileLayout />}>
-              <Route index element={<MobileAgenda />} />
-              <Route path="tache/:id" element={<MobileTaskDetail />} />
-              <Route path="fiche/:taskId" element={<MobileFicheForm />} />
-              <Route path="fiches" element={<MobileFiches />} />
-              <Route path="pieces" element={<MobilePieces />} />
-              <Route path="profil" element={<MobileProfil />} />
-            </Route>
+              {/* PWA Mobile Ouvrier */}
+              <Route path="/mobile" element={<MobileLayout />}>
+                <Route index element={<MobileAgenda />} />
+                <Route path="tache/:id" element={<MobileTaskDetail />} />
+                <Route path="fiche/:taskId" element={<MobileFicheForm />} />
+                <Route path="fiches" element={<MobileFiches />} />
+                <Route path="pieces" element={<MobilePieces />} />
+                <Route path="profil" element={<MobileProfil />} />
+              </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
