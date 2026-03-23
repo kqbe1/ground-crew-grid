@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Send, Save, WifiOff } from "lucide-react";
 import SignatureCanvas from "@/components/mobile/SignatureCanvas";
 import PhotoCapture from "@/components/mobile/PhotoCapture";
+import { uploadPhotos, uploadSignature } from "@/lib/storageUpload";
 
 export default function MobileFicheForm() {
   const { taskId } = useParams();
