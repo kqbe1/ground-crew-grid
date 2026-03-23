@@ -24,7 +24,7 @@ import { getOverlappingTaskIds, findOverlaps } from "@/lib/overlapUtils";
 
 type ViewMode = "day" | "week" | "month";
 
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 6); // 6h - 18h
+const HOURS = Array.from({ length: 11 }, (_, i) => i + 7); // 7h - 17h
 const ALL_INTERVENTION_TYPES = Object.keys(INTERVENTION_TYPE_LABELS);
 
 function getInitials(name: string) {
