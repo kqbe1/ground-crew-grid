@@ -106,7 +106,7 @@ export default function Taches() {
             filtered.map((task) => (
               <button
                 key={task.id}
-                onClick={() => setSelectedTaskId(task.id)}
+                onClick={() => setSelectedTask(task)}
                 className="w-full grid grid-cols-[1fr_150px_140px_120px_130px] gap-2 px-4 py-3 text-left hover:bg-muted/30 transition-colors text-sm"
               >
                 <div>
