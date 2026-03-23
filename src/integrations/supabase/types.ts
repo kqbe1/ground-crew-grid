@@ -702,6 +702,7 @@ export type Database = {
       is_admin_or_secretariat: { Args: never; Returns: boolean }
       is_ouvrier: { Args: never; Returns: boolean }
       is_secretariat: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "secretariat" | "ouvrier" | "super_admin"
