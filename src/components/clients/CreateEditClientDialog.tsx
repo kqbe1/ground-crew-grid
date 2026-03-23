@@ -49,6 +49,7 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
         notes_internal: client.notes_internal || "",
         syndic_keys_codes: client.syndic_keys_codes || "",
         birthday: client.birthday || "",
+        region: (client as any).region || "",
       });
     } else {
       setForm({
