@@ -15,17 +15,15 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function Admin() {
   const { role } = useAuth();
-  
+  const [users, setUsers] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [templateDialog, setTemplateDialog] = useState(false);
+  const [editTemplate, setEditTemplate] = useState<any>(null);
+
   // Defense-in-depth: block non-admin access at component level
   if (role && role !== "admin") {
     return <Navigate to="/" replace />;
   }
-
-  const [users, setUsers] = useState<any[]>([]);
-  const [templates, setTemplates] = useState<any[]>([]);
-
-  const [templateDialog, setTemplateDialog] = useState(false);
-  const [editTemplate, setEditTemplate] = useState<any>(null);
 
   const fetchAll = async () => {
     const [usersRes, rolesRes, templatesRes] = await Promise.all([
