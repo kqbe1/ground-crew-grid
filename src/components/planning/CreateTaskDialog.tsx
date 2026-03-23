@@ -7,7 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { INTERVENTION_TYPE_LABELS } from "@/lib/constants";
+
+const SIMPLIFIED_TYPES: Record<string, string> = {
+  depannage: "Dépannage",
+  entretien_gaz: "Entretien",
+  installation: "Installation",
+  rdv_divers: "RDV Divers",
+  autre: "Autre",
+};
 import { Plus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -135,7 +142,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultWork
               <Select value={interventionType} onValueChange={setInterventionType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {Object.entries(INTERVENTION_TYPE_LABELS).map(([k, v]) => (
+                  {Object.entries(SIMPLIFIED_TYPES).map(([k, v]) => (
                     <SelectItem key={k} value={k}>{v}</SelectItem>
                   ))}
                 </SelectContent>
