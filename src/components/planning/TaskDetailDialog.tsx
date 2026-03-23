@@ -227,11 +227,11 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Type</Label>
-                <Select value={interventionType} onValueChange={setInterventionType}>
+                <Select value={toSimplifiedKey(interventionType)} onValueChange={(v) => setInterventionType(SIMPLIFIED_TO_ENUM[v] || v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {Object.entries(INTERVENTION_TYPE_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                    {Object.entries(SIMPLIFIED_INTERVENTION_LABELS).map(([k, v]) => (
+                      <SelectItem key={k} value={k === "entretien_gaz" ? "entretien" : k}>{v as string}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
