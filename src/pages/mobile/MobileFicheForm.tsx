@@ -37,6 +37,28 @@ export default function MobileFicheForm() {
 
     const now = new Date().toISOString().split("T")[0];
 
+    // Upload photos & signature to storage if online
+    let finalPhotosBefore = photosBefore;
+    let finalPhotosAfter = photosAfter;
+    let finalSignature = signatureData;
+
+    if (isOnline) {
+      try {
+        if (photosBefore.length > 0) {
+          finalPhotosBefore = await uploadPhotos(photosBefore, user.id);
+        }
+        if (photosAfter.length > 0) {
+          finalPhotosAfter = await uploadPhotos(photosAfter, user.id);
+        }
+        if (signatureData) {
+          finalSignature = await uploadSignature(signatureData, user.id);
+        }
+      } catch (err) {
+        console.error("Storage upload error:", err);
+        toast.error("Erreur d'upload — sauvegarde en base64");
+      }
+    }
+
     const result = await save({
       work_task_id: taskId,
       worker_id: user.id,
@@ -46,10 +68,10 @@ export default function MobileFicheForm() {
       final_status: finalStatus,
       client_present: clientPresent,
       client_absent: !clientPresent,
-      signature_data: signatureData || null,
+      signature_data: finalSignature || null,
       signed_at: signatureData ? new Date().toISOString() : null,
-      photos_before: photosBefore.length > 0 ? photosBefore : null,
-      photos_after: photosAfter.length > 0 ? photosAfter : null,
+      photos_before: finalPhotosBefore.length > 0 ? finalPhotosBefore : null,
+      photos_after: finalPhotosAfter.length > 0 ? finalPhotosAfter : null,
       is_draft: isDraft,
     });
 
