@@ -152,7 +152,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <span className="text-sm text-muted-foreground">Type</span>
-                <p>{INTERVENTION_TYPE_LABELS[task.intervention_type] ?? task.intervention_type}</p>
+                <p>{SIMPLIFIED_INTERVENTION_LABELS[toSimplifiedKey(task.intervention_type)] ?? task.intervention_type}</p>
               </div>
               <div>
                 <span className="text-sm text-muted-foreground">Assigné à</span>
