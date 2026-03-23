@@ -137,6 +137,7 @@ export default function Taches() {
         <TaskDetailDialog
           task={selectedTask}
           onClose={() => { setSelectedTask(null); refetch(); }}
+          onUpdated={() => refetch()}
         />
       )}
     </div>
