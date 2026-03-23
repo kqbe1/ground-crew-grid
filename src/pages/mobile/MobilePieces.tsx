@@ -20,12 +20,22 @@ export default function MobilePieces() {
   useEffect(() => {
     if (!user) return;
     const fetch = async () => {
-      const { data } = await supabase
-        .from("parts_orders")
-        .select("*, clients(name), work_tasks(title)")
-        .eq("requested_by", user.id)
-        .order("created_at", { ascending: false });
-      setOrders(data ?? []);
+      const [ordersRes, clientsRes] = await Promise.all([
+        supabase
+          .from("parts_orders")
+          .select("*, work_tasks(title)")
+          .eq("requested_by", user.id)
+          .order("created_at", { ascending: false }),
+        supabase.rpc("get_my_clients_safe"),
+      ]);
+      const clientMap = Object.fromEntries(
+        (clientsRes.data ?? []).map((c: any) => [c.id, c])
+      );
+      const enriched = (ordersRes.data ?? []).map((o: any) => ({
+        ...o,
+        clients: o.client_id ? clientMap[o.client_id] ?? null : null,
+      }));
+      setOrders(enriched);
     };
     fetch();
   }, [user]);

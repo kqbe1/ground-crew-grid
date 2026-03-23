@@ -21,9 +21,11 @@ export default function MobileTaskNotifications() {
         { event: "INSERT", schema: "public", table: "work_tasks", filter: `assigned_to=eq.${user.id}` },
         async (payload) => {
           const task = payload.new as any;
-          const { data: client } = task.client_id
-            ? await supabase.from("clients").select("name").eq("id", task.client_id).maybeSingle()
-            : { data: null };
+          let client: any = null;
+          if (task.client_id) {
+            const { data: clients } = await supabase.rpc("get_my_clients_safe");
+            client = (clients ?? []).find((c: any) => c.id === task.client_id) ?? null;
+          }
 
           toast.info("📋 Nouvelle tâche assignée", {
             description: `${task.title}${client?.name ? ` · ${client.name}` : ""}`,

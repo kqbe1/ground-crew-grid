@@ -14,12 +14,24 @@ export default function MobileFiches() {
   useEffect(() => {
     if (!user) return;
     const fetch = async () => {
-      const { data } = await supabase
-        .from("intervention_sheets")
-        .select("*, work_tasks(title, clients(name))")
-        .eq("worker_id", user.id)
-        .order("created_at", { ascending: false });
-      setSheets(data ?? []);
+      const [sheetsRes, clientsRes] = await Promise.all([
+        supabase
+          .from("intervention_sheets")
+          .select("*, work_tasks(title, client_id)")
+          .eq("worker_id", user.id)
+          .order("created_at", { ascending: false }),
+        supabase.rpc("get_my_clients_safe"),
+      ]);
+      const clientMap = Object.fromEntries(
+        (clientsRes.data ?? []).map((c: any) => [c.id, c])
+      );
+      const enriched = (sheetsRes.data ?? []).map((s: any) => ({
+        ...s,
+        work_tasks: s.work_tasks
+          ? { ...s.work_tasks, clients: s.work_tasks.client_id ? clientMap[s.work_tasks.client_id] ?? null : null }
+          : null,
+      }));
+      setSheets(enriched);
     };
     fetch();
   }, [user]);
