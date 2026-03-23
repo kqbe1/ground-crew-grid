@@ -13,7 +13,7 @@ import { TASK_STATUS_LABELS } from "@/lib/constants";
 
 const SIMPLIFIED_INTERVENTION_LABELS: Record<string, string> = {
   depannage: "Dépannage",
-  entretien_gaz: "Entretien",
+  entretien: "Entretien",
   installation: "Installation",
   rdv_divers: "RDV Divers",
   autre: "Autre",
