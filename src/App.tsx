@@ -18,6 +18,7 @@ const Entretiens = lazy(() => import("@/pages/Entretiens"));
 const Commandes = lazy(() => import("@/pages/Commandes"));
 const Fiches = lazy(() => import("@/pages/Fiches"));
 const Admin = lazy(() => import("@/pages/Admin"));
+const Taches = lazy(() => import("@/pages/Taches"));
 const MobileAgenda = lazy(() => import("@/pages/mobile/MobileAgenda"));
 const MobileTaskDetail = lazy(() => import("@/pages/mobile/MobileTaskDetail"));
 const MobileFicheForm = lazy(() => import("@/pages/mobile/MobileFicheForm"));
