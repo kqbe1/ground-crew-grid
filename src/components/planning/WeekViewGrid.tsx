@@ -13,7 +13,7 @@ import { useTaskClipboard } from "@/components/planning/TaskClipboardContext";
 import { ClipboardPaste } from "lucide-react";
 import { getOverlappingTaskIds, findOverlaps } from "@/lib/overlapUtils";
 
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 6);
+const HOURS = Array.from({ length: 11 }, (_, i) => i + 7); // 7h - 17h
 
 function getInitials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
