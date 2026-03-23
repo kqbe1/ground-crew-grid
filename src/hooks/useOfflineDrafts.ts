@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { uploadPhotos, uploadSignature } from "@/lib/storageUpload";
 
 const DB_NAME = "pme-terrain-offline";
 const DB_VERSION = 1;
@@ -74,6 +75,23 @@ async function deleteDraft(id: string): Promise<void> {
 
 async function syncDraft(draft: OfflineDraft): Promise<boolean> {
   const { id, synced, created_at, ...payload } = draft;
+
+  // Upload base64 photos/signatures to Storage before inserting
+  try {
+    if (payload.photos_before && payload.photos_before.length > 0) {
+      payload.photos_before = await uploadPhotos(payload.photos_before, payload.worker_id);
+    }
+    if (payload.photos_after && payload.photos_after.length > 0) {
+      payload.photos_after = await uploadPhotos(payload.photos_after, payload.worker_id);
+    }
+    if (payload.signature_data && !payload.signature_data.startsWith("http")) {
+      payload.signature_data = await uploadSignature(payload.signature_data, payload.worker_id);
+    }
+  } catch (err) {
+    console.error("Storage upload during sync failed:", err);
+    // Continue with base64 fallback rather than losing data
+  }
+
   const { error } = await supabase.from("intervention_sheets").insert({
     ...payload,
     arrival_time: payload.arrival_time || null,
@@ -82,7 +100,6 @@ async function syncDraft(draft: OfflineDraft): Promise<boolean> {
   });
 
   if (!error) {
-    // Also update work_tasks status
     await supabase.from("work_tasks").update({ status: payload.final_status as any }).eq("id", payload.work_task_id);
     await deleteDraft(id);
     return true;
