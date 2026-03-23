@@ -249,16 +249,30 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
               </div>
             </div>
 
-            <div>
-              <Label>Assigné à</Label>
-              <Select value={assignedTo} onValueChange={setAssignedTo}>
-                <SelectTrigger><SelectValue placeholder="Non assigné" /></SelectTrigger>
-                <SelectContent>
-                  {workers.map((w) => (
-                    <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Ouvrier principal</Label>
+                <Select value={assignedTo} onValueChange={setAssignedTo}>
+                  <SelectTrigger><SelectValue placeholder="Non assigné" /></SelectTrigger>
+                  <SelectContent>
+                    {workers.map((w) => (
+                      <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Second ouvrier / apprenti</Label>
+                <Select value={secondAssignedTo} onValueChange={setSecondAssignedTo}>
+                  <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Aucun</SelectItem>
+                    {workers.map((w) => (
+                      <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
