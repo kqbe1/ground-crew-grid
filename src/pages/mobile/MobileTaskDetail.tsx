@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { INTERVENTION_TYPE_LABELS, TASK_STATUS_LABELS } from "@/lib/constants";
-import { ArrowLeft, Phone, MapPin, ClipboardList, MessageSquare } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, ClipboardList, MessageSquare, KeyRound, UserRound, Building2, StickyNote } from "lucide-react";
 
 export default function MobileTaskDetail() {
   const { id } = useParams();
@@ -13,21 +13,26 @@ export default function MobileTaskDetail() {
   const [task, setTask] = useState<any>(null);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchTask = async () => {
       const { data } = await supabase
         .from("work_tasks")
         .select("*, client_sites(address, name), client_equipment(name, brand, model)")
         .eq("id", id)
         .maybeSingle();
+
       if (data?.client_id) {
-        const { data: clients } = await supabase.rpc("get_my_clients_safe");
-        const client = (clients ?? []).find((c: any) => c.id === data.client_id);
-        setTask({ ...data, clients: client ?? null });
+        // Fetch full client info including syndic/locataire/keys/notes
+        const { data: clientData } = await supabase
+          .from("clients")
+          .select("id, name, phone, email, address_intervention, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal")
+          .eq("id", data.client_id)
+          .maybeSingle();
+        setTask({ ...data, clients: clientData ?? null });
       } else {
         setTask({ ...data, clients: null });
       }
     };
-    if (id) fetch();
+    if (id) fetchTask();
   }, [id]);
 
   if (!task) {
@@ -37,6 +42,8 @@ export default function MobileTaskDetail() {
       </div>
     );
   }
+
+  const hasClientExtras = task.clients?.contact_syndic || task.clients?.contact_locataire || task.clients?.syndic_keys_codes || task.clients?.notes_internal;
 
   return (
     <div className="p-4 space-y-4">
@@ -52,6 +59,7 @@ export default function MobileTaskDetail() {
         </div>
       </div>
 
+      {/* Task details */}
       <Card>
         <CardContent className="py-3 space-y-3">
           <div>
@@ -91,6 +99,46 @@ export default function MobileTaskDetail() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Client extra info (syndic, locataire, clés, notes) */}
+      {hasClientExtras && (
+        <Card>
+          <CardContent className="py-3 space-y-3">
+            {task.clients.contact_syndic && (
+              <div className="bg-muted/50 rounded-lg p-3">
+                <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground mb-1">
+                  <Building2 className="w-3 h-3" /> Contact syndic
+                </div>
+                <div className="text-sm whitespace-pre-line">{task.clients.contact_syndic}</div>
+              </div>
+            )}
+            {task.clients.contact_locataire && (
+              <div className="bg-muted/50 rounded-lg p-3">
+                <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground mb-1">
+                  <UserRound className="w-3 h-3" /> Contact locataire
+                </div>
+                <div className="text-sm whitespace-pre-line">{task.clients.contact_locataire}</div>
+              </div>
+            )}
+            {task.clients.syndic_keys_codes && (
+              <div className="bg-primary/10 rounded-lg p-3">
+                <div className="flex items-center gap-1 text-xs font-medium text-primary mb-1">
+                  <KeyRound className="w-3 h-3" /> Codes / Clés syndic
+                </div>
+                <div className="text-sm whitespace-pre-line">{task.clients.syndic_keys_codes}</div>
+              </div>
+            )}
+            {task.clients.notes_internal && (
+              <div className="bg-muted/50 rounded-lg p-3">
+                <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground mb-1">
+                  <StickyNote className="w-3 h-3" /> Notes internes
+                </div>
+                <div className="text-sm whitespace-pre-line">{task.clients.notes_internal}</div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Action buttons */}
       <div className="grid grid-cols-2 gap-3">
