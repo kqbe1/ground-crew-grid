@@ -4,7 +4,7 @@ import { Calendar, ClipboardList, Package, User, WifiOff, RefreshCw } from "luci
 import { cn } from "@/lib/utils";
 import { useOfflineDrafts } from "@/hooks/useOfflineDrafts";
 import { toast } from "sonner";
-
+import MobileTaskNotifications from "@/components/mobile/MobileTaskNotifications";
 const mobileNav = [
   { to: "/mobile", icon: Calendar, label: "Agenda" },
   { to: "/mobile/fiches", icon: ClipboardList, label: "Fiches" },
