@@ -6,6 +6,7 @@ import {
   Users,
   Wrench as WrenchIcon,
   Package,
+  ListTodo,
   ClipboardList,
   Settings,
   LogOut,
