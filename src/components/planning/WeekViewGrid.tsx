@@ -190,7 +190,7 @@ export default function WeekViewGrid({ currentDate, tasks, workers, onTaskClick,
                   <ContextMenu key={`cell-${hour}-${w.id}`}>
                     <ContextMenuTrigger asChild>
                       <div
-                        className="border-b border-l border-border h-24 relative"
+                        className="border-b border-l border-border h-16 relative"
                       >
                         {[0, 1, 2, 3].map((q) => {
                           const qKey = `${hour}-${q}-${w.id}`;
