@@ -56,6 +56,8 @@ export default function OrderDetailDialog({ open, onOpenChange, order, onUpdated
     // Si on passe à "Reçue", proposer de créer une tâche de suite
     if (workflow.next === "recue" && order.client_id) {
       setShowFollowUp(true);
+      // Don't call onUpdated yet — wait for follow-up dialog to close
+      return;
     }
 
     onUpdated();
@@ -193,7 +195,10 @@ export default function OrderDetailDialog({ open, onOpenChange, order, onUpdated
 
       <CreateFollowUpTaskDialog
         open={showFollowUp}
-        onOpenChange={setShowFollowUp}
+        onOpenChange={(o) => {
+          setShowFollowUp(o);
+          if (!o) onUpdated(); // Refresh list when follow-up dialog closes (whether created or dismissed)
+        }}
         order={order}
         onCreated={() => {
           setShowFollowUp(false);
