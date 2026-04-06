@@ -3,7 +3,7 @@ import { useDragScroll } from "@/hooks/useDragScroll";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, ChevronRight, Filter, ClipboardPaste } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, ClipboardPaste, Users } from "lucide-react";
 import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
