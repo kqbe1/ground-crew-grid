@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, Phone, Mail, MapPin, Upload } from "lucide-react";
+import { Plus, Search, Phone, Mail, MapPin, Upload, Download } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import CreateEditClientDialog from "@/components/clients/CreateEditClientDialog";
 import ClientDetailDialog from "@/components/clients/ClientDetailDialog";
@@ -31,6 +31,26 @@ export default function Clients() {
 
   const handleCardClick = (client: Client) => setDetailClient(client);
 
+  const exportCsv = () => {
+    const headers = ["Nom","Email","Téléphone","Tél. secondaire","Adresse intervention","Coordonnées facturation","Contact syndic","Contact locataire","Clés/codes syndic","Notes internes","Région","Anniversaire"];
+    const rows = clients.map((c) => [
+      c.name, c.email ?? "", c.phone ?? "", c.phone_secondary ?? "",
+      c.address_intervention ?? "", c.address_billing ?? "",
+      c.contact_syndic ?? "", c.contact_locataire ?? "",
+      c.syndic_keys_codes ?? "", c.notes_internal ?? "",
+      c.region ?? "", c.birthday ?? "",
+    ]);
+    const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const csv = [headers.map(escape).join(";"), ...rows.map((r) => r.map(escape).join(";"))].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `clients_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -39,6 +59,7 @@ export default function Clients() {
           <p className="text-muted-foreground">{clients.length} client(s)</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={exportCsv}><Download className="w-4 h-4 mr-2" /> Exporter CSV</Button>
           <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="w-4 h-4 mr-2" /> Importer CSV</Button>
           <Button onClick={() => setCreateOpen(true)}><Plus className="w-4 h-4 mr-2" /> Nouveau client</Button>
         </div>
