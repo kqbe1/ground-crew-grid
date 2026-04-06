@@ -282,8 +282,21 @@ export default function ImportCsvDialog({ open, onOpenChange, onImported }: Impo
             <div className="text-lg font-semibold">{result.ok} client(s) importé(s)</div>
             {result.skipped > 0 && (
               <Badge variant="outline" className="text-destructive border-destructive">
-                {result.skipped} ligne(s) ignorée(s) (nom manquant ou doublon)
+                {result.skipped} ligne(s) ignorée(s)
               </Badge>
+            )}
+            {result.duplicates.length > 0 && (
+              <div className="text-left mx-auto max-w-md">
+                <div className="text-sm font-medium text-muted-foreground mb-1">Doublons détectés :</div>
+                <div className="max-h-32 overflow-y-auto text-sm space-y-0.5 bg-muted rounded-lg p-2">
+                  {result.duplicates.map((d, i) => (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                      <span className="truncate">{d}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
             <Button variant="outline" onClick={() => { reset(); onOpenChange(false); }}>Fermer</Button>
           </div>
