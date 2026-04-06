@@ -25,7 +25,12 @@ import { getOverlappingTaskIds, findOverlaps } from "@/lib/overlapUtils";
 type ViewMode = "day" | "week" | "month";
 
 const HOURS = Array.from({ length: 11 }, (_, i) => i + 7); // 7h - 17h
-const ALL_INTERVENTION_TYPES = Object.keys(INTERVENTION_TYPE_LABELS);
+const ENTRETIEN_TYPES = ["entretien_gaz", "entretien_mazout", "entretien_pellets", "entretien_clim", "entretien_vmc"];
+const STANDALONE_TYPES = ["depannage", "installation", "remplacement", "rdv_divers", "autre"];
+const FILTER_GROUPS = [
+  { key: "entretien", label: "Entretien", types: ENTRETIEN_TYPES },
+  ...STANDALONE_TYPES.map((t) => ({ key: t, label: INTERVENTION_TYPE_LABELS[t], types: [t] })),
+];
 
 function getInitials(name: string) {
   return name
