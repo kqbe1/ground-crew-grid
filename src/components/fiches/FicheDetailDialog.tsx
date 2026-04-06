@@ -269,7 +269,7 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
           {!sheet.sent_to_client && (
             <Button onClick={handleSendEmail} disabled={sending} size="sm">
               <Mail className="w-4 h-4 mr-1" />
-              {sending ? "Envoi..." : "Envoyer au client"}
+              {sending ? "Préparation..." : "Envoyer par email"}
             </Button>
           )}
         </div>
