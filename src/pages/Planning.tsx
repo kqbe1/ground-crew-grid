@@ -200,11 +200,15 @@ function PlanningInner() {
 
   const overlappingIds = useMemo(() => getOverlappingTaskIds(filteredTasks), [filteredTasks]);
 
-  const toggleType = (type: string) => {
+  const toggleGroup = (group: typeof FILTER_GROUPS[number]) => {
     setHiddenTypes((prev) => {
       const next = new Set(prev);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
+      const allHidden = group.types.every((t) => next.has(t));
+      if (allHidden) {
+        group.types.forEach((t) => next.delete(t));
+      } else {
+        group.types.forEach((t) => next.add(t));
+      }
       return next;
     });
   };
