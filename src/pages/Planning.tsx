@@ -385,7 +385,7 @@ function PlanningInner() {
                 <div className="border-b border-border p-1 text-xs text-muted-foreground text-right pr-2 h-16 flex items-start justify-end pt-1 font-medium">
                   {String(hour).padStart(2, "0")}:00
                 </div>
-                {workers.map((w) => {
+                {displayedWorkers.map((w) => {
                   const hourTasks = filteredTasks.filter(
                     (t) => t.assigned_to === w.id && t.start_time && parseInt(t.start_time.split(":")[0]) === hour
                   );
