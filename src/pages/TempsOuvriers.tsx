@@ -41,10 +41,6 @@ export default function TempsOuvriers() {
   const [period, setPeriod] = useState("month");
   const [loading, setLoading] = useState(true);
 
-  if (role && role !== "admin" && role !== "super_admin") {
-    return <Navigate to="/" replace />;
-  }
-
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -147,6 +143,10 @@ export default function TempsOuvriers() {
   }, [filteredSheets]);
 
   const avgPerTask = filteredSheets.length > 0 ? Math.round(totalMinutes / filteredSheets.length) : 0;
+
+  if (role && role !== "admin" && role !== "super_admin") {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="p-6 space-y-6">
