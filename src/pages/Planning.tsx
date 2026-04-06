@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChevronLeft, ChevronRight, Filter, ClipboardPaste, Users } from "lucide-react";
 import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
-import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
+import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, FILTER_TYPE_GROUPS } from "@/lib/constants";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -25,12 +25,7 @@ import { getOverlappingTaskIds, findOverlaps } from "@/lib/overlapUtils";
 type ViewMode = "day" | "week" | "month";
 
 const HOURS = Array.from({ length: 11 }, (_, i) => i + 7); // 7h - 17h
-const ENTRETIEN_TYPES = ["entretien_gaz", "entretien_mazout", "entretien_pellets", "entretien_clim", "entretien_vmc"];
-const STANDALONE_TYPES = ["depannage", "installation", "remplacement", "rdv_divers", "autre"];
-const FILTER_GROUPS = [
-  { key: "entretien", label: "Entretien", types: ENTRETIEN_TYPES },
-  ...STANDALONE_TYPES.map((t) => ({ key: t, label: INTERVENTION_TYPE_LABELS[t], types: [t] })),
-];
+const ALL_FILTER_GROUPS = FILTER_TYPE_GROUPS;
 
 function getInitials(name: string) {
   return name
@@ -227,7 +222,7 @@ function PlanningInner() {
   };
   const overlappingIds = useMemo(() => getOverlappingTaskIds(filteredTasks), [filteredTasks]);
 
-  const toggleGroup = (group: typeof FILTER_GROUPS[number]) => {
+  const toggleGroup = (group: typeof ALL_FILTER_GROUPS[number]) => {
     setHiddenTypes((prev) => {
       const next = new Set(prev);
       const allHidden = group.types.every((t) => next.has(t));
@@ -281,7 +276,7 @@ function PlanningInner() {
           </PopoverTrigger>
           <PopoverContent className="w-56 p-2 bg-popover z-50" align="start">
             <div className="text-sm font-semibold mb-2 px-2">Filtrer par type</div>
-            {FILTER_GROUPS.map((group) => {
+            {ALL_FILTER_GROUPS.map((group) => {
               const allVisible = group.types.every((t) => !hiddenTypes.has(t));
               const someVisible = group.types.some((t) => !hiddenTypes.has(t));
               return (

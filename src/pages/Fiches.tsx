@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
+import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, FILTER_TYPE_GROUPS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
 import { ClipboardList, FileSignature, Camera, Mail, Search } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -31,7 +31,11 @@ export default function Fiches() {
 
   const filtered = sheets.filter((s) => {
     if (statusFilter !== "all" && s.final_status !== statusFilter) return false;
-    if (typeFilter !== "all" && s.work_tasks?.intervention_type !== typeFilter) return false;
+    if (typeFilter !== "all") {
+      if (typeFilter === "entretien") {
+        if (!ENTRETIEN_SUBTYPES.includes(s.work_tasks?.intervention_type)) return false;
+      } else if (s.work_tasks?.intervention_type !== typeFilter) return false;
+    }
     if (search) {
       const q = search.toLowerCase();
       const match =
@@ -87,8 +91,8 @@ export default function Fiches() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous les types</SelectItem>
-            {Object.entries(INTERVENTION_TYPE_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
+            {FILTER_TYPE_GROUPS.map((g) => (
+              <SelectItem key={g.key} value={g.key}>{g.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>

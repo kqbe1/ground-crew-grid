@@ -3,10 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import TaskDetailDialog from "@/components/planning/TaskDetailDialog";
+import { FILTER_TYPE_GROUPS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
 
 const statusLabels: Record<string, string> = {
   planifie: "Planifié",
@@ -37,6 +39,7 @@ const typeLabels: Record<string, string> = {
 
 export default function Taches() {
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
 
   const { data: tasks = [], refetch } = useQuery({
@@ -52,9 +55,19 @@ export default function Taches() {
   });
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return tasks;
+    let result = tasks;
+    // Type filter
+    if (typeFilter !== "all") {
+      if (typeFilter === "entretien") {
+        result = result.filter((t) => ENTRETIEN_SUBTYPES.includes(t.intervention_type));
+      } else {
+        result = result.filter((t) => t.intervention_type === typeFilter);
+      }
+    }
+    // Search
+    if (!search.trim()) return result;
     const terms = search.toLowerCase().split(/\s+/).filter(Boolean);
-    return tasks.filter((t) => {
+    return result.filter((t) => {
       const haystack = [
         t.title,
         t.description,
@@ -71,7 +84,7 @@ export default function Taches() {
         .toLowerCase();
       return terms.every((term) => haystack.includes(term));
     });
-  }, [tasks, search]);
+  }, [tasks, search, typeFilter]);
 
   return (
     <div className="p-6 space-y-4">
@@ -80,14 +93,27 @@ export default function Taches() {
         <span className="text-sm text-muted-foreground">{filtered.length} tâche{filtered.length !== 1 ? "s" : ""}</span>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Rechercher par client, titre, statut, type…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher par client, titre, statut, type…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les types</SelectItem>
+            {FILTER_TYPE_GROUPS.map((g) => (
+              <SelectItem key={g.key} value={g.key}>{g.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="rounded-lg border border-border overflow-hidden">
