@@ -126,7 +126,7 @@ export default function Admin() {
         <p className="text-muted-foreground">Gestion des utilisateurs et templates</p>
       </div>
 
-      <Tabs defaultValue="users">
+      <Tabs defaultValue="stats">
         <TabsList>
           <TabsTrigger value="stats" className="gap-1.5"><BarChart3 className="w-4 h-4" /> Statistiques</TabsTrigger>
           <TabsTrigger value="users" className="gap-1.5"><Users className="w-4 h-4" /> Utilisateurs</TabsTrigger>
