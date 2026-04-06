@@ -368,7 +368,7 @@ function PlanningInner() {
           <div className="grid" style={{ gridTemplateColumns: `80px repeat(${Math.max(displayedWorkers.length, 1)}, 180px)`, minWidth: `${80 + Math.max(displayedWorkers.length, 1) * 180}px` }}>
             {/* Header row - worker avatars */}
             <div className="sticky top-0 bg-muted/50 border-b border-border p-3 z-10" />
-            {workers.map((w) => (
+            {displayedWorkers.map((w) => (
               <div key={w.id} className="sticky top-0 bg-muted/50 border-b border-l border-border p-3 z-10 flex flex-col items-center gap-1.5">
                 <Avatar className="h-9 w-9 bg-muted-foreground/20">
                   <AvatarFallback className="text-xs font-semibold bg-muted text-muted-foreground">
