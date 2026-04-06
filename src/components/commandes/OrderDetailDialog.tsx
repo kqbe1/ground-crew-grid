@@ -195,7 +195,10 @@ export default function OrderDetailDialog({ open, onOpenChange, order, onUpdated
 
       <CreateFollowUpTaskDialog
         open={showFollowUp}
-        onOpenChange={setShowFollowUp}
+        onOpenChange={(o) => {
+          setShowFollowUp(o);
+          if (!o) onUpdated(); // Refresh list when follow-up dialog closes (whether created or dismissed)
+        }}
         order={order}
         onCreated={() => {
           setShowFollowUp(false);
