@@ -94,7 +94,7 @@ export default function ImportCsvDialog({ open, onOpenChange, onImported }: Impo
   const [csvRows, setCsvRows] = useState<string[][]>([]);
   const [mapping, setMapping] = useState<Record<number, string>>({});
   const [importing, setImporting] = useState(false);
-  const [result, setResult] = useState<{ total: number; ok: number; skipped: number } | null>(null);
+  const [result, setResult] = useState<{ total: number; ok: number; skipped: number; duplicates: string[] } | null>(null);
 
   const reset = () => {
     setCsvHeaders([]);
@@ -136,6 +136,16 @@ export default function ImportCsvDialog({ open, onOpenChange, onImported }: Impo
     setImporting(true);
     let ok = 0;
     let skipped = 0;
+    const duplicates: string[] = [];
+
+    // Fetch existing clients for duplicate detection
+    const { data: existing } = await supabase.from("clients").select("name, email");
+    const existingNames = new Set((existing ?? []).map((c) => c.name?.toLowerCase().trim()));
+    const existingEmails = new Set(
+      (existing ?? []).filter((c) => c.email).map((c) => c.email!.toLowerCase().trim())
+    );
+
+    const emailColIdx = Object.entries(mapping).find(([, v]) => v === "email")?.[0];
 
     for (const row of csvRows) {
       const record: Record<string, string | null> = {};
@@ -150,15 +160,43 @@ export default function ImportCsvDialog({ open, onOpenChange, onImported }: Impo
       }
       if (!record.name) { skipped++; continue; }
 
+      // Duplicate check by name
+      const nameLower = record.name.toLowerCase().trim();
+      if (existingNames.has(nameLower)) {
+        duplicates.push(record.name);
+        skipped++;
+        continue;
+      }
+
+      // Duplicate check by email
+      if (record.email) {
+        const emailLower = record.email.toLowerCase().trim();
+        if (existingEmails.has(emailLower)) {
+          duplicates.push(`${record.name} (${record.email})`);
+          skipped++;
+          continue;
+        }
+      }
+
       const { error } = await supabase.from("clients").insert(record as any);
-      if (error) { skipped++; } else { ok++; }
+      if (error) {
+        skipped++;
+      } else {
+        ok++;
+        // Add to sets to catch intra-CSV duplicates too
+        existingNames.add(nameLower);
+        if (record.email) existingEmails.add(record.email.toLowerCase().trim());
+      }
     }
 
-    setResult({ total: csvRows.length, ok, skipped });
+    setResult({ total: csvRows.length, ok, skipped, duplicates });
     setImporting(false);
     if (ok > 0) {
       toast.success(`${ok} client(s) importé(s)`);
       onImported();
+    }
+    if (duplicates.length > 0) {
+      toast.warning(`${duplicates.length} doublon(s) détecté(s)`);
     }
   };
 
@@ -244,8 +282,21 @@ export default function ImportCsvDialog({ open, onOpenChange, onImported }: Impo
             <div className="text-lg font-semibold">{result.ok} client(s) importé(s)</div>
             {result.skipped > 0 && (
               <Badge variant="outline" className="text-destructive border-destructive">
-                {result.skipped} ligne(s) ignorée(s) (nom manquant ou doublon)
+                {result.skipped} ligne(s) ignorée(s)
               </Badge>
+            )}
+            {result.duplicates.length > 0 && (
+              <div className="text-left mx-auto max-w-md">
+                <div className="text-sm font-medium text-muted-foreground mb-1">Doublons détectés :</div>
+                <div className="max-h-32 overflow-y-auto text-sm space-y-0.5 bg-muted rounded-lg p-2">
+                  {result.duplicates.map((d, i) => (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                      <span className="truncate">{d}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
             <Button variant="outline" onClick={() => { reset(); onOpenChange(false); }}>Fermer</Button>
           </div>
