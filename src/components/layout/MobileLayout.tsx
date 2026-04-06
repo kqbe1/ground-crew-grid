@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useOfflineDrafts } from "@/hooks/useOfflineDrafts";
 import { toast } from "sonner";
 import MobileTaskNotifications from "@/components/mobile/MobileTaskNotifications";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 const mobileNav = [
   { to: "/mobile", icon: Calendar, label: "Agenda" },
   { to: "/mobile/fiches", icon: ClipboardList, label: "Fiches" },
