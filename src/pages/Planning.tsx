@@ -304,6 +304,38 @@ function PlanningInner() {
           </PopoverContent>
         </Popover>
 
+        {/* Worker filter dropdown */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Users className="w-4 h-4" />
+              {visibleWorkerIds ? `${visibleWorkerIds.size} ouvrier${visibleWorkerIds.size > 1 ? "s" : ""}` : "Tous ouvriers"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-2 bg-popover z-50" align="start">
+            <div className="text-sm font-semibold mb-2 px-2">Filtrer par ouvrier</div>
+            {workers.map((w) => (
+              <label key={w.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                <Checkbox
+                  checked={!visibleWorkerIds || visibleWorkerIds.has(w.id)}
+                  onCheckedChange={() => toggleWorker(w.id)}
+                />
+                <Avatar className="h-5 w-5">
+                  <AvatarFallback className="text-[9px] bg-muted text-muted-foreground">
+                    {getInitials(w.full_name)}
+                  </AvatarFallback>
+                </Avatar>
+                {w.full_name}
+              </label>
+            ))}
+            {visibleWorkerIds && (
+              <Button variant="ghost" size="sm" className="w-full mt-1" onClick={() => setVisibleWorkerIds(null)}>
+                Tous afficher
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
+
         <div className="flex-1" />
 
         {/* Action buttons */}
