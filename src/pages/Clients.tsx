@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, Phone, Mail, MapPin, Upload } from "lucide-react";
+import { Plus, Search, Phone, Mail, MapPin, Upload, Download } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import CreateEditClientDialog from "@/components/clients/CreateEditClientDialog";
 import ClientDetailDialog from "@/components/clients/ClientDetailDialog";
