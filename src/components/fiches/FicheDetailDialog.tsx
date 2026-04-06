@@ -39,11 +39,46 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
       return;
     }
     setSending(true);
-    // Mark as sent
-    await supabase.from("intervention_sheets").update({ sent_to_client: true }).eq("id", sheet.id);
-    toast.success(`Email envoyé à ${task.clients.email}`);
-    setSending(false);
-    onUpdated();
+    try {
+      // 1. Generate & download the PDF
+      const { data: pdfCfg } = await supabase.from("pdf_settings").select("*").limit(1).single();
+      let logoDataUrl: string | null = null;
+      if (pdfCfg?.logo_url) {
+        try {
+          const { data: signedData } = await supabase.storage
+            .from("intervention-photos")
+            .createSignedUrl(pdfCfg.logo_url, 60);
+          if (signedData?.signedUrl) {
+            const resp = await fetch(signedData.signedUrl);
+            const blob = await resp.blob();
+            logoDataUrl = await new Promise<string>((res) => {
+              const r = new FileReader();
+              r.onloadend = () => res(r.result as string);
+              r.readAsDataURL(blob);
+            });
+          }
+        } catch {}
+      }
+      downloadFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
+
+      // 2. Open mailto with pre-filled subject & body
+      const clientName = task.clients?.name || "Client";
+      const taskTitle = task?.title || "Intervention";
+      const subject = encodeURIComponent(`Fiche d'intervention — ${taskTitle}`);
+      const body = encodeURIComponent(
+        `Bonjour ${clientName},\n\nVeuillez trouver ci-joint la fiche d'intervention concernant : ${taskTitle}.\n\nN'hésitez pas à nous contacter pour toute question.\n\nCordialement`
+      );
+      window.open(`mailto:${task.clients.email}?subject=${subject}&body=${body}`, "_blank");
+
+      // 3. Mark as sent
+      await supabase.from("intervention_sheets").update({ sent_to_client: true }).eq("id", sheet.id);
+      toast.success("PDF téléchargé — joignez-le à l'email ouvert");
+      onUpdated();
+    } catch (err) {
+      toast.error("Erreur lors de la préparation de l'email");
+    } finally {
+      setSending(false);
+    }
   };
 
   const interventionType = task?.intervention_type;
