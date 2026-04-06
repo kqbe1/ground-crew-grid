@@ -25,6 +25,7 @@ const navItems = [
   { to: "/commandes", icon: Package, label: "Commandes", roles: ["admin", "secretariat", "super_admin"] },
   { to: "/taches", icon: ListTodo, label: "Tâches", roles: ["admin", "secretariat", "super_admin"] },
   { to: "/fiches", icon: ClipboardList, label: "Fiches", roles: ["admin", "secretariat", "super_admin"] },
+  { to: "/temps-ouvriers", icon: Clock, label: "Temps", roles: ["admin", "super_admin"] },
   { to: "/admin", icon: Settings, label: "Admin", roles: ["admin", "super_admin"] },
 ];
 
