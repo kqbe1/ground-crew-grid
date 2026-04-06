@@ -136,6 +136,16 @@ export default function ImportCsvDialog({ open, onOpenChange, onImported }: Impo
     setImporting(true);
     let ok = 0;
     let skipped = 0;
+    const duplicates: string[] = [];
+
+    // Fetch existing clients for duplicate detection
+    const { data: existing } = await supabase.from("clients").select("name, email");
+    const existingNames = new Set((existing ?? []).map((c) => c.name?.toLowerCase().trim()));
+    const existingEmails = new Set(
+      (existing ?? []).filter((c) => c.email).map((c) => c.email!.toLowerCase().trim())
+    );
+
+    const emailColIdx = Object.entries(mapping).find(([, v]) => v === "email")?.[0];
 
     for (const row of csvRows) {
       const record: Record<string, string | null> = {};
@@ -150,15 +160,43 @@ export default function ImportCsvDialog({ open, onOpenChange, onImported }: Impo
       }
       if (!record.name) { skipped++; continue; }
 
+      // Duplicate check by name
+      const nameLower = record.name.toLowerCase().trim();
+      if (existingNames.has(nameLower)) {
+        duplicates.push(record.name);
+        skipped++;
+        continue;
+      }
+
+      // Duplicate check by email
+      if (record.email) {
+        const emailLower = record.email.toLowerCase().trim();
+        if (existingEmails.has(emailLower)) {
+          duplicates.push(`${record.name} (${record.email})`);
+          skipped++;
+          continue;
+        }
+      }
+
       const { error } = await supabase.from("clients").insert(record as any);
-      if (error) { skipped++; } else { ok++; }
+      if (error) {
+        skipped++;
+      } else {
+        ok++;
+        // Add to sets to catch intra-CSV duplicates too
+        existingNames.add(nameLower);
+        if (record.email) existingEmails.add(record.email.toLowerCase().trim());
+      }
     }
 
-    setResult({ total: csvRows.length, ok, skipped });
+    setResult({ total: csvRows.length, ok, skipped, duplicates });
     setImporting(false);
     if (ok > 0) {
       toast.success(`${ok} client(s) importé(s)`);
       onImported();
+    }
+    if (duplicates.length > 0) {
+      toast.warning(`${duplicates.length} doublon(s) détecté(s)`);
     }
   };
 
