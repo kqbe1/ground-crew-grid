@@ -199,6 +199,32 @@ function PlanningInner() {
     ? tasks.filter((t) => !hiddenTypes.has(t.intervention_type))
     : tasks;
 
+  const displayedWorkers = useMemo(
+    () => visibleWorkerIds ? workers.filter((w) => visibleWorkerIds.has(w.id)) : workers,
+    [workers, visibleWorkerIds]
+  );
+
+  const toggleWorker = (id: string) => {
+    setVisibleWorkerIds((prev) => {
+      if (!prev) {
+        // First click: show only this worker
+        const allIds = new Set(workers.map((w) => w.id));
+        allIds.delete(id);
+        // Actually, toggle means deselect this one → show all except this
+        // Better UX: unchecking one means filter to all others
+        const next = new Set(workers.map((w) => w.id));
+        next.delete(id);
+        return next;
+      }
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      // If all selected again, reset to null
+      if (next.size === workers.length) return null;
+      if (next.size === 0) return null; // prevent empty
+      return next;
+    });
+  };
   const overlappingIds = useMemo(() => getOverlappingTaskIds(filteredTasks), [filteredTasks]);
 
   const toggleGroup = (group: typeof FILTER_GROUPS[number]) => {
