@@ -25,7 +25,12 @@ import { getOverlappingTaskIds, findOverlaps } from "@/lib/overlapUtils";
 type ViewMode = "day" | "week" | "month";
 
 const HOURS = Array.from({ length: 11 }, (_, i) => i + 7); // 7h - 17h
-const ALL_INTERVENTION_TYPES = Object.keys(INTERVENTION_TYPE_LABELS);
+const ENTRETIEN_TYPES = ["entretien_gaz", "entretien_mazout", "entretien_pellets", "entretien_clim", "entretien_vmc"];
+const STANDALONE_TYPES = ["depannage", "installation", "remplacement", "rdv_divers", "autre"];
+const FILTER_GROUPS = [
+  { key: "entretien", label: "Entretien", types: ENTRETIEN_TYPES },
+  ...STANDALONE_TYPES.map((t) => ({ key: t, label: INTERVENTION_TYPE_LABELS[t], types: [t] })),
+];
 
 function getInitials(name: string) {
   return name
@@ -195,11 +200,15 @@ function PlanningInner() {
 
   const overlappingIds = useMemo(() => getOverlappingTaskIds(filteredTasks), [filteredTasks]);
 
-  const toggleType = (type: string) => {
+  const toggleGroup = (group: typeof FILTER_GROUPS[number]) => {
     setHiddenTypes((prev) => {
       const next = new Set(prev);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
+      const allHidden = group.types.every((t) => next.has(t));
+      if (allHidden) {
+        group.types.forEach((t) => next.delete(t));
+      } else {
+        group.types.forEach((t) => next.add(t));
+      }
       return next;
     });
   };
@@ -245,16 +254,21 @@ function PlanningInner() {
           </PopoverTrigger>
           <PopoverContent className="w-56 p-2 bg-popover z-50" align="start">
             <div className="text-sm font-semibold mb-2 px-2">Filtrer par type</div>
-            {ALL_INTERVENTION_TYPES.map((type) => (
-              <label key={type} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
-                <Checkbox
-                  checked={!hiddenTypes.has(type)}
-                  onCheckedChange={() => toggleType(type)}
-                />
-                <span className={cn("w-2.5 h-2.5 rounded-full", INTERVENTION_TYPE_COLORS[type])} />
-                {INTERVENTION_TYPE_LABELS[type]}
-              </label>
-            ))}
+            {FILTER_GROUPS.map((group) => {
+              const allVisible = group.types.every((t) => !hiddenTypes.has(t));
+              const someVisible = group.types.some((t) => !hiddenTypes.has(t));
+              return (
+                <label key={group.key} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                  <Checkbox
+                    checked={allVisible}
+                    {...(!allVisible && someVisible ? { "data-state": "indeterminate" } : {})}
+                    onCheckedChange={() => toggleGroup(group)}
+                  />
+                  <span className={cn("w-2.5 h-2.5 rounded-full", INTERVENTION_TYPE_COLORS[group.types[0]])} />
+                  {group.label}
+                </label>
+              );
+            })}
             {hiddenTypes.size > 0 && (
               <Button variant="ghost" size="sm" className="w-full mt-1" onClick={() => setHiddenTypes(new Set())}>
                 Tout afficher
