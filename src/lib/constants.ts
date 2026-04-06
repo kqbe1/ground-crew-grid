@@ -62,3 +62,12 @@ export const PERIODICITY_LABELS: Record<string, string> = {
   bisannuel: "Bisannuel",
   triennal: "Triennal",
 };
+
+// Grouped filter options: single "Entretien" entry covering all entretien_* subtypes
+export const ENTRETIEN_SUBTYPES = ["entretien_gaz", "entretien_mazout", "entretien_pellets", "entretien_clim", "entretien_vmc"];
+export const STANDALONE_INTERVENTION_TYPES = ["depannage", "installation", "remplacement", "rdv_divers", "autre"];
+
+export const FILTER_TYPE_GROUPS = [
+  { key: "entretien", label: "Entretien", types: ENTRETIEN_SUBTYPES },
+  ...STANDALONE_INTERVENTION_TYPES.map((t) => ({ key: t, label: INTERVENTION_TYPE_LABELS[t], types: [t] })),
+];
