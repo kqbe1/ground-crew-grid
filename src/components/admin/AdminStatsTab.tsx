@@ -194,6 +194,7 @@ export default function AdminStatsTab() {
   }, [schedules, taskStats, sheets, workers, projections, monthlyActivity, workerStats, currentYear]);
 
 
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin h-6 w-6 border-3 border-primary border-t-transparent rounded-full" />
