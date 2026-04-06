@@ -209,7 +209,7 @@ export default function ImportCsvDialog({ open, onOpenChange, onImported }: Impo
                             <SelectItem value={IGNORE}>— Ignorer —</SelectItem>
                             {CLIENT_FIELDS.map((f) => (
                               <SelectItem key={f.key} value={f.key} disabled={usedFields.has(f.key) && mapping[i] !== f.key}>
-                                {f.label} {f.required ? "*" : ""}
+                                {f.label} {"required" in f && f.required ? "*" : ""}
                               </SelectItem>
                             ))}
                           </SelectContent>
