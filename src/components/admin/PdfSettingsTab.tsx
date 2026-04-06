@@ -322,13 +322,81 @@ export default function PdfSettingsTab() {
         </CardContent>
       </Card>
 
-      {/* Save Button */}
-      <div className="flex justify-end">
+      {/* Preview + Save */}
+      <div className="flex justify-between items-center">
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (!settings) return;
+            const sampleSheet = {
+              id: "preview-0001-abcd-efgh",
+              created_at: new Date().toISOString(),
+              arrival_time: new Date(Date.now() - 3600000 * 2).toISOString(),
+              departure_time: new Date().toISOString(),
+              description: "Remplacement du brûleur et vérification complète du circuit. Nettoyage de la chaudière et contrôle des fumées. RAS.",
+              final_status: "termine",
+              is_draft: false,
+              client_present: true,
+              client_absent: false,
+              signature_data: null,
+              signed_at: null,
+              sent_to_client: false,
+              photos_before: [],
+              photos_after: [],
+              checklist_results: [
+                { label: "Vérification étanchéité gaz", checked: true },
+                { label: "Contrôle température fumées", checked: true },
+                { label: "Nettoyage brûleur", checked: true },
+                { label: "Vérification ventilation", checked: false },
+                { label: "Test sécurité thermique", checked: true },
+              ],
+              work_tasks: {
+                title: "Entretien annuel chaudière gaz",
+                intervention_type: "entretien_gaz",
+                clients: {
+                  name: "Dupont Jean",
+                  email: "jean.dupont@email.be",
+                  phone: "+32 475 12 34 56",
+                  address_intervention: "Rue de la Loi 42, 1000 Bruxelles",
+                },
+              },
+              profiles: { full_name: "Marc Leroy" },
+            };
+            const doc = generateFichePdf(sampleSheet, settings as Partial<PdfConfig>, logoDataUrl);
+            const blob = doc.output("blob");
+            const url = URL.createObjectURL(blob);
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(url);
+          }}
+        >
+          <Eye className="w-4 h-4 mr-2" />
+          Aperçu PDF
+        </Button>
         <Button onClick={save} disabled={saving}>
           <Save className="w-4 h-4 mr-2" />
           {saving ? "Sauvegarde..." : "Sauvegarder la configuration"}
         </Button>
       </div>
+
+      {/* PDF Preview */}
+      {previewUrl && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-base">Aperçu du PDF</CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => { URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }}>
+              Fermer
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <iframe
+              src={previewUrl}
+              className="w-full border rounded-lg"
+              style={{ height: "700px" }}
+              title="Aperçu PDF"
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
