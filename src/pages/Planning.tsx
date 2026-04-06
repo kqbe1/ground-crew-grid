@@ -222,7 +222,7 @@ function PlanningInner() {
   };
   const overlappingIds = useMemo(() => getOverlappingTaskIds(filteredTasks), [filteredTasks]);
 
-  const toggleGroup = (group: typeof FILTER_GROUPS[number]) => {
+  const toggleGroup = (group: typeof ALL_FILTER_GROUPS[number]) => {
     setHiddenTypes((prev) => {
       const next = new Set(prev);
       const allHidden = group.types.every((t) => next.has(t));
@@ -276,7 +276,7 @@ function PlanningInner() {
           </PopoverTrigger>
           <PopoverContent className="w-56 p-2 bg-popover z-50" align="start">
             <div className="text-sm font-semibold mb-2 px-2">Filtrer par type</div>
-            {FILTER_GROUPS.map((group) => {
+            {ALL_FILTER_GROUPS.map((group) => {
               const allVisible = group.types.every((t) => !hiddenTypes.has(t));
               const someVisible = group.types.some((t) => !hiddenTypes.has(t));
               return (
