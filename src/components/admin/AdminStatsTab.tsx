@@ -132,7 +132,68 @@ export default function AdminStatsTab() {
       .sort((a, b) => b.totalTasks - a.totalTasks);
   }, [workers, tasks, sheets, currentYear]);
 
-  if (loading) {
+  const exportCsv = useCallback(() => {
+    const sep = ";";
+    const lines: string[] = [];
+    const addSection = (title: string) => { lines.push(""); lines.push(title); };
+    const addRow = (...cols: (string | number)[]) => lines.push(cols.join(sep));
+
+    // Header
+    lines.push(`Rapport Statistiques — ${format(new Date(), "d MMMM yyyy", { locale: fr })}`);
+    lines.push("");
+
+    // KPI
+    addSection("═══ INDICATEURS CLÉS ═══");
+    addRow("Indicateur", "Valeur");
+    addRow("Entretiens actifs", schedules.length);
+    addRow(`Tâches ${currentYear}`, taskStats.total);
+    addRow("Fiches complétées", sheets.length);
+    addRow("Ouvriers actifs", workers.filter((w) => w.worker_level).length);
+
+    // Projections
+    addSection("═══ PROJECTIONS ENTRETIENS ═══");
+    const projHeaders = ["Type", ...projections.map((p) => String(p.year))];
+    addRow(...projHeaders);
+    ENTRETIEN_TYPES.forEach(([type, label]) => {
+      addRow(label as string, ...projections.map((p) => p.byType[type] || 0));
+    });
+    addRow("TOTAL", ...projections.map((p) => p.total));
+
+    // Tasks by status
+    addSection(`═══ TÂCHES ${currentYear} PAR STATUT ═══`);
+    addRow("Statut", "Nombre", "Pourcentage");
+    Object.entries(taskStats.byStatus)
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([status, count]) => {
+        const pct = taskStats.total ? Math.round((count / taskStats.total) * 100) : 0;
+        addRow(statusLabels[status] || status, count, `${pct}%`);
+      });
+
+    // Monthly activity
+    addSection("═══ ACTIVITÉ MENSUELLE (6 MOIS) ═══");
+    addRow("Mois", "Tâches", "Fiches");
+    monthlyActivity.forEach((m) => addRow(m.label, m.tasks, m.sheets));
+
+    // Worker productivity
+    addSection(`═══ CHARGE PAR OUVRIER — ${currentYear} ═══`);
+    addRow("Ouvrier", "Niveau", `Tâches ${currentYear}`, "Ce mois", "Heures est.", "Fiches");
+    workerStats.forEach((w) => {
+      addRow(w.full_name, w.worker_level || "—", w.totalTasks, w.monthTasks, `${w.totalHours}h`, w.totalSheets);
+    });
+
+    // BOM for Excel compatibility + download
+    const bom = "\uFEFF";
+    const blob = new Blob([bom + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `statistiques_${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Export CSV téléchargé");
+  }, [schedules, taskStats, sheets, workers, projections, monthlyActivity, workerStats, currentYear]);
+
+
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin h-6 w-6 border-3 border-primary border-t-transparent rounded-full" />
