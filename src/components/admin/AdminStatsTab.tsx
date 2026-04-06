@@ -218,6 +218,13 @@ export default function AdminStatsTab() {
 
   return (
     <div className="space-y-6">
+      {/* Export button */}
+      <div className="flex justify-end">
+        <Button variant="outline" className="gap-2" onClick={exportCsv}>
+          <Download className="w-4 h-4" /> Exporter CSV
+        </Button>
+      </div>
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
