@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, Phone, Mail, MapPin } from "lucide-react";
+import { Plus, Search, Phone, Mail, MapPin, Upload } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import CreateEditClientDialog from "@/components/clients/CreateEditClientDialog";
 import ClientDetailDialog from "@/components/clients/ClientDetailDialog";
+import ImportCsvDialog from "@/components/clients/ImportCsvDialog";
 
 type Client = Tables<"clients">;
 
@@ -15,6 +16,7 @@ export default function Clients() {
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editClient, setEditClient] = useState<Client | null>(null);
   const [detailClient, setDetailClient] = useState<Client | null>(null);
 
@@ -36,7 +38,10 @@ export default function Clients() {
           <h1 className="text-2xl font-bold">Clients</h1>
           <p className="text-muted-foreground">{clients.length} client(s)</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}><Plus className="w-4 h-4 mr-2" /> Nouveau client</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="w-4 h-4 mr-2" /> Importer CSV</Button>
+          <Button onClick={() => setCreateOpen(true)}><Plus className="w-4 h-4 mr-2" /> Nouveau client</Button>
+        </div>
       </div>
 
       <div className="relative">
@@ -107,6 +112,9 @@ export default function Clients() {
         client={detailClient}
         onEdit={() => { setEditClient(detailClient); setDetailClient(null); }}
       />
+
+      {/* Import CSV */}
+      <ImportCsvDialog open={importOpen} onOpenChange={setImportOpen} onImported={fetchClients} />
     </div>
   );
 }
