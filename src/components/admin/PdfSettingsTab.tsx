@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Save, Upload, Image } from "lucide-react";
+import { Save, Upload, Image, Eye } from "lucide-react";
+import { generateFichePdf, PdfConfig } from "@/lib/generateFichePdf";
 
 interface PdfSettings {
   id: string;
@@ -52,6 +53,8 @@ export default function PdfSettingsTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -60,7 +63,24 @@ export default function PdfSettingsTab() {
         .select("*")
         .limit(1)
         .single();
-      if (data) setSettings(data as unknown as PdfSettings);
+      if (data) {
+        setSettings(data as unknown as PdfSettings);
+        // Load logo as data URL for preview
+        if (data.logo_url) {
+          try {
+            const { data: signedData } = await supabase.storage
+              .from("intervention-photos")
+              .createSignedUrl(data.logo_url as string, 120);
+            if (signedData?.signedUrl) {
+              const resp = await globalThis.fetch(signedData.signedUrl);
+              const blob = await resp.blob();
+              const reader = new FileReader();
+              reader.onloadend = () => setLogoDataUrl(reader.result as string);
+              reader.readAsDataURL(blob);
+            }
+          } catch {}
+        }
+      }
       setLoading(false);
     };
     fetch();
