@@ -3,7 +3,7 @@ import { useDragScroll } from "@/hooks/useDragScroll";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, ChevronRight, Filter, ClipboardPaste } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, ClipboardPaste, Users } from "lucide-react";
 import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
@@ -56,6 +56,7 @@ function PlanningInner() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [workers, setWorkers] = useState<any[]>([]);
   const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set());
+  const [visibleWorkerIds, setVisibleWorkerIds] = useState<Set<string> | null>(null); // null = all visible
   const [clickContext, setClickContext] = useState<{ hour?: number; workerId?: string }>({});
   const [refreshKey, setRefreshKey] = useState(0);
   const refreshTasks = useCallback(() => setRefreshKey((k) => k + 1), []);
@@ -198,6 +199,32 @@ function PlanningInner() {
     ? tasks.filter((t) => !hiddenTypes.has(t.intervention_type))
     : tasks;
 
+  const displayedWorkers = useMemo(
+    () => visibleWorkerIds ? workers.filter((w) => visibleWorkerIds.has(w.id)) : workers,
+    [workers, visibleWorkerIds]
+  );
+
+  const toggleWorker = (id: string) => {
+    setVisibleWorkerIds((prev) => {
+      if (!prev) {
+        // First click: show only this worker
+        const allIds = new Set(workers.map((w) => w.id));
+        allIds.delete(id);
+        // Actually, toggle means deselect this one → show all except this
+        // Better UX: unchecking one means filter to all others
+        const next = new Set(workers.map((w) => w.id));
+        next.delete(id);
+        return next;
+      }
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      // If all selected again, reset to null
+      if (next.size === workers.length) return null;
+      if (next.size === 0) return null; // prevent empty
+      return next;
+    });
+  };
   const overlappingIds = useMemo(() => getOverlappingTaskIds(filteredTasks), [filteredTasks]);
 
   const toggleGroup = (group: typeof FILTER_GROUPS[number]) => {
@@ -277,6 +304,38 @@ function PlanningInner() {
           </PopoverContent>
         </Popover>
 
+        {/* Worker filter dropdown */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Users className="w-4 h-4" />
+              {visibleWorkerIds ? `${visibleWorkerIds.size} ouvrier${visibleWorkerIds.size > 1 ? "s" : ""}` : "Tous ouvriers"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-2 bg-popover z-50" align="start">
+            <div className="text-sm font-semibold mb-2 px-2">Filtrer par ouvrier</div>
+            {workers.map((w) => (
+              <label key={w.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                <Checkbox
+                  checked={!visibleWorkerIds || visibleWorkerIds.has(w.id)}
+                  onCheckedChange={() => toggleWorker(w.id)}
+                />
+                <Avatar className="h-5 w-5">
+                  <AvatarFallback className="text-[9px] bg-muted text-muted-foreground">
+                    {getInitials(w.full_name)}
+                  </AvatarFallback>
+                </Avatar>
+                {w.full_name}
+              </label>
+            ))}
+            {visibleWorkerIds && (
+              <Button variant="ghost" size="sm" className="w-full mt-1" onClick={() => setVisibleWorkerIds(null)}>
+                Tous afficher
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
+
         <div className="flex-1" />
 
         {/* Action buttons */}
@@ -306,10 +365,10 @@ function PlanningInner() {
       {/* Planning Grid - Day View */}
       {viewMode === "day" && (
         <div ref={dragScrollRef} className="border border-border rounded-xl overflow-auto bg-card shadow-sm cursor-grab">
-          <div className="grid" style={{ gridTemplateColumns: `80px repeat(${Math.max(workers.length, 1)}, 180px)`, minWidth: `${80 + Math.max(workers.length, 1) * 180}px` }}>
+          <div className="grid" style={{ gridTemplateColumns: `80px repeat(${Math.max(displayedWorkers.length, 1)}, 180px)`, minWidth: `${80 + Math.max(displayedWorkers.length, 1) * 180}px` }}>
             {/* Header row - worker avatars */}
             <div className="sticky top-0 bg-muted/50 border-b border-border p-3 z-10" />
-            {workers.map((w) => (
+            {displayedWorkers.map((w) => (
               <div key={w.id} className="sticky top-0 bg-muted/50 border-b border-l border-border p-3 z-10 flex flex-col items-center gap-1.5">
                 <Avatar className="h-9 w-9 bg-muted-foreground/20">
                   <AvatarFallback className="text-xs font-semibold bg-muted text-muted-foreground">
@@ -326,7 +385,7 @@ function PlanningInner() {
                 <div className="border-b border-border p-1 text-xs text-muted-foreground text-right pr-2 h-16 flex items-start justify-end pt-1 font-medium">
                   {String(hour).padStart(2, "0")}:00
                 </div>
-                {workers.map((w) => {
+                {displayedWorkers.map((w) => {
                   const hourTasks = filteredTasks.filter(
                     (t) => t.assigned_to === w.id && t.start_time && parseInt(t.start_time.split(":")[0]) === hour
                   );
@@ -404,7 +463,7 @@ function PlanningInner() {
         <WeekViewGrid
           currentDate={currentDate}
           tasks={filteredTasks}
-          workers={workers}
+          workers={displayedWorkers}
           onTaskClick={(task) => setSelectedTask(task)}
           onCellClick={(date, hour, workerId) => {
             setClickContext({ hour, workerId });
