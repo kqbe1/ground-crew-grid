@@ -112,6 +112,10 @@ export default function PdfSettingsTab() {
 
       // Store the path for signed URL generation
       update("logo_url", path);
+      // Also update logo data URL for preview
+      const reader = new FileReader();
+      reader.onloadend = () => setLogoDataUrl(reader.result as string);
+      reader.readAsDataURL(file);
       toast.success("Logo uploadé");
     } catch (err: any) {
       toast.error("Erreur upload : " + err.message);
