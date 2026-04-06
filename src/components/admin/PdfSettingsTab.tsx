@@ -367,8 +367,8 @@ export default function PdfSettingsTab() {
             toast.success("PDF d'aperçu téléchargé");
           }}
         >
-          <Eye className="w-4 h-4 mr-2" />
-          Aperçu PDF
+          <Download className="w-4 h-4 mr-2" />
+          Télécharger l'aperçu PDF
         </Button>
         <Button onClick={save} disabled={saving}>
           <Save className="w-4 h-4 mr-2" />
