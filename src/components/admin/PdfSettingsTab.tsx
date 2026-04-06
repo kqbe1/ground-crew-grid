@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Save, Upload, Image, Eye } from "lucide-react";
+import { Save, Upload, Image, Download } from "lucide-react";
 import { generateFichePdf, PdfConfig } from "@/lib/generateFichePdf";
 
 interface PdfSettings {
@@ -53,7 +53,7 @@ export default function PdfSettingsTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -363,39 +363,18 @@ export default function PdfSettingsTab() {
               profiles: { full_name: "Marc Leroy" },
             };
             const doc = generateFichePdf(sampleSheet, settings as Partial<PdfConfig>, logoDataUrl);
-            const dataUri = doc.output("datauristring");
-            if (previewUrl) URL.revokeObjectURL(previewUrl);
-            setPreviewUrl(dataUri);
+            doc.save("apercu-fiche-intervention.pdf");
+            toast.success("PDF d'aperçu téléchargé");
           }}
         >
-          <Eye className="w-4 h-4 mr-2" />
-          Aperçu PDF
+          <Download className="w-4 h-4 mr-2" />
+          Télécharger l'aperçu PDF
         </Button>
         <Button onClick={save} disabled={saving}>
           <Save className="w-4 h-4 mr-2" />
           {saving ? "Sauvegarde..." : "Sauvegarder la configuration"}
         </Button>
       </div>
-
-      {/* PDF Preview */}
-      {previewUrl && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base">Aperçu du PDF</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setPreviewUrl(null)}>
-              Fermer
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <iframe
-              src={previewUrl}
-              className="w-full border rounded-lg"
-              style={{ height: "700px" }}
-              title="Aperçu PDF"
-            />
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
