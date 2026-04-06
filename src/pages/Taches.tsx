@@ -55,9 +55,19 @@ export default function Taches() {
   });
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return tasks;
+    let result = tasks;
+    // Type filter
+    if (typeFilter !== "all") {
+      if (typeFilter === "entretien") {
+        result = result.filter((t) => ENTRETIEN_SUBTYPES.includes(t.intervention_type));
+      } else {
+        result = result.filter((t) => t.intervention_type === typeFilter);
+      }
+    }
+    // Search
+    if (!search.trim()) return result;
     const terms = search.toLowerCase().split(/\s+/).filter(Boolean);
-    return tasks.filter((t) => {
+    return result.filter((t) => {
       const haystack = [
         t.title,
         t.description,
@@ -74,7 +84,7 @@ export default function Taches() {
         .toLowerCase();
       return terms.every((term) => haystack.includes(term));
     });
-  }, [tasks, search]);
+  }, [tasks, search, typeFilter]);
 
   return (
     <div className="p-6 space-y-4">
