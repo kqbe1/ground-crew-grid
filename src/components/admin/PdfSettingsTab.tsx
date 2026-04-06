@@ -53,7 +53,7 @@ export default function PdfSettingsTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
