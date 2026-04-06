@@ -363,10 +363,9 @@ export default function PdfSettingsTab() {
               profiles: { full_name: "Marc Leroy" },
             };
             const doc = generateFichePdf(sampleSheet, settings as Partial<PdfConfig>, logoDataUrl);
-            const blob = doc.output("blob");
-            const url = URL.createObjectURL(blob);
+            const dataUri = doc.output("datauristring");
             if (previewUrl) URL.revokeObjectURL(previewUrl);
-            setPreviewUrl(url);
+            setPreviewUrl(dataUri);
           }}
         >
           <Eye className="w-4 h-4 mr-2" />
@@ -383,7 +382,7 @@ export default function PdfSettingsTab() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base">Aperçu du PDF</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => { URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }}>
+            <Button variant="ghost" size="sm" onClick={() => setPreviewUrl(null)}>
               Fermer
             </Button>
           </CardHeader>
