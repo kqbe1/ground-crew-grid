@@ -463,7 +463,7 @@ function PlanningInner() {
         <WeekViewGrid
           currentDate={currentDate}
           tasks={filteredTasks}
-          workers={workers}
+          workers={displayedWorkers}
           onTaskClick={(task) => setSelectedTask(task)}
           onCellClick={(date, hour, workerId) => {
             setClickContext({ hour, workerId });
