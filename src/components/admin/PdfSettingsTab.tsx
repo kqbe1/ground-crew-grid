@@ -363,12 +363,8 @@ export default function PdfSettingsTab() {
               profiles: { full_name: "Marc Leroy" },
             };
             const doc = generateFichePdf(sampleSheet, settings as Partial<PdfConfig>, logoDataUrl);
-            // Use Blob URL + window.open for reliable PDF display
-            const blob = doc.output("blob");
-            const blobUrl = URL.createObjectURL(blob);
-            window.open(blobUrl, "_blank");
-            // Clean up after a delay
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+            doc.save("apercu-fiche-intervention.pdf");
+            toast.success("PDF d'aperçu téléchargé");
           }}
         >
           <Eye className="w-4 h-4 mr-2" />
