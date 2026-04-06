@@ -126,6 +126,15 @@ export default function ClientDetailDialog({ open, onOpenChange, client, onEdit,
 
   if (!client) return null;
 
+  const deleteClient = async () => {
+    if (!client) return;
+    const { error } = await supabase.from("clients").delete().eq("id", client.id);
+    if (error) { toast.error("Erreur : " + error.message); return; }
+    toast.success("Client supprimé");
+    onOpenChange(false);
+    onDeleted?.();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -135,9 +144,34 @@ export default function ClientDetailDialog({ open, onOpenChange, client, onEdit,
               <DialogTitle className="text-xl">{client.name}</DialogTitle>
               <DialogDescription>Fiche client détaillée</DialogDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={onEdit}>
-              <Pencil className="w-4 h-4 mr-1" /> Modifier
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={onEdit}>
+                <Pencil className="w-4 h-4 mr-1" /> Modifier
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="w-4 h-4 mr-1" /> Supprimer
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-destructive" /> Supprimer le client
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Êtes-vous sûr de vouloir supprimer <strong>{client.name}</strong> ? Cette action est irréversible. Les sites et équipements liés seront également supprimés.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction onClick={deleteClient} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Supprimer
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         </DialogHeader>
 
