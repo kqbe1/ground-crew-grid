@@ -382,7 +382,7 @@ export default function PdfSettingsTab() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base">Aperçu du PDF</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => { URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }}>
+            <Button variant="ghost" size="sm" onClick={() => setPreviewUrl(null)}>
               Fermer
             </Button>
           </CardHeader>
