@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Save, Upload, Image, Eye } from "lucide-react";
+import { Save, Upload, Image, Download } from "lucide-react";
 import { generateFichePdf, PdfConfig } from "@/lib/generateFichePdf";
 
 interface PdfSettings {
