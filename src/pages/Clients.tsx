@@ -112,6 +112,9 @@ export default function Clients() {
         client={detailClient}
         onEdit={() => { setEditClient(detailClient); setDetailClient(null); }}
       />
+
+      {/* Import CSV */}
+      <ImportCsvDialog open={importOpen} onOpenChange={setImportOpen} onImported={fetchClients} />
     </div>
   );
 }
