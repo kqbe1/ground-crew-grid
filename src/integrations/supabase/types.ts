@@ -446,6 +446,84 @@ export type Database = {
           },
         ]
       }
+      pdf_settings: {
+        Row: {
+          company_address: string
+          company_email: string
+          company_name: string
+          company_phone: string
+          company_vat: string
+          company_website: string
+          created_at: string
+          document_title: string
+          footer_text: string
+          id: string
+          logo_url: string | null
+          primary_color: string
+          show_checklist: boolean
+          show_client_info: boolean
+          show_client_state: boolean
+          show_description: boolean
+          show_horaires: boolean
+          show_intervention_type: boolean
+          show_photos_after: boolean
+          show_photos_before: boolean
+          show_signature: boolean
+          show_worker_info: boolean
+          updated_at: string
+        }
+        Insert: {
+          company_address?: string
+          company_email?: string
+          company_name?: string
+          company_phone?: string
+          company_vat?: string
+          company_website?: string
+          created_at?: string
+          document_title?: string
+          footer_text?: string
+          id?: string
+          logo_url?: string | null
+          primary_color?: string
+          show_checklist?: boolean
+          show_client_info?: boolean
+          show_client_state?: boolean
+          show_description?: boolean
+          show_horaires?: boolean
+          show_intervention_type?: boolean
+          show_photos_after?: boolean
+          show_photos_before?: boolean
+          show_signature?: boolean
+          show_worker_info?: boolean
+          updated_at?: string
+        }
+        Update: {
+          company_address?: string
+          company_email?: string
+          company_name?: string
+          company_phone?: string
+          company_vat?: string
+          company_website?: string
+          created_at?: string
+          document_title?: string
+          footer_text?: string
+          id?: string
+          logo_url?: string | null
+          primary_color?: string
+          show_checklist?: boolean
+          show_client_info?: boolean
+          show_client_state?: boolean
+          show_description?: boolean
+          show_horaires?: boolean
+          show_intervention_type?: boolean
+          show_photos_after?: boolean
+          show_photos_before?: boolean
+          show_signature?: boolean
+          show_worker_info?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

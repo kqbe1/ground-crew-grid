@@ -9,7 +9,7 @@ import { FileSignature, Camera, Clock, Mail, Check, User, AlertTriangle, Downloa
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
-import { downloadFichePdf } from "@/lib/generateFichePdf";
+import { downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
 
 interface FicheDetailDialogProps {
   sheet: any;
@@ -203,7 +203,31 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
 
         {/* Actions */}
         <div className="flex justify-end gap-2 pt-2 border-t">
-          <Button onClick={() => downloadFichePdf(sheet)} variant="outline" size="sm">
+          <Button
+            onClick={async () => {
+              const { data: pdfCfg } = await supabase.from("pdf_settings").select("*").limit(1).single();
+              let logoDataUrl: string | null = null;
+              if (pdfCfg?.logo_url) {
+                try {
+                  const { data: signedData } = await supabase.storage
+                    .from("intervention-photos")
+                    .createSignedUrl(pdfCfg.logo_url, 60);
+                  if (signedData?.signedUrl) {
+                    const resp = await fetch(signedData.signedUrl);
+                    const blob = await resp.blob();
+                    logoDataUrl = await new Promise<string>((res) => {
+                      const r = new FileReader();
+                      r.onloadend = () => res(r.result as string);
+                      r.readAsDataURL(blob);
+                    });
+                  }
+                } catch {}
+              }
+              downloadFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
+            }}
+            variant="outline"
+            size="sm"
+          >
             <Download className="w-4 h-4 mr-1" />
             Télécharger PDF
           </Button>
