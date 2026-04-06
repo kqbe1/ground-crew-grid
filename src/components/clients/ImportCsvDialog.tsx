@@ -94,7 +94,7 @@ export default function ImportCsvDialog({ open, onOpenChange, onImported }: Impo
   const [csvRows, setCsvRows] = useState<string[][]>([]);
   const [mapping, setMapping] = useState<Record<number, string>>({});
   const [importing, setImporting] = useState(false);
-  const [result, setResult] = useState<{ total: number; ok: number; skipped: number } | null>(null);
+  const [result, setResult] = useState<{ total: number; ok: number; skipped: number; duplicates: string[] } | null>(null);
 
   const reset = () => {
     setCsvHeaders([]);
