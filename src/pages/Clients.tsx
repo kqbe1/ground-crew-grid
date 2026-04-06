@@ -132,6 +132,7 @@ export default function Clients() {
         onOpenChange={(open) => { if (!open) setDetailClient(null); }}
         client={detailClient}
         onEdit={() => { setEditClient(detailClient); setDetailClient(null); }}
+        onDeleted={fetchClients}
       />
 
       {/* Import CSV */}
