@@ -3,10 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import TaskDetailDialog from "@/components/planning/TaskDetailDialog";
+import { FILTER_TYPE_GROUPS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
 
 const statusLabels: Record<string, string> = {
   planifie: "Planifié",
