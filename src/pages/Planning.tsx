@@ -56,6 +56,7 @@ function PlanningInner() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [workers, setWorkers] = useState<any[]>([]);
   const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set());
+  const [visibleWorkerIds, setVisibleWorkerIds] = useState<Set<string> | null>(null); // null = all visible
   const [clickContext, setClickContext] = useState<{ hour?: number; workerId?: string }>({});
   const [refreshKey, setRefreshKey] = useState(0);
   const refreshTasks = useCallback(() => setRefreshKey((k) => k + 1), []);
