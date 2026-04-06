@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS } from "@/lib/constants";
-import { Clock, Users, Calendar, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Clock, Users, Calendar, TrendingUp, Download } from "lucide-react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, parseISO, differenceInMinutes } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -144,6 +145,33 @@ export default function TempsOuvriers() {
 
   const avgPerTask = filteredSheets.length > 0 ? Math.round(totalMinutes / filteredSheets.length) : 0;
 
+  const exportCSV = () => {
+    const headers = ["Date", "Ouvrier", "Tâche", "Client", "Type", "Arrivée", "Départ", "Durée (min)"];
+    const rows = filteredSheets.map((s) => {
+      const mins = s.arrival_time && s.departure_time
+        ? Math.max(0, differenceInMinutes(new Date(s.departure_time), new Date(s.arrival_time)))
+        : 0;
+      return [
+        s.task?.scheduled_date ? format(parseISO(s.task.scheduled_date), "dd/MM/yyyy") : "",
+        s.worker?.full_name || "",
+        s.task?.title || "",
+        s.task?.client?.name || "",
+        s.task?.intervention_type ? (INTERVENTION_TYPE_LABELS[s.task.intervention_type] || s.task.intervention_type) : "",
+        s.arrival_time ? format(new Date(s.arrival_time), "HH:mm") : "",
+        s.departure_time ? format(new Date(s.departure_time), "HH:mm") : "",
+        mins.toString(),
+      ];
+    });
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(";")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `temps-travail-${period}-${format(now, "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (role && role !== "admin" && role !== "super_admin") {
     return <Navigate to="/" replace />;
   }
@@ -156,7 +184,7 @@ export default function TempsOuvriers() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 items-center">
         <Select value={period} onValueChange={setPeriod}>
           <SelectTrigger className="w-[160px]">
             <SelectValue />
@@ -178,6 +206,11 @@ export default function TempsOuvriers() {
             ))}
           </SelectContent>
         </Select>
+
+        <Button variant="outline" size="sm" onClick={exportCSV} disabled={filteredSheets.length === 0}>
+          <Download className="h-4 w-4 mr-2" />
+          Export CSV
+        </Button>
       </div>
 
       {/* KPI Cards */}
