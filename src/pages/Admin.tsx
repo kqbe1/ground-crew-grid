@@ -8,11 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { WORKER_LEVEL_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
-import { Users, FileText, Plus, Pencil, Trash2, ShieldAlert, Printer } from "lucide-react";
+import { Users, FileText, Plus, Pencil, Trash2, ShieldAlert, Printer, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import CreateEditTemplateDialog from "@/components/admin/CreateEditTemplateDialog";
 import { useAuth } from "@/hooks/useAuth";
 import PdfSettingsTab from "@/components/admin/PdfSettingsTab";
+import AdminStatsTab from "@/components/admin/AdminStatsTab";
 
 export default function Admin() {
   const { role, user } = useAuth();
@@ -125,12 +126,18 @@ export default function Admin() {
         <p className="text-muted-foreground">Gestion des utilisateurs et templates</p>
       </div>
 
-      <Tabs defaultValue="users">
+      <Tabs defaultValue="stats">
         <TabsList>
+          <TabsTrigger value="stats" className="gap-1.5"><BarChart3 className="w-4 h-4" /> Statistiques</TabsTrigger>
           <TabsTrigger value="users" className="gap-1.5"><Users className="w-4 h-4" /> Utilisateurs</TabsTrigger>
           <TabsTrigger value="templates" className="gap-1.5"><FileText className="w-4 h-4" /> Templates</TabsTrigger>
           <TabsTrigger value="pdf" className="gap-1.5"><Printer className="w-4 h-4" /> Config PDF</TabsTrigger>
         </TabsList>
+
+        {/* ===== STATISTIQUES ===== */}
+        <TabsContent value="stats" className="mt-4">
+          <AdminStatsTab />
+        </TabsContent>
 
         {/* ===== UTILISATEURS ===== */}
         <TabsContent value="users" className="mt-4">
