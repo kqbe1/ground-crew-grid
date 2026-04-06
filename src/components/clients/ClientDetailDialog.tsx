@@ -49,9 +49,10 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   client: Client | null;
   onEdit: () => void;
+  onDeleted?: () => void;
 }
 
-export default function ClientDetailDialog({ open, onOpenChange, client, onEdit }: Props) {
+export default function ClientDetailDialog({ open, onOpenChange, client, onEdit, onDeleted }: Props) {
   const [sites, setSites] = useState<ClientSite[]>([]);
   const [equipment, setEquipment] = useState<ClientEquipment[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
