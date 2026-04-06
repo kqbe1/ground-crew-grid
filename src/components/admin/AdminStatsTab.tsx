@@ -1,12 +1,14 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { INTERVENTION_TYPE_LABELS } from "@/lib/constants";
-import { BarChart3, TrendingUp, Users, Wrench, ClipboardList, Calendar } from "lucide-react";
+import { BarChart3, TrendingUp, Users, Wrench, ClipboardList, Calendar, Download } from "lucide-react";
 import { getYear, getMonth, format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const PERIODICITY_MONTHS: Record<string, number> = {
   mensuel: 1, trimestriel: 3, semestriel: 6, annuel: 12, bisannuel: 24, triennal: 36,
