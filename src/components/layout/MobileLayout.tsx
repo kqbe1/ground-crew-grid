@@ -15,6 +15,7 @@ const mobileNav = [
 
 export default function MobileLayout() {
   const { session, loading } = useAuth();
+  usePushNotifications();
   const { isOnline, pendingCount, syncing, syncAll } = useOfflineDrafts();
 
   if (loading) {
