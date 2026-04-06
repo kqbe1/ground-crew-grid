@@ -363,9 +363,12 @@ export default function PdfSettingsTab() {
               profiles: { full_name: "Marc Leroy" },
             };
             const doc = generateFichePdf(sampleSheet, settings as Partial<PdfConfig>, logoDataUrl);
-            const dataUri = doc.output("datauristring");
-            if (previewUrl) URL.revokeObjectURL(previewUrl);
-            setPreviewUrl(dataUri);
+            // Use Blob URL + window.open for reliable PDF display
+            const blob = doc.output("blob");
+            const blobUrl = URL.createObjectURL(blob);
+            window.open(blobUrl, "_blank");
+            // Clean up after a delay
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
           }}
         >
           <Eye className="w-4 h-4 mr-2" />
@@ -376,26 +379,6 @@ export default function PdfSettingsTab() {
           {saving ? "Sauvegarde..." : "Sauvegarder la configuration"}
         </Button>
       </div>
-
-      {/* PDF Preview */}
-      {previewUrl && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base">Aperçu du PDF</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setPreviewUrl(null)}>
-              Fermer
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <iframe
-              src={previewUrl}
-              className="w-full border rounded-lg"
-              style={{ height: "700px" }}
-              title="Aperçu PDF"
-            />
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
