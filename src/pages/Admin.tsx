@@ -11,6 +11,7 @@ import { WORKER_LEVEL_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS
 import { Users, FileText, Plus, Pencil, Trash2, ShieldAlert, Printer, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import CreateEditTemplateDialog from "@/components/admin/CreateEditTemplateDialog";
+import CreateUserDialog from "@/components/admin/CreateUserDialog";
 import { useAuth } from "@/hooks/useAuth";
 import PdfSettingsTab from "@/components/admin/PdfSettingsTab";
 import AdminStatsTab from "@/components/admin/AdminStatsTab";
@@ -21,6 +22,7 @@ export default function Admin() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [templateDialog, setTemplateDialog] = useState(false);
   const [editTemplate, setEditTemplate] = useState<any>(null);
+  const [createUserOpen, setCreateUserOpen] = useState(false);
 
   const isSuperAdmin = role === "super_admin";
   const isAdmin = role === "admin";
@@ -139,9 +141,14 @@ export default function Admin() {
 
         {/* ===== UTILISATEURS (admin + super_admin only) ===== */}
         {canManageUsers && <TabsContent value="users" className="mt-4">
-          <Card>
-            <CardHeader>
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Utilisateurs ({users.length})</CardTitle>
+              {canManageUsers && (
+                <Button size="sm" onClick={() => setCreateUserOpen(true)}>
+                  <Plus className="w-4 h-4 mr-1" /> Nouvel utilisateur
+                </Button>
+              )}
             </CardHeader>
             <CardContent className="space-y-2">
               {users.map((u) => {
@@ -259,6 +266,15 @@ export default function Admin() {
         template={editTemplate}
         onSaved={fetchAll}
       />
+
+      {canManageUsers && (
+        <CreateUserDialog
+          open={createUserOpen}
+          onOpenChange={setCreateUserOpen}
+          onCreated={fetchAll}
+          callerRole={role || ""}
+        />
+      )}
     </div>
   );
 }
