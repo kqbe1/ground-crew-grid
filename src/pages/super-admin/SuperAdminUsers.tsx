@@ -155,9 +155,14 @@ export default function SuperAdminUsers() {
                   {p.email} · {getCompanyName(p.company_id)}
                 </p>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => setEditingProfile({ ...p })}>
-                <Pencil className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={() => { setEditUserTarget(p); setEditUserDialogOpen(true); }} title="Modifier nom/email/mot de passe">
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setEditingProfile({ ...p })}>
+                  Rôle / Entreprise
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -269,6 +274,13 @@ export default function SuperAdminUsers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <EditUserDialog
+        open={editUserDialogOpen}
+        onOpenChange={setEditUserDialogOpen}
+        user={editUserTarget}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["sa-profiles-full"] })}
+      />
     </div>
   );
 }
