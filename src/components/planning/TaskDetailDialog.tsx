@@ -45,7 +45,7 @@ interface TaskDetailDialogProps {
 
 export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetailDialogProps) {
   const { role } = useAuth();
-  const canEdit = role === "admin" || role === "secretariat" || role === "super_admin";
+  const canEdit = role === "admin" || role === "bureau" || role === "secretariat" || role === "super_admin";
 
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);

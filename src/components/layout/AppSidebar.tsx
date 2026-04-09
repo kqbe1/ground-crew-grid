@@ -19,15 +19,15 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard", roles: ["admin", "secretariat", "super_admin"] },
-  { to: "/planning", icon: Calendar, label: "Planning", roles: ["admin", "secretariat", "super_admin"] },
-  { to: "/clients", icon: Users, label: "Clients", roles: ["admin", "secretariat", "super_admin"] },
-  { to: "/entretiens", icon: WrenchIcon, label: "Entretiens", roles: ["admin", "secretariat", "super_admin"] },
-  { to: "/commandes", icon: Package, label: "Commandes", roles: ["admin", "secretariat", "super_admin"] },
-  { to: "/taches", icon: ListTodo, label: "Tâches", roles: ["admin", "secretariat", "super_admin"] },
-  { to: "/fiches", icon: ClipboardList, label: "Fiches", roles: ["admin", "secretariat", "super_admin"] },
-  { to: "/temps-ouvriers", icon: Clock, label: "Temps", roles: ["admin", "super_admin"] },
-  { to: "/admin", icon: Settings, label: "Admin", roles: ["admin", "super_admin"] },
+  { to: "/", icon: LayoutDashboard, label: "Dashboard", roles: ["admin", "bureau", "secretariat", "super_admin"] },
+  { to: "/planning", icon: Calendar, label: "Planning", roles: ["admin", "bureau", "secretariat", "super_admin"] },
+  { to: "/clients", icon: Users, label: "Clients", roles: ["admin", "bureau", "secretariat", "super_admin"] },
+  { to: "/entretiens", icon: WrenchIcon, label: "Entretiens", roles: ["admin", "bureau", "secretariat", "super_admin"] },
+  { to: "/commandes", icon: Package, label: "Commandes", roles: ["admin", "bureau", "secretariat", "super_admin"] },
+  { to: "/taches", icon: ListTodo, label: "Tâches", roles: ["admin", "bureau", "secretariat", "super_admin"] },
+  { to: "/fiches", icon: ClipboardList, label: "Fiches", roles: ["admin", "bureau", "secretariat", "super_admin"] },
+  { to: "/temps-ouvriers", icon: Clock, label: "Temps", roles: ["admin", "bureau", "super_admin"] },
+  { to: "/admin", icon: Settings, label: "Admin", roles: ["admin", "bureau", "super_admin"] },
 ];
 
 export default function AppSidebar() {

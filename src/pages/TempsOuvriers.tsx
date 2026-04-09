@@ -320,7 +320,7 @@ export default function TempsOuvriers() {
     URL.revokeObjectURL(url);
   };
 
-  if (role && role !== "admin" && role !== "super_admin") {
+  if (role && role !== "admin" && role !== "bureau" && role !== "super_admin") {
     return <Navigate to="/" replace />;
   }
 
