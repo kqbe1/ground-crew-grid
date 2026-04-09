@@ -174,7 +174,7 @@ function PlanningInner() {
     }
 
     const { error } = await supabase.from("work_tasks").insert([{
-      ...copiedTask,
+      ...copiedTask as any,
       assigned_to: workerId,
       start_time: newTime,
       scheduled_date: targetDate,

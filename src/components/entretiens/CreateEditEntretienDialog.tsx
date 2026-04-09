@@ -85,7 +85,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
     };
     const { error } = schedule
       ? await supabase.from("maintenance_schedules").update(payload).eq("id", schedule.id)
-      : await supabase.from("maintenance_schedules").insert(payload);
+      : await supabase.from("maintenance_schedules").insert(payload as any);
     setLoading(false);
     if (error) toast.error(error.message);
     else { toast.success(schedule ? "Entretien modifié" : "Entretien créé"); onOpenChange(false); onSaved(); }

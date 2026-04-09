@@ -53,7 +53,7 @@ export default function CreateOrderDialog({ open, onOpenChange, onSaved }: Props
       notes: form.notes || null,
       requested_by: user.id,
       status: "demandee",
-    });
+    } as any);
 
     setLoading(false);
     if (error) { toast.error("Erreur : " + error.message); }

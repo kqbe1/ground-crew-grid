@@ -245,7 +245,7 @@ export default function MobileTaskDetail() {
                     client_id: task.client_id || null,
                     requested_by: user.id,
                     status: "demandee",
-                  });
+                  } as any);
                   if (orderError) throw orderError;
 
                   const { error: taskError } = await supabase

@@ -61,7 +61,7 @@ export default function CreateFollowUpTaskDialog({ open, onOpenChange, order, on
       description: description || null,
       created_by: user.id,
       status: "planifie" as any,
-    });
+    } as any);
     setLoading(false);
     if (error) {
       toast.error("Erreur : " + error.message);

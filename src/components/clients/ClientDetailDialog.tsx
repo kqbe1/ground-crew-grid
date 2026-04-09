@@ -94,7 +94,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, onEdit,
     if (!client || !newSite.name.trim() || !newSite.address.trim()) return;
     const { error } = await supabase.from("client_sites").insert({
       client_id: client.id, name: newSite.name, address: newSite.address, is_primary: sites.length === 0,
-    });
+    } as any);
     if (error) toast.error(error.message);
     else { toast.success("Site ajouté"); setNewSite({ name: "", address: "" }); setShowAddSite(false); fetchSites(); }
   };
@@ -113,7 +113,7 @@ export default function ClientDetailDialog({ open, onOpenChange, client, onEdit,
       model: newEquip.model || null,
       energy_type: newEquip.energy_type as any,
       client_site_id: newEquip.client_site_id,
-    });
+    } as any);
     if (error) toast.error(error.message);
     else { toast.success("Équipement ajouté"); setNewEquip({ name: "", brand: "", model: "", energy_type: "autre", client_site_id: "" }); setShowAddEquip(false); fetchEquipment(); }
   };
