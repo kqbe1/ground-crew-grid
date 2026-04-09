@@ -137,8 +137,8 @@ export default function Admin() {
           <AdminStatsTab />
         </TabsContent>
 
-        {/* ===== UTILISATEURS ===== */}
-        <TabsContent value="users" className="mt-4">
+        {/* ===== UTILISATEURS (admin + super_admin only) ===== */}
+        {canManageUsers && <TabsContent value="users" className="mt-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Utilisateurs ({users.length})</CardTitle>
