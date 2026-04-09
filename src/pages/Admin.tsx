@@ -22,6 +22,7 @@ export default function Admin() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [templateDialog, setTemplateDialog] = useState(false);
   const [editTemplate, setEditTemplate] = useState<any>(null);
+  const [createUserOpen, setCreateUserOpen] = useState(false);
 
   const isSuperAdmin = role === "super_admin";
   const isAdmin = role === "admin";
