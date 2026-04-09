@@ -114,7 +114,7 @@ export default function SuperAdminUsers() {
       {/* Filter */}
       <div className="flex items-center gap-3">
         <Label>Entreprise :</Label>
-        <Select value={filterCompany} onValueChange={setFilterCompany}>
+        <Select value={filterCompany} onValueChange={(v) => { setFilterCompany(v); if (v === "all") { searchParams.delete("company"); } else { searchParams.set("company", v); } setSearchParams(searchParams); }}>
           <SelectTrigger className="w-64">
             <SelectValue />
           </SelectTrigger>
