@@ -5,11 +5,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { FileSignature, Camera, Clock, Mail, Check, User, AlertTriangle, Download } from "lucide-react";
+import { FileSignature, Camera, Clock, Mail, Check, User, AlertTriangle, Download, Eye, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState } from "react";
-import { downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
+import { useState, useCallback } from "react";
+import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
 
 interface FicheDetailDialogProps {
   sheet: any;
@@ -20,6 +20,45 @@ interface FicheDetailDialogProps {
 
 export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated }: FicheDetailDialogProps) {
   const [sending, setSending] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [loadingPdf, setLoadingPdf] = useState(false);
+
+  const loadPdfConfig = useCallback(async () => {
+    const { data: pdfCfg } = await supabase.from("pdf_settings").select("*").limit(1).single();
+    let logoDataUrl: string | null = null;
+    if (pdfCfg?.logo_url) {
+      try {
+        const { data: signedData } = await supabase.storage
+          .from("intervention-photos")
+          .createSignedUrl(pdfCfg.logo_url, 60);
+        if (signedData?.signedUrl) {
+          const resp = await fetch(signedData.signedUrl);
+          const blob = await resp.blob();
+          logoDataUrl = await new Promise<string>((res) => {
+            const r = new FileReader();
+            r.onloadend = () => res(r.result as string);
+            r.readAsDataURL(blob);
+          });
+        }
+      } catch {}
+    }
+    return { pdfCfg, logoDataUrl };
+  }, []);
+
+  const handlePreviewPdf = useCallback(async () => {
+    if (pdfUrl) return;
+    setLoadingPdf(true);
+    try {
+      const { pdfCfg, logoDataUrl } = await loadPdfConfig();
+      const doc = generateFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
+      const blob = doc.output("blob");
+      setPdfUrl(URL.createObjectURL(blob));
+    } catch {
+      toast.error("Erreur lors de la génération de l'aperçu");
+    } finally {
+      setLoadingPdf(false);
+    }
+  }, [sheet, pdfUrl, loadPdfConfig]);
 
   if (!sheet) return null;
 
@@ -84,7 +123,7 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
   const interventionType = task?.intervention_type;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { setPdfUrl(null); } onOpenChange(v); }}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
@@ -130,6 +169,9 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
               Photos ({(sheet.photos_before?.length || 0) + (sheet.photos_after?.length || 0)})
             </TabsTrigger>
             <TabsTrigger value="signature" className="flex-1">Signature</TabsTrigger>
+            <TabsTrigger value="pdf" className="flex-1" onClick={handlePreviewPdf}>
+              <Eye className="w-3.5 h-3.5 mr-1" /> PDF
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="space-y-4 mt-4">
@@ -234,30 +276,34 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="pdf" className="mt-4">
+            {loadingPdf ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+                <p className="text-sm text-muted-foreground">Génération du PDF…</p>
+              </div>
+            ) : pdfUrl ? (
+              <iframe
+                src={pdfUrl}
+                className="w-full rounded-lg border"
+                style={{ height: "60vh" }}
+                title="Aperçu PDF"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <Eye className="w-8 h-8 mb-2 opacity-50" />
+                <p className="text-sm">Cliquez sur l'onglet PDF pour générer l'aperçu</p>
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
 
         {/* Actions */}
         <div className="flex justify-end gap-2 pt-2 border-t">
           <Button
             onClick={async () => {
-              const { data: pdfCfg } = await supabase.from("pdf_settings").select("*").limit(1).single();
-              let logoDataUrl: string | null = null;
-              if (pdfCfg?.logo_url) {
-                try {
-                  const { data: signedData } = await supabase.storage
-                    .from("intervention-photos")
-                    .createSignedUrl(pdfCfg.logo_url, 60);
-                  if (signedData?.signedUrl) {
-                    const resp = await fetch(signedData.signedUrl);
-                    const blob = await resp.blob();
-                    logoDataUrl = await new Promise<string>((res) => {
-                      const r = new FileReader();
-                      r.onloadend = () => res(r.result as string);
-                      r.readAsDataURL(blob);
-                    });
-                  }
-                } catch {}
-              }
+              const { pdfCfg, logoDataUrl } = await loadPdfConfig();
               downloadFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
             }}
             variant="outline"
