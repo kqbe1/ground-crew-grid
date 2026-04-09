@@ -12,7 +12,7 @@ import { Plus, Pencil } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-const ALL_ROLES = ["super_admin", "admin", "bureau", "secretariat", "ouvrier"] as const;
+const ALL_ROLES = ["admin", "bureau", "secretariat", "ouvrier"] as const;
 
 const roleBadgeClass: Record<string, string> = {
   super_admin: "bg-amber-600 text-white",
