@@ -108,12 +108,12 @@ export default function ClientDetailDialog({ open, onOpenChange, client, onEdit,
   const addEquipment = async () => {
     if (!newEquip.name.trim() || !newEquip.client_site_id) return;
     const { error } = await supabase.from("client_equipment").insert({
-      name: newEquip.name as any,
+      name: newEquip.name,
       brand: newEquip.brand || null,
       model: newEquip.model || null,
       energy_type: newEquip.energy_type as any,
       client_site_id: newEquip.client_site_id,
-    });
+    } as any);
     if (error) toast.error(error.message);
     else { toast.success("Équipement ajouté"); setNewEquip({ name: "", brand: "", model: "", energy_type: "autre", client_site_id: "" }); setShowAddEquip(false); fetchEquipment(); }
   };

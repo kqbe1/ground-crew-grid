@@ -43,7 +43,7 @@ export default function CreateOrderDialog({ open, onOpenChange, onSaved }: Props
     if (!user) { toast.error("Vous devez être connecté"); setLoading(false); return; }
 
     const { error } = await supabase.from("parts_orders").insert({
-      part_name: form.part_name.trim() as any,
+      part_name: form.part_name.trim(),
       part_reference: form.part_reference || null,
       quantity: form.quantity,
       supplier: form.supplier || null,
@@ -53,7 +53,7 @@ export default function CreateOrderDialog({ open, onOpenChange, onSaved }: Props
       notes: form.notes || null,
       requested_by: user.id,
       status: "demandee",
-    });
+    } as any);
 
     setLoading(false);
     if (error) { toast.error("Erreur : " + error.message); }

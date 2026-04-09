@@ -51,7 +51,7 @@ export default function CreateFollowUpTaskDialog({ open, onOpenChange, order, on
     }
     setLoading(true);
     const { error } = await supabase.from("work_tasks").insert({
-      title: title.trim() as any,
+      title: title.trim(),
       intervention_type: interventionType as any,
       assigned_to: assignedTo || null,
       scheduled_date: scheduledDate,
@@ -61,7 +61,7 @@ export default function CreateFollowUpTaskDialog({ open, onOpenChange, order, on
       description: description || null,
       created_by: user.id,
       status: "planifie" as any,
-    });
+    } as any);
     setLoading(false);
     if (error) {
       toast.error("Erreur : " + error.message);

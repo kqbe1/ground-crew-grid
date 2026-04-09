@@ -236,7 +236,7 @@ export default function MobileTaskDetail() {
                 setSubmitting(true);
                 try {
                   const { error: orderError } = await supabase.from("parts_orders").insert({
-                    part_name: partName.trim() as any,
+                    part_name: partName.trim(),
                     part_reference: partRef.trim() || null,
                     quantity: partQty,
                     urgency: partUrgency,
@@ -245,7 +245,7 @@ export default function MobileTaskDetail() {
                     client_id: task.client_id || null,
                     requested_by: user.id,
                     status: "demandee",
-                  });
+                  } as any);
                   if (orderError) throw orderError;
 
                   const { error: taskError } = await supabase

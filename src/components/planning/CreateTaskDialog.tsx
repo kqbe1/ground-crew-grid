@@ -122,7 +122,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultWork
     }
     setLoading(true);
     const { error } = await supabase.from("work_tasks").insert({
-      title: title.trim() as any,
+      title: title.trim(),
       intervention_type: interventionType as any,
       assigned_to: assignedTo || null,
       scheduled_date: scheduledDate,
@@ -134,7 +134,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultWork
       template_id: templateId || null,
       created_by: user.id,
       status: "planifie" as any,
-    });
+    } as any);
     setLoading(false);
     if (error) {
       toast.error("Erreur lors de la création: " + error.message);
