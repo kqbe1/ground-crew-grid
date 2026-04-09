@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -102,9 +102,18 @@ export default function SuperAdminUsers() {
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Gestion des utilisateurs</h1>
-          <p className="text-muted-foreground">{filteredProfiles.length} utilisateur(s)</p>
+        <div className="flex items-center gap-3">
+          {filterCompany !== "all" && (
+            <Button variant="ghost" size="icon" onClick={() => navigate("/super-admin/companies")} title="Retour aux entreprises">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          )}
+          <div>
+            <h1 className="text-2xl font-bold">
+              {filterCompany !== "all" ? `Utilisateurs — ${getCompanyName(filterCompany)}` : "Gestion des utilisateurs"}
+            </h1>
+            <p className="text-muted-foreground">{filteredProfiles.length} utilisateur(s)</p>
+          </div>
         </div>
         <Button onClick={() => setCreateOpen(true)} className="gap-2">
           <Plus className="w-4 h-4" /> Nouvel utilisateur
