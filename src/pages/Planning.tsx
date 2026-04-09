@@ -236,15 +236,14 @@ function PlanningInner() {
   };
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
       {/* Title */}
-      <div>
-        <h1 className="text-2xl font-bold">Planning</h1>
-        <p className="text-muted-foreground text-sm">Gérez le planning de vos équipes</p>
+      <div className="mb-2">
+        <h1 className="text-xl font-bold">Planning</h1>
       </div>
 
       {/* Controls row */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap mb-2">
         {/* View mode toggle */}
         <div className="flex rounded-lg border border-border overflow-hidden">
           {(["day", "week", "month"] as ViewMode[]).map((mode) => (
@@ -343,7 +342,7 @@ function PlanningInner() {
       </div>
 
       {/* Navigation row */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 mb-2">
         <Button variant="outline" size="icon" onClick={() => navigate("prev")}>
           <ChevronLeft className="w-4 h-4" />
         </Button>
@@ -359,25 +358,25 @@ function PlanningInner() {
 
       {/* Planning Grid - Day View */}
       {viewMode === "day" && (
-        <div ref={dragScrollRef} className="border border-border rounded-xl overflow-auto bg-card shadow-sm cursor-grab">
+        <div ref={dragScrollRef} className="border border-border rounded-xl overflow-auto bg-card shadow-sm cursor-grab flex-1 min-h-0">
           <div className="grid" style={{ gridTemplateColumns: `80px repeat(${Math.max(displayedWorkers.length, 1)}, 180px)`, minWidth: `${80 + Math.max(displayedWorkers.length, 1) * 180}px` }}>
             {/* Header row - worker avatars */}
-            <div className="sticky top-0 bg-muted/50 border-b border-border p-3 z-10" />
+            <div className="sticky top-0 bg-muted/50 border-b border-border p-2 z-10" />
             {displayedWorkers.map((w) => (
-              <div key={w.id} className="sticky top-0 bg-muted/50 border-b border-l border-border p-3 z-10 flex flex-col items-center gap-1.5">
-                <Avatar className="h-9 w-9 bg-muted-foreground/20">
-                  <AvatarFallback className="text-xs font-semibold bg-muted text-muted-foreground">
+              <div key={w.id} className="sticky top-0 bg-muted/50 border-b border-l border-border p-2 z-10 flex flex-col items-center gap-1">
+                <Avatar className="h-7 w-7 bg-muted-foreground/20">
+                  <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
                     {getInitials(w.full_name)}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-xs font-medium text-center truncate w-full">{w.full_name}</span>
+                <span className="text-[10px] font-medium text-center truncate w-full">{w.full_name}</span>
               </div>
             ))}
 
             {/* Time rows */}
             {HOURS.map((hour) => (
               <div key={`row-${hour}`} className="contents">
-                <div className="border-b border-border p-1 text-xs text-muted-foreground text-right pr-2 h-16 flex items-start justify-end pt-1 font-medium">
+                <div className="border-b border-border p-1 text-xs text-muted-foreground text-right pr-2 flex items-start justify-end pt-1 font-medium" style={{ height: `calc((100vh - 15rem) / ${HOURS.length})` }}>
                   {String(hour).padStart(2, "0")}:00
                 </div>
                 {displayedWorkers.map((w) => {
@@ -389,7 +388,7 @@ function PlanningInner() {
                       <ContextMenuTrigger asChild>
                         <div
                           key={`cell-${hour}-${w.id}`}
-                          className="border-b border-l border-border h-16 relative"
+                          className="border-b border-l border-border relative" style={{ height: `calc((100vh - 15rem) / ${HOURS.length})` }}
                         >
                           {/* 4 quarter-hour drop zones */}
                           {[0, 1, 2, 3].map((q) => {
@@ -455,6 +454,7 @@ function PlanningInner() {
 
       {/* Week View */}
       {viewMode === "week" && (
+        <div className="flex-1 min-h-0 overflow-auto">
         <WeekViewGrid
           currentDate={currentDate}
           tasks={filteredTasks}
@@ -470,10 +470,12 @@ function PlanningInner() {
           onRefresh={refreshTasks}
           onPaste={handlePaste}
         />
+        </div>
       )}
 
       {/* Month View */}
       {viewMode === "month" && (
+        <div className="flex-1 min-h-0 overflow-auto">
         <MonthViewCalendar
           currentDate={currentDate}
           tasks={filteredTasks}
@@ -484,6 +486,7 @@ function PlanningInner() {
           }}
           onRefresh={refreshTasks}
         />
+        </div>
       )}
 
       {/* Task Detail Dialog */}
