@@ -8,6 +8,8 @@ import {
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
+  Settings,
+  ScrollText,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -17,6 +19,8 @@ const navItems = [
   { to: "/super-admin", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/super-admin/companies", icon: Building2, label: "Entreprises" },
   { to: "/super-admin/users", icon: Users, label: "Utilisateurs" },
+  { to: "/super-admin/settings", icon: Settings, label: "Paramètres" },
+  { to: "/super-admin/logs", icon: ScrollText, label: "Journal" },
 ];
 
 export default function SuperAdminLayout() {
