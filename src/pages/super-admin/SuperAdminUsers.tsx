@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import EditUserDialog from "@/components/admin/EditUserDialog";
 
 const ALL_ROLES = ["admin", "bureau", "ouvrier"] as const;
 
@@ -29,6 +30,8 @@ export default function SuperAdminUsers() {
   const [filterCompany, setFilterCompany] = useState<string>(searchParams.get("company") || "all");
   const [createOpen, setCreateOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<any>(null);
+  const [editUserDialogOpen, setEditUserDialogOpen] = useState(false);
+  const [editUserTarget, setEditUserTarget] = useState<any>(null);
 
   // Create form
   const [newEmail, setNewEmail] = useState("");
