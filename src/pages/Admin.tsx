@@ -25,25 +25,19 @@ export default function Admin() {
   const isSuperAdmin = role === "super_admin";
 
   const fetchAll = async () => {
-    const [usersRes, rolesRes, templatesRes] = await Promise.all([
+    const [usersRes, templatesRes] = await Promise.all([
       supabase.from("profiles").select("*").order("full_name"),
-      supabase.from("user_roles").select("*"),
       supabase.from("task_templates").select("*").order("name"),
     ]);
 
-    const rolesMap = new Map<string, string>();
-    (rolesRes.data ?? []).forEach((r: any) => rolesMap.set(r.user_id, r.role));
-
-    setUsers(
-      (usersRes.data ?? []).map((u: any) => ({ ...u, role: rolesMap.get(u.id) || null }))
-    );
+    setUsers(usersRes.data ?? []);
     setTemplates(templatesRes.data ?? []);
   };
 
   useEffect(() => { fetchAll(); }, []);
 
   // Defense-in-depth: block non-admin access at component level
-  if (role && role !== "admin" && role !== "super_admin") {
+  if (role && role !== "admin" && role !== "bureau" && role !== "super_admin") {
     return <Navigate to="/" replace />;
   }
 
@@ -80,8 +74,7 @@ export default function Admin() {
   };
 
   const assignRole = async (userId: string, newRole: string) => {
-    await supabase.from("user_roles").delete().eq("user_id", userId);
-    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: newRole as any });
+    const { error } = await supabase.from("profiles").update({ role: newRole as any }).eq("id", userId);
     if (error) { toast.error(error.message); return; }
     toast.success("Rôle mis à jour");
     fetchAll();
@@ -108,6 +101,7 @@ export default function Admin() {
   const roleColors: Record<string, string> = {
     super_admin: "bg-amber-600 text-white",
     admin: "bg-destructive text-destructive-foreground",
+    bureau: "bg-blue-600 text-white",
     secretariat: "bg-secondary text-secondary-foreground",
     ouvrier: "bg-primary text-primary-foreground",
   };
@@ -115,6 +109,7 @@ export default function Admin() {
   const roleLabels: Record<string, string> = {
     super_admin: "Super Admin",
     admin: "Admin",
+    bureau: "Bureau",
     secretariat: "Secrétariat",
     ouvrier: "Ouvrier",
   };
@@ -171,7 +166,8 @@ export default function Admin() {
                       </SelectTrigger>
                       <SelectContent>
                         {isSuperAdmin && <SelectItem value="super_admin">Super Admin</SelectItem>}
-                        <SelectItem value="admin">Admin</SelectItem>
+                        {(isSuperAdmin || role === "admin") && <SelectItem value="admin">Admin</SelectItem>}
+                        <SelectItem value="bureau">Bureau</SelectItem>
                         <SelectItem value="secretariat">Secrétariat</SelectItem>
                         <SelectItem value="ouvrier">Ouvrier</SelectItem>
                       </SelectContent>
