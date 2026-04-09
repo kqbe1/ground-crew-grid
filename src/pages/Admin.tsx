@@ -206,7 +206,7 @@ export default function Admin() {
               })}
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent>}
 
         {/* ===== TEMPLATES ===== */}
         <TabsContent value="templates" className="mt-4">
