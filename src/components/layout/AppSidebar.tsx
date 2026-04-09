@@ -22,13 +22,13 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 const navItems = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard", roles: ["admin", "bureau", "secretariat", "super_admin"] },
-  { to: "/planning", icon: Calendar, label: "Planning", roles: ["admin", "bureau", "secretariat", "super_admin"] },
-  { to: "/clients", icon: Users, label: "Clients", roles: ["admin", "bureau", "secretariat", "super_admin"] },
-  { to: "/entretiens", icon: WrenchIcon, label: "Entretiens", roles: ["admin", "bureau", "secretariat", "super_admin"] },
-  { to: "/commandes", icon: Package, label: "Commandes", roles: ["admin", "bureau", "secretariat", "super_admin"] },
-  { to: "/taches", icon: ListTodo, label: "Tâches", roles: ["admin", "bureau", "secretariat", "super_admin"] },
-  { to: "/fiches", icon: ClipboardList, label: "Fiches", roles: ["admin", "bureau", "secretariat", "super_admin"] },
+  { to: "/", icon: LayoutDashboard, label: "Dashboard", roles: ["admin", "bureau", "super_admin"] },
+  { to: "/planning", icon: Calendar, label: "Planning", roles: ["admin", "bureau", "super_admin"] },
+  { to: "/clients", icon: Users, label: "Clients", roles: ["admin", "bureau", "super_admin"] },
+  { to: "/entretiens", icon: WrenchIcon, label: "Entretiens", roles: ["admin", "bureau", "super_admin"] },
+  { to: "/commandes", icon: Package, label: "Commandes", roles: ["admin", "bureau", "super_admin"] },
+  { to: "/taches", icon: ListTodo, label: "Tâches", roles: ["admin", "bureau", "super_admin"] },
+  { to: "/fiches", icon: ClipboardList, label: "Fiches", roles: ["admin", "bureau", "super_admin"] },
   { to: "/temps-ouvriers", icon: Clock, label: "Temps", roles: ["admin", "bureau", "super_admin"] },
   { to: "/admin", icon: Settings, label: "Admin", roles: ["admin", "bureau", "super_admin"] },
 ];
@@ -37,7 +37,7 @@ const roleConfig: Record<string, { label: string; color: string; icon: typeof Sh
   super_admin: { label: "Super Admin", color: "bg-amber-600 text-white", icon: ShieldCheck },
   admin: { label: "Admin", color: "bg-destructive text-destructive-foreground", icon: Shield },
   bureau: { label: "Bureau", color: "bg-blue-600 text-white", icon: Building2 },
-  secretariat: { label: "Secrétariat", color: "bg-secondary text-secondary-foreground", icon: ClipboardList },
+  
 };
 
 export default function AppSidebar() {

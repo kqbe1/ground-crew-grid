@@ -15,8 +15,8 @@ interface Props {
 }
 
 const ROLES_BY_CALLER: Record<string, string[]> = {
-  super_admin: ["admin", "bureau", "secretariat", "ouvrier"],
-  admin: ["bureau", "secretariat", "ouvrier"],
+  super_admin: ["admin", "bureau", "ouvrier"],
+  admin: ["bureau", "ouvrier"],
 };
 
 export default function CreateUserDialog({ open, onOpenChange, onCreated, callerRole }: Props) {
@@ -63,7 +63,6 @@ export default function CreateUserDialog({ open, onOpenChange, onCreated, caller
   const roleLabels: Record<string, string> = {
     admin: "Admin",
     bureau: "Bureau",
-    secretariat: "Secrétariat",
     ouvrier: "Ouvrier",
   };
 

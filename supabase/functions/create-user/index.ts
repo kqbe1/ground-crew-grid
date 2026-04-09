@@ -81,8 +81,8 @@ Deno.serve(async (req) => {
 
     // Role hierarchy enforcement
     const allowedRoles: Record<string, string[]> = {
-      super_admin: ["admin", "bureau", "secretariat", "ouvrier"],
-      admin: ["bureau", "secretariat", "ouvrier"],
+      super_admin: ["admin", "bureau", "ouvrier"],
+      admin: ["bureau", "ouvrier"],
     };
 
     if (!allowedRoles[callerRole]?.includes(role)) {
