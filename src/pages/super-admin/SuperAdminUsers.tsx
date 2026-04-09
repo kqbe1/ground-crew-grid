@@ -116,7 +116,7 @@ export default function SuperAdminUsers() {
             <p className="text-muted-foreground">{filteredProfiles.length} utilisateur(s)</p>
           </div>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2">
+        <Button onClick={() => { if (filterCompany !== "all") setNewCompanyId(filterCompany); setCreateOpen(true); }} className="gap-2">
           <Plus className="w-4 h-4" /> Nouvel utilisateur
         </Button>
       </div>
