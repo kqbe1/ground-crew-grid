@@ -355,7 +355,7 @@ function PlanningInner() {
 
       {/* Planning Grid - Day View */}
       {viewMode === "day" && (
-        <div ref={dragScrollRef} className="border border-border rounded-xl overflow-auto bg-card shadow-sm cursor-grab flex-1 min-h-0">
+        <div ref={dragScrollRef} className="border border-border rounded-xl overflow-x-auto overflow-y-hidden bg-card shadow-sm cursor-grab flex-1 min-h-0">
           <div className="grid" style={{ gridTemplateColumns: `80px repeat(${Math.max(displayedWorkers.length, 1)}, 180px)`, minWidth: `${80 + Math.max(displayedWorkers.length, 1) * 180}px` }}>
             {/* Header row - worker avatars */}
             <div className="sticky top-0 bg-muted/50 border-b border-border p-1 z-10" />
