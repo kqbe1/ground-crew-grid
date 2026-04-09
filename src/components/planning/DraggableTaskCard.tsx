@@ -18,9 +18,10 @@ interface DraggableTaskCardProps {
   onClick: (task: any) => void;
   onResized: () => void;
   hasOverlap?: boolean;
+  useRelativeHeight?: boolean;
 }
 
-export default function DraggableTaskCard({ task, onDragStart, onClick, onResized, hasOverlap }: DraggableTaskCardProps) {
+export default function DraggableTaskCard({ task, onDragStart, onClick, onResized, hasOverlap, useRelativeHeight }: DraggableTaskCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const resizingRef = useRef(false);
   const { copyTask } = useTaskClipboard();
@@ -34,7 +35,8 @@ export default function DraggableTaskCard({ task, onDragStart, onClick, onResize
   const endMin = endMinutes % 60;
   const timeRange = `${task.start_time?.slice(0, 5)} – ${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
 
-  const heightPx = Math.max((task.duration_minutes / 60) * CELL_HEIGHT, 40);
+  const heightPx = useRelativeHeight ? undefined : Math.max((task.duration_minutes / 60) * CELL_HEIGHT, 40);
+  const heightPercent = useRelativeHeight ? `${Math.max((task.duration_minutes / 60) * 100, 50)}%` : undefined;
 
   const handleResizeStart = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
@@ -71,7 +73,7 @@ export default function DraggableTaskCard({ task, onDragStart, onClick, onResize
 
       if (error) {
         toast.error("Erreur lors du redimensionnement");
-        if (card) card.style.height = `${heightPx}px`;
+        if (card) card.style.height = useRelativeHeight ? (heightPercent || '') : `${heightPx}px`;
       } else {
         toast.success(`Durée: ${pendingDuration} min`);
         onResized();
@@ -108,7 +110,7 @@ export default function DraggableTaskCard({ task, onDragStart, onClick, onResize
             INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre",
             hasOverlap ? "border-destructive border-2 ring-2 ring-destructive/30" : "border-white/20"
           )}
-          style={{ height: `${heightPx}px` }}
+          style={{ height: useRelativeHeight ? heightPercent : `${heightPx}px` }}
         >
           <div className="font-bold truncate text-[11px] leading-tight flex items-center gap-1">
             {hasOverlap && <AlertTriangle className="w-3 h-3 text-white shrink-0" />}

@@ -236,14 +236,14 @@ function PlanningInner() {
   };
 
   return (
-    <div className="p-4 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
+    <div className="p-2 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
       {/* Title */}
-      <div className="mb-2">
-        <h1 className="text-xl font-bold">Planning</h1>
+      <div className="mb-1">
+        <h1 className="text-lg font-bold">Planning</h1>
       </div>
 
       {/* Controls row */}
-      <div className="flex items-center gap-2 flex-wrap mb-2">
+      <div className="flex items-center gap-1.5 flex-wrap mb-1">
         {/* View mode toggle */}
         <div className="flex rounded-lg border border-border overflow-hidden">
           {(["day", "week", "month"] as ViewMode[]).map((mode) => (
@@ -342,7 +342,7 @@ function PlanningInner() {
       </div>
 
       {/* Navigation row */}
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-1">
         <Button variant="outline" size="icon" onClick={() => navigate("prev")}>
           <ChevronLeft className="w-4 h-4" />
         </Button>
@@ -376,7 +376,7 @@ function PlanningInner() {
             {/* Time rows */}
             {HOURS.map((hour) => (
               <div key={`row-${hour}`} className="contents">
-                <div className="border-b border-border p-1 text-xs text-muted-foreground text-right pr-2 flex items-start justify-end pt-1 font-medium" style={{ height: `calc((100vh - 15rem) / ${HOURS.length})` }}>
+                <div className="border-b border-border px-1 text-[10px] text-muted-foreground text-right pr-2 flex items-start justify-end pt-0.5 font-medium" style={{ height: `calc((100vh - 11rem) / ${HOURS.length})` }}>
                   {String(hour).padStart(2, "0")}:00
                 </div>
                 {displayedWorkers.map((w) => {
@@ -388,7 +388,7 @@ function PlanningInner() {
                       <ContextMenuTrigger asChild>
                         <div
                           key={`cell-${hour}-${w.id}`}
-                          className="border-b border-l border-border relative" style={{ height: `calc((100vh - 15rem) / ${HOURS.length})` }}
+                          className="border-b border-l border-border relative" style={{ height: `calc((100vh - 11rem) / ${HOURS.length})` }}
                         >
                           {/* 4 quarter-hour drop zones */}
                           {[0, 1, 2, 3].map((q) => {
@@ -418,15 +418,16 @@ function PlanningInner() {
                       {/* Task cards */}
                       {hourTasks.map((task) => {
                         const startMin = parseInt(task.start_time.split(":")[1] || "0");
-                        const topOffset = (startMin / 60) * 64;
+                        const topPercent = (startMin / 60) * 100;
                         return (
-                          <div key={task.id} className="absolute inset-x-1 z-[2]" style={{ top: `${topOffset}px` }}>
+                          <div key={task.id} className="absolute inset-x-0.5 z-[2]" style={{ top: `${topPercent}%` }}>
                             <DraggableTaskCard
                               task={task}
                               onDragStart={handleDragStart}
                               onClick={setSelectedTask}
                               onResized={refreshTasks}
                               hasOverlap={overlappingIds.has(task.id)}
+                              useRelativeHeight
                             />
                           </div>
                         );
