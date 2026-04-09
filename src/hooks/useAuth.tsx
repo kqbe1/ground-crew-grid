@@ -64,11 +64,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
         setTimeout(() => fetchUserData(session.user.id), 0);
+        // Log login event
+        if (event === "SIGNED_IN") {
+          supabase.from("activity_logs").insert({
+            action: "login",
+            actor_id: session.user.id,
+            metadata: { email: session.user.email },
+          }).then(() => {});
+        }
       } else {
         setRole(null);
         setProfile(null);
