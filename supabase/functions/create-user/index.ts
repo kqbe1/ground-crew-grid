@@ -23,32 +23,44 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Client with caller's JWT to check their role
-    const callerClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    // Check if caller is using service role key (internal calls)
+    const token = authHeader.replace("Bearer ", "");
+    let callerRole = "";
+    let callerCompanyId = "";
 
-    const { data: { user: caller } } = await callerClient.auth.getUser();
-    if (!caller) {
-      return new Response(JSON.stringify({ error: "Non autorisé" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (token === serviceRoleKey) {
+      // Service role call — treat as super_admin
+      callerRole = "super_admin";
+      callerCompanyId = "";
+    } else {
+      // Normal user call — validate JWT
+      const callerClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
       });
-    }
+      const { data: { user: caller } } = await callerClient.auth.getUser();
+      if (!caller) {
+        return new Response(JSON.stringify({ error: "Non autorisé" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-    // Check caller role
-    const { data: callerProfile } = await createClient(supabaseUrl, serviceRoleKey)
-      .from("profiles")
-      .select("role, company_id")
-      .eq("id", caller.id)
-      .single();
+      const { data: callerProfile } = await adminClient
+        .from("profiles")
+        .select("role, company_id")
+        .eq("id", caller.id)
+        .single();
 
-    if (!callerProfile || !["super_admin", "admin"].includes(callerProfile.role)) {
-      return new Response(JSON.stringify({ error: "Droits insuffisants" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (!callerProfile || !["super_admin", "admin"].includes(callerProfile.role)) {
+        return new Response(JSON.stringify({ error: "Droits insuffisants" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      callerRole = callerProfile.role;
+      callerCompanyId = callerProfile.company_id;
     }
 
     const body = await req.json();
@@ -67,7 +79,7 @@ Deno.serve(async (req) => {
       admin: ["bureau", "secretariat", "ouvrier"],
     };
 
-    if (!allowedRoles[callerProfile.role]?.includes(role)) {
+    if (!allowedRoles[callerRole]?.includes(role)) {
       return new Response(JSON.stringify({ error: "Vous ne pouvez pas créer ce rôle" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -75,9 +87,9 @@ Deno.serve(async (req) => {
     }
 
     // Determine target company
-    const targetCompanyId = callerProfile.role === "super_admin"
-      ? (company_id || callerProfile.company_id)
-      : callerProfile.company_id;
+    const targetCompanyId = callerRole === "super_admin"
+      ? (company_id || callerCompanyId)
+      : callerCompanyId;
 
     // Create user with service role (bypasses email confirmation)
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
