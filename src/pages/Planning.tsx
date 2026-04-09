@@ -361,15 +361,15 @@ function PlanningInner() {
         <div ref={dragScrollRef} className="border border-border rounded-xl overflow-auto bg-card shadow-sm cursor-grab flex-1 min-h-0">
           <div className="grid" style={{ gridTemplateColumns: `80px repeat(${Math.max(displayedWorkers.length, 1)}, 180px)`, minWidth: `${80 + Math.max(displayedWorkers.length, 1) * 180}px` }}>
             {/* Header row - worker avatars */}
-            <div className="sticky top-0 bg-muted/50 border-b border-border p-3 z-10" />
+            <div className="sticky top-0 bg-muted/50 border-b border-border p-2 z-10" />
             {displayedWorkers.map((w) => (
-              <div key={w.id} className="sticky top-0 bg-muted/50 border-b border-l border-border p-3 z-10 flex flex-col items-center gap-1.5">
-                <Avatar className="h-9 w-9 bg-muted-foreground/20">
-                  <AvatarFallback className="text-xs font-semibold bg-muted text-muted-foreground">
+              <div key={w.id} className="sticky top-0 bg-muted/50 border-b border-l border-border p-2 z-10 flex flex-col items-center gap-1">
+                <Avatar className="h-7 w-7 bg-muted-foreground/20">
+                  <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
                     {getInitials(w.full_name)}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-xs font-medium text-center truncate w-full">{w.full_name}</span>
+                <span className="text-[10px] font-medium text-center truncate w-full">{w.full_name}</span>
               </div>
             ))}
 
