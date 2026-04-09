@@ -20,6 +20,45 @@ interface FicheDetailDialogProps {
 
 export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated }: FicheDetailDialogProps) {
   const [sending, setSending] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [loadingPdf, setLoadingPdf] = useState(false);
+
+  const loadPdfConfig = useCallback(async () => {
+    const { data: pdfCfg } = await supabase.from("pdf_settings").select("*").limit(1).single();
+    let logoDataUrl: string | null = null;
+    if (pdfCfg?.logo_url) {
+      try {
+        const { data: signedData } = await supabase.storage
+          .from("intervention-photos")
+          .createSignedUrl(pdfCfg.logo_url, 60);
+        if (signedData?.signedUrl) {
+          const resp = await fetch(signedData.signedUrl);
+          const blob = await resp.blob();
+          logoDataUrl = await new Promise<string>((res) => {
+            const r = new FileReader();
+            r.onloadend = () => res(r.result as string);
+            r.readAsDataURL(blob);
+          });
+        }
+      } catch {}
+    }
+    return { pdfCfg, logoDataUrl };
+  }, []);
+
+  const handlePreviewPdf = useCallback(async () => {
+    if (pdfUrl) return;
+    setLoadingPdf(true);
+    try {
+      const { pdfCfg, logoDataUrl } = await loadPdfConfig();
+      const doc = generateFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
+      const blob = doc.output("blob");
+      setPdfUrl(URL.createObjectURL(blob));
+    } catch {
+      toast.error("Erreur lors de la génération de l'aperçu");
+    } finally {
+      setLoadingPdf(false);
+    }
+  }, [sheet, pdfUrl, loadPdfConfig]);
 
   if (!sheet) return null;
 
