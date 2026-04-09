@@ -5,11 +5,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { FileSignature, Camera, Clock, Mail, Check, User, AlertTriangle, Download } from "lucide-react";
+import { FileSignature, Camera, Clock, Mail, Check, User, AlertTriangle, Download, Eye, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState } from "react";
-import { downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
+import { useState, useCallback } from "react";
+import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
 
 interface FicheDetailDialogProps {
   sheet: any;
