@@ -32,11 +32,23 @@ export default function CreateUserDialog({ open, onOpenChange, onCreated, caller
     if (!email || !password || !fullName || !role) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-user", {
-        body: { email, password, full_name: fullName, role },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ email, password, full_name: fullName, role }),
+        }
+      );
+      const result = await resp.json();
+      if (!resp.ok || result.error) {
+        throw new Error(result.error || "Erreur lors de la création");
+      }
       toast.success("Utilisateur créé avec succès");
       setEmail(""); setPassword(""); setFullName(""); setRole("ouvrier");
       onOpenChange(false);
