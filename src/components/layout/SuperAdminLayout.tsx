@@ -47,15 +47,12 @@ export default function SuperAdminLayout() {
         )}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border">
+        <div className="flex items-center justify-center gap-3 px-4 h-16 border-b border-sidebar-border">
           <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-600 flex items-center justify-center">
             <ShieldCheck className="w-4 h-4 text-white" />
           </div>
           {!collapsed && (
-            <div className="overflow-hidden flex-1 min-w-0">
-              <h1 className="text-sm font-bold truncate">PME Terrain</h1>
-              <p className="text-xs text-sidebar-foreground/60 truncate">{profile?.full_name}</p>
-            </div>
+            <h1 className="text-sm font-bold truncate">PME Terrain</h1>
           )}
         </div>
 
