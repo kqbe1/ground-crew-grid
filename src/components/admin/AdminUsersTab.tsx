@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus, Search, ShieldAlert, Pencil } from "lucide-react";
+import { Plus, Search, ShieldAlert, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import CreateUserDialog from "@/components/admin/CreateUserDialog";
 import EditUserDialog from "@/components/admin/EditUserDialog";
@@ -152,9 +152,42 @@ export default function AdminUsersTab() {
                 )}
 
                 {canChangeRole(u) && (
-                  <Button variant="ghost" size="icon" onClick={() => setEditUser(u)} title="Modifier">
-                    <Pencil className="w-4 h-4" />
-                  </Button>
+                  <>
+                    <Button variant="ghost" size="icon" onClick={() => setEditUser(u)} title="Modifier">
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Supprimer"
+                      onClick={async () => {
+                        if (!confirm(`Supprimer définitivement ${u.full_name} ? Cette action est irréversible.`)) return;
+                        try {
+                          const { data: { session } } = await supabase.auth.getSession();
+                          const resp = await fetch(
+                            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-user`,
+                            {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${session?.access_token}`,
+                                "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                              },
+                              body: JSON.stringify({ user_id: u.id, action: "delete" }),
+                            }
+                          );
+                          const result = await resp.json();
+                          if (!resp.ok || result.error) throw new Error(result.error);
+                          toast.success("Utilisateur supprimé");
+                          fetchUsers();
+                        } catch (err: any) {
+                          toast.error(err.message || "Erreur lors de la suppression");
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </>
                 )}
 
                 <div className="flex items-center gap-2">
