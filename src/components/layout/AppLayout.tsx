@@ -19,7 +19,7 @@ export default function AppLayout() {
   // Ouvrier goes to mobile PWA
   if (role === "ouvrier") return <Navigate to="/mobile" replace />;
 
-  // No role assigned yet
+  // Bureau role also goes to desktop
   if (!role) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">

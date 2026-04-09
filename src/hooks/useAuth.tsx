@@ -2,13 +2,13 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-type AppRole = "admin" | "secretariat" | "ouvrier" | "super_admin";
+type AppRole = "admin" | "bureau" | "secretariat" | "ouvrier" | "super_admin";
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   role: AppRole | null;
-  profile: { full_name: string; worker_level: string | null } | null;
+  profile: { full_name: string; worker_level: string | null; company_id: string | null } | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
@@ -21,16 +21,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
-  const [profile, setProfile] = useState<{ full_name: string; worker_level: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ full_name: string; worker_level: string | null; company_id: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchUserData = async (userId: string) => {
-    const [roleRes, profileRes] = await Promise.all([
-      supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
-      supabase.from("profiles").select("full_name, worker_level").eq("id", userId).maybeSingle(),
-    ]);
-    if (roleRes.data) setRole(roleRes.data.role as AppRole);
-    if (profileRes.data) setProfile(profileRes.data);
+    const { data } = await supabase
+      .from("profiles")
+      .select("full_name, worker_level, role, company_id")
+      .eq("id", userId)
+      .maybeSingle();
+    if (data) {
+      setRole((data.role as AppRole) ?? null);
+      setProfile({ full_name: data.full_name, worker_level: data.worker_level, company_id: data.company_id });
+    }
   };
 
   useEffect(() => {
