@@ -7,9 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus, Search, ShieldAlert } from "lucide-react";
+import { Plus, Search, ShieldAlert, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import CreateUserDialog from "@/components/admin/CreateUserDialog";
+import EditUserDialog from "@/components/admin/EditUserDialog";
 
 const roleColors: Record<string, string> = {
   super_admin: "bg-amber-600 text-white",
@@ -30,6 +31,7 @@ export default function AdminUsersTab() {
   const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [editUser, setEditUser] = useState<any>(null);
 
   const isSuperAdmin = role === "super_admin";
 
@@ -149,6 +151,12 @@ export default function AdminUsersTab() {
                   </Select>
                 )}
 
+                {canChangeRole(u) && (
+                  <Button variant="ghost" size="icon" onClick={() => setEditUser(u)} title="Modifier">
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                )}
+
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={u.is_active}
@@ -175,6 +183,13 @@ export default function AdminUsersTab() {
         onOpenChange={setCreateOpen}
         onCreated={fetchUsers}
         callerRole={role || ""}
+      />
+
+      <EditUserDialog
+        open={!!editUser}
+        onOpenChange={(open) => !open && setEditUser(null)}
+        user={editUser}
+        onSaved={fetchUsers}
       />
     </>
   );
