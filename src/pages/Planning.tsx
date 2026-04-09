@@ -373,7 +373,7 @@ function PlanningInner() {
             {/* Time rows */}
             {HOURS.map((hour) => (
               <div key={`row-${hour}`} className="contents">
-                <div className="border-b border-border px-1 text-[10px] text-muted-foreground text-right pr-2 flex items-start justify-end pt-0.5 font-medium" style={{ height: `calc((100vh - 11rem) / ${HOURS.length})` }}>
+                <div className="border-b border-border px-1 text-[10px] text-muted-foreground text-right pr-2 flex items-start justify-end pt-0.5 font-medium" style={{ height: `calc((100vh - 8rem) / ${HOURS.length})` }}>
                   {String(hour).padStart(2, "0")}:00
                 </div>
                 {displayedWorkers.map((w) => {
@@ -385,7 +385,7 @@ function PlanningInner() {
                       <ContextMenuTrigger asChild>
                         <div
                           key={`cell-${hour}-${w.id}`}
-                          className="border-b border-l border-border relative" style={{ height: `calc((100vh - 11rem) / ${HOURS.length})` }}
+                          className="border-b border-l border-border relative" style={{ height: `calc((100vh - 8rem) / ${HOURS.length})` }}
                         >
                           {/* 4 quarter-hour drop zones */}
                           {[0, 1, 2, 3].map((q) => {
