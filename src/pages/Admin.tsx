@@ -11,6 +11,7 @@ import { WORKER_LEVEL_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS
 import { Users, FileText, Plus, Pencil, Trash2, ShieldAlert, Printer, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import CreateEditTemplateDialog from "@/components/admin/CreateEditTemplateDialog";
+import CreateUserDialog from "@/components/admin/CreateUserDialog";
 import { useAuth } from "@/hooks/useAuth";
 import PdfSettingsTab from "@/components/admin/PdfSettingsTab";
 import AdminStatsTab from "@/components/admin/AdminStatsTab";
