@@ -122,7 +122,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultWork
     }
     setLoading(true);
     const { error } = await supabase.from("work_tasks").insert({
-      title: title.trim(),
+      title: title.trim() as any,
       intervention_type: interventionType as any,
       assigned_to: assignedTo || null,
       scheduled_date: scheduledDate,

@@ -84,7 +84,7 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
 
     const { error } = client
       ? await supabase.from("clients").update(payload).eq("id", client.id)
-      : await supabase.from("clients").insert(payload);
+      : await supabase.from("clients").insert(payload as any);
 
     setLoading(false);
     if (error) {

@@ -93,7 +93,7 @@ async function syncDraft(draft: OfflineDraft): Promise<boolean> {
   }
 
   const { error } = await supabase.from("intervention_sheets").insert({
-    ...payload,
+    ...payload as any,
     arrival_time: payload.arrival_time || null,
     departure_time: payload.departure_time || null,
     final_status: payload.final_status as any,

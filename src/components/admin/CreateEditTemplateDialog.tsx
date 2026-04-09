@@ -67,7 +67,7 @@ export default function CreateEditTemplateDialog({ open, onOpenChange, template,
 
     const { error } = template
       ? await supabase.from("task_templates").update(payload).eq("id", template.id)
-      : await supabase.from("task_templates").insert(payload);
+      : await supabase.from("task_templates").insert(payload as any);
 
     setSaving(false);
     if (error) { toast.error(error.message); return; }

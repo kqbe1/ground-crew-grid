@@ -236,7 +236,7 @@ export default function MobileTaskDetail() {
                 setSubmitting(true);
                 try {
                   const { error: orderError } = await supabase.from("parts_orders").insert({
-                    part_name: partName.trim(),
+                    part_name: partName.trim() as any,
                     part_reference: partRef.trim() || null,
                     quantity: partQty,
                     urgency: partUrgency,
