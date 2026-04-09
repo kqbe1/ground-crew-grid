@@ -32,18 +32,22 @@ export default function CreateUserDialog({ open, onOpenChange, onCreated, caller
     if (!email || !password || !fullName || !role) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-user", {
-        body: { email, password, full_name: fullName, role },
-      });
-      if (data?.error) throw new Error(data.error);
-      if (error) {
-        // Try to parse the error context for a meaningful message
-        const msg = typeof error === 'object' && 'context' in error
-          ? (error as any).context?.body
-            ? JSON.parse(new TextDecoder().decode((error as any).context.body)).error
-            : error.message
-          : error.message;
-        throw new Error(msg || "Erreur lors de la création");
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token}`,
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ email, password, full_name: fullName, role }),
+        }
+      );
+      const result = await resp.json();
+      if (!resp.ok || result.error) {
+        throw new Error(result.error || "Erreur lors de la création");
       }
       toast.success("Utilisateur créé avec succès");
       setEmail(""); setPassword(""); setFullName(""); setRole("ouvrier");
