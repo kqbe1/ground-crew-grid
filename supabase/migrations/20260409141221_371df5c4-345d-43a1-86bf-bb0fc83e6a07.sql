@@ -1,0 +1,1 @@
+ALTER TABLE public.companies ALTER COLUMN max_users SET DEFAULT 25;
