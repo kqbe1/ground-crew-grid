@@ -162,14 +162,14 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
           )}
         </div>
 
-        <Tabs defaultValue="details" className="mt-2">
+        <Tabs defaultValue="details" className="mt-2" onValueChange={(v) => { if (v === "pdf") handlePreviewPdf(); }}>
           <TabsList className="w-full">
             <TabsTrigger value="details" className="flex-1">Détails</TabsTrigger>
             <TabsTrigger value="photos" className="flex-1">
               Photos ({(sheet.photos_before?.length || 0) + (sheet.photos_after?.length || 0)})
             </TabsTrigger>
             <TabsTrigger value="signature" className="flex-1">Signature</TabsTrigger>
-            <TabsTrigger value="pdf" className="flex-1" onClick={handlePreviewPdf}>
+            <TabsTrigger value="pdf" className="flex-1">
               <Eye className="w-3.5 h-3.5 mr-1" /> PDF
             </TabsTrigger>
           </TabsList>
