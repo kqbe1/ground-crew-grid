@@ -169,6 +169,9 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
               Photos ({(sheet.photos_before?.length || 0) + (sheet.photos_after?.length || 0)})
             </TabsTrigger>
             <TabsTrigger value="signature" className="flex-1">Signature</TabsTrigger>
+            <TabsTrigger value="pdf" className="flex-1" onClick={handlePreviewPdf}>
+              <Eye className="w-3.5 h-3.5 mr-1" /> PDF
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="space-y-4 mt-4">
