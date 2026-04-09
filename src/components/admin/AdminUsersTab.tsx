@@ -15,7 +15,6 @@ const roleColors: Record<string, string> = {
   super_admin: "bg-amber-600 text-white",
   admin: "bg-destructive text-destructive-foreground",
   bureau: "bg-blue-600 text-white",
-  secretariat: "bg-secondary text-secondary-foreground",
   ouvrier: "bg-primary text-primary-foreground",
 };
 
@@ -23,7 +22,6 @@ const roleLabels: Record<string, string> = {
   super_admin: "Super Admin",
   admin: "Admin",
   bureau: "Bureau",
-  secretariat: "Secrétariat",
   ouvrier: "Ouvrier",
 };
 
@@ -134,7 +132,6 @@ export default function AdminUsersTab() {
                   <SelectContent>
                     {(isSuperAdmin || role === "admin") && <SelectItem value="admin">Admin</SelectItem>}
                     <SelectItem value="bureau">Bureau</SelectItem>
-                    <SelectItem value="secretariat">Secrétariat</SelectItem>
                     <SelectItem value="ouvrier">Ouvrier</SelectItem>
                   </SelectContent>
                 </Select>
