@@ -92,7 +92,6 @@ Deno.serve(async (req) => {
       : callerCompanyId;
 
     // Create user with service role (bypasses email confirmation)
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
