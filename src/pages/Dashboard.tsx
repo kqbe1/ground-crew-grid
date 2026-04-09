@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import LegalAlertsPanel from "@/components/dashboard/LegalAlertsPanel";
 import PartsReceivedPanel from "@/components/dashboard/PartsReceivedPanel";
+import RecentSheetsPanel from "@/components/dashboard/RecentSheetsPanel";
 
 const CHART_COLORS = [
   "hsl(220, 72%, 50%)",
@@ -294,6 +295,8 @@ export default function Dashboard() {
 
       {/* Status pie chart + detail sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Recent intervention sheets */}
+        <RecentSheetsPanel />
         {/* Legal alerts */}
         <LegalAlertsPanel />
 
