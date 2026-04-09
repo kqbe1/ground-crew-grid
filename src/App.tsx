@@ -34,6 +34,8 @@ const Install = lazy(() => import("@/pages/Install"));
 const SuperAdminDashboard = lazy(() => import("@/pages/super-admin/SuperAdminDashboard"));
 const SuperAdminCompanies = lazy(() => import("@/pages/super-admin/SuperAdminCompanies"));
 const SuperAdminUsers = lazy(() => import("@/pages/super-admin/SuperAdminUsers"));
+const SuperAdminSettings = lazy(() => import("@/pages/super-admin/SuperAdminSettings"));
+const SuperAdminLogs = lazy(() => import("@/pages/super-admin/SuperAdminLogs"));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center h-32">
@@ -60,6 +62,8 @@ const App = () => (
                 <Route index element={<SuperAdminDashboard />} />
                 <Route path="companies" element={<SuperAdminCompanies />} />
                 <Route path="users" element={<SuperAdminUsers />} />
+                <Route path="settings" element={<SuperAdminSettings />} />
+                <Route path="logs" element={<SuperAdminLogs />} />
               </Route>
 
               {/* Webapp Admin/Secrétariat */}
