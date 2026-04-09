@@ -24,6 +24,7 @@ const roleBadgeClass: Record<string, string> = {
 
 export default function SuperAdminUsers() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [filterCompany, setFilterCompany] = useState<string>(searchParams.get("company") || "all");
   const [createOpen, setCreateOpen] = useState(false);
