@@ -64,6 +64,11 @@ export default function SuperAdminLayout() {
             </Badge>
           </div>
         )}
+        {collapsed && (
+          <div className="flex justify-center py-2 border-b border-sidebar-border" title="Super Admin">
+            <ShieldCheck className="w-4 h-4 text-amber-500" />
+          </div>
+        )}
 
         {/* Nav */}
         <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
