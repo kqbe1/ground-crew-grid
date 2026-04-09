@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { user_id, email, password, full_name } = body;
+    const { user_id, action } = body;
 
     if (!user_id) {
       return new Response(JSON.stringify({ error: "user_id requis" }), {
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     // Get target user profile
     const { data: targetProfile } = await adminClient
       .from("profiles")
-      .select("role, company_id")
+      .select("role, company_id, full_name, email")
       .eq("id", user_id)
       .single();
 
@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Admin can only edit users in their own company (not admin/super_admin)
+    // Permission checks
     if (callerRole === "admin") {
       if (targetProfile.company_id !== callerCompanyId) {
         return new Response(JSON.stringify({ error: "Vous ne pouvez modifier que les utilisateurs de votre entreprise" }), {
@@ -100,6 +100,44 @@ Deno.serve(async (req) => {
         });
       }
     }
+
+    // Cannot delete yourself
+    if (action === "delete" && callerId === user_id) {
+      return new Response(JSON.stringify({ error: "Vous ne pouvez pas supprimer votre propre compte" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // === DELETE ===
+    if (action === "delete") {
+      // Delete auth user (cascade will delete profile via ON DELETE CASCADE)
+      const { error: deleteError } = await adminClient.auth.admin.deleteUser(user_id);
+      if (deleteError) {
+        return new Response(JSON.stringify({ error: deleteError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Log activity
+      await adminClient.from("activity_logs").insert({
+        action: "delete_user",
+        actor_id: callerId,
+        target_type: "user",
+        target_id: user_id,
+        company_id: targetProfile.company_id,
+        metadata: { full_name: targetProfile.full_name, email: targetProfile.email },
+      });
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // === UPDATE ===
+    const { email, password, full_name } = body;
 
     // Update auth user (email/password) via admin API
     const authUpdates: Record<string, string> = {};

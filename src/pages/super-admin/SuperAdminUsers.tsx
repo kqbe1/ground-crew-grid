@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, ArrowLeft } from "lucide-react";
+import { Plus, Pencil, ArrowLeft, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import EditUserDialog from "@/components/admin/EditUserDialog";
@@ -161,6 +161,37 @@ export default function SuperAdminUsers() {
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => setEditingProfile({ ...p })}>
                   Rôle / Entreprise
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Supprimer"
+                  onClick={async () => {
+                    if (!confirm(`Supprimer définitivement ${p.full_name} ? Cette action est irréversible.`)) return;
+                    try {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      const resp = await fetch(
+                        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-user`,
+                        {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${session?.access_token}`,
+                            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                          },
+                          body: JSON.stringify({ user_id: p.id, action: "delete" }),
+                        }
+                      );
+                      const result = await resp.json();
+                      if (!resp.ok || result.error) throw new Error(result.error);
+                      toast.success("Utilisateur supprimé");
+                      queryClient.invalidateQueries({ queryKey: ["sa-profiles-full"] });
+                    } catch (err: any) {
+                      toast.error(err.message || "Erreur lors de la suppression");
+                    }
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 text-destructive" />
                 </Button>
               </div>
             </CardContent>
