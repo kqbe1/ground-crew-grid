@@ -23,7 +23,8 @@ export default function Admin() {
   const [editTemplate, setEditTemplate] = useState<any>(null);
 
   const isSuperAdmin = role === "super_admin";
-
+  const isAdmin = role === "admin";
+  const canManageUsers = isSuperAdmin || isAdmin; // bureau cannot manage users
   const fetchAll = async () => {
     const [usersRes, templatesRes] = await Promise.all([
       supabase.from("profiles").select("*").order("full_name"),
