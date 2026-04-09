@@ -237,13 +237,10 @@ function PlanningInner() {
 
   return (
     <div className="p-2 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
-      {/* Title */}
-      <div className="mb-1">
-        <h1 className="text-lg font-bold">Planning</h1>
-      </div>
-
-      {/* Controls row */}
+      {/* Controls row - title + filters + action */}
       <div className="flex items-center gap-1.5 flex-wrap mb-1">
+        <h1 className="text-lg font-bold mr-2">Planning</h1>
+
         {/* View mode toggle */}
         <div className="flex rounded-lg border border-border overflow-hidden">
           {(["day", "week", "month"] as ViewMode[]).map((mode) => (
@@ -251,7 +248,7 @@ function PlanningInner() {
               key={mode}
               onClick={() => setViewMode(mode)}
               className={cn(
-                "px-4 py-2 text-sm font-medium transition-colors",
+                "px-3 py-1.5 text-xs font-medium transition-colors",
                 viewMode === mode ? "bg-primary text-primary-foreground" : "hover:bg-muted"
               )}
             >
@@ -263,11 +260,11 @@ function PlanningInner() {
         {/* Type filter dropdown */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="gap-2">
-              <Filter className="w-4 h-4" />
+            <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
+              <Filter className="w-3.5 h-3.5" />
               Tous types
               {hiddenTypes.size > 0 && (
-                <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                <Badge variant="destructive" className="ml-1 h-4 w-4 p-0 flex items-center justify-center text-[9px]">
                   {hiddenTypes.size}
                 </Badge>
               )}
@@ -301,8 +298,8 @@ function PlanningInner() {
         {/* Worker filter dropdown */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="gap-2">
-              <Users className="w-4 h-4" />
+            <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
+              <Users className="w-3.5 h-3.5" />
               {visibleWorkerIds ? `${visibleWorkerIds.size} ouvrier${visibleWorkerIds.size > 1 ? "s" : ""}` : "Tous ouvriers"}
             </Button>
           </PopoverTrigger>
@@ -330,7 +327,22 @@ function PlanningInner() {
           </PopoverContent>
         </Popover>
 
+        {/* Navigation */}
+        <div className="flex items-center gap-1 ml-2">
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate("prev")}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate("next")}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+          <span className="text-sm font-semibold capitalize ml-1">{dateLabel}</span>
+        </div>
+
         <div className="flex-1" />
+
+        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setCurrentDate(new Date())}>
+          Aujourd'hui
+        </Button>
 
         {/* Action buttons */}
         <CreateTaskDialog
@@ -339,21 +351,6 @@ function PlanningInner() {
           defaultWorkerId={clickContext.workerId}
           onCreated={refreshTasks}
         />
-      </div>
-
-      {/* Navigation row */}
-      <div className="flex items-center gap-2 mb-1">
-        <Button variant="outline" size="icon" onClick={() => navigate("prev")}>
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
-        <Button variant="outline" size="icon" onClick={() => navigate("next")}>
-          <ChevronRight className="w-4 h-4" />
-        </Button>
-        <span className="text-base font-semibold capitalize">{dateLabel}</span>
-        <div className="flex-1" />
-        <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
-          Aujourd'hui
-        </Button>
       </div>
 
       {/* Planning Grid - Day View */}
