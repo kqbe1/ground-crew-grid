@@ -236,7 +236,7 @@ function PlanningInner() {
   };
 
   return (
-    <div className="p-4 flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="p-4 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
       {/* Title */}
       <div className="mb-2">
         <h1 className="text-xl font-bold">Planning</h1>
