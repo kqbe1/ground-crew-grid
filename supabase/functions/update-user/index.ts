@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     let callerRole = "";
     let callerCompanyId: string | null = null;
+    let callerId: string | null = null;
 
     if (token === serviceRoleKey) {
       callerRole = "super_admin";
@@ -57,6 +58,7 @@ Deno.serve(async (req) => {
       }
       callerRole = callerProfile.role;
       callerCompanyId = callerProfile.company_id;
+      callerId = caller.id;
     }
 
     const body = await req.json();
@@ -130,6 +132,25 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+    }
+
+    // Log activity
+    const logMeta: Record<string, unknown> = { full_name: targetProfile.full_name || full_name };
+    const changes: string[] = [];
+    if (full_name) { logMeta.new_full_name = full_name; changes.push("name"); }
+    if (email) { logMeta.new_email = email; changes.push("email"); }
+    if (password) { changes.push("password"); }
+    logMeta.changes = changes;
+
+    if (changes.length > 0) {
+      await adminClient.from("activity_logs").insert({
+        action: "update_user_credentials",
+        actor_id: callerId,
+        target_type: "user",
+        target_id: user_id,
+        company_id: targetProfile.company_id,
+        metadata: logMeta,
+      });
     }
 
     return new Response(JSON.stringify({ success: true }), {
