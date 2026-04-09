@@ -108,11 +108,11 @@ export default function MobileFicheForm() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Heure d'arrivée</Label>
-              <Input type="time" value={arrivalTime} onChange={(e) => setArrivalTime(e.target.value)} />
+              <TimeInput value={arrivalTime} onChange={setArrivalTime} />
             </div>
             <div className="space-y-1.5">
               <Label>Heure de départ</Label>
-              <Input type="time" value={departureTime} onChange={(e) => setDepartureTime(e.target.value)} />
+              <TimeInput value={departureTime} onChange={setDepartureTime} />
             </div>
           </div>
 
