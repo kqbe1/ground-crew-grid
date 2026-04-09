@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import EditUserDialog from "@/components/admin/EditUserDialog";
 
 const ALL_ROLES = ["admin", "bureau", "ouvrier"] as const;
 
@@ -29,6 +30,8 @@ export default function SuperAdminUsers() {
   const [filterCompany, setFilterCompany] = useState<string>(searchParams.get("company") || "all");
   const [createOpen, setCreateOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<any>(null);
+  const [editUserDialogOpen, setEditUserDialogOpen] = useState(false);
+  const [editUserTarget, setEditUserTarget] = useState<any>(null);
 
   // Create form
   const [newEmail, setNewEmail] = useState("");
@@ -152,9 +155,14 @@ export default function SuperAdminUsers() {
                   {p.email} · {getCompanyName(p.company_id)}
                 </p>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => setEditingProfile({ ...p })}>
-                <Pencil className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={() => { setEditUserTarget(p); setEditUserDialogOpen(true); }} title="Modifier nom/email/mot de passe">
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setEditingProfile({ ...p })}>
+                  Rôle / Entreprise
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -266,6 +274,13 @@ export default function SuperAdminUsers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <EditUserDialog
+        open={editUserDialogOpen}
+        onOpenChange={setEditUserDialogOpen}
+        user={editUserTarget}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["sa-profiles-full"] })}
+      />
     </div>
   );
 }
