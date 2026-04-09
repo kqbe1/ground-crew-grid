@@ -993,6 +993,10 @@ export type Database = {
       is_bureau: { Args: never; Returns: boolean }
       is_ouvrier: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      storage_file_belongs_to_my_company: {
+        Args: { file_name: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "ouvrier" | "super_admin" | "bureau"
