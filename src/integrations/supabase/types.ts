@@ -391,7 +391,7 @@ export type Database = {
           signed_at: string | null
           updated_at: string
           work_task_id: string
-          worker_id: string
+          worker_id: string | null
         }
         Insert: {
           arrival_time?: string | null
@@ -412,7 +412,7 @@ export type Database = {
           signed_at?: string | null
           updated_at?: string
           work_task_id: string
-          worker_id: string
+          worker_id?: string | null
         }
         Update: {
           arrival_time?: string | null
@@ -433,7 +433,7 @@ export type Database = {
           signed_at?: string | null
           updated_at?: string
           work_task_id?: string
-          worker_id?: string
+          worker_id?: string | null
         }
         Relationships: [
           {
@@ -904,7 +904,7 @@ export type Database = {
           client_site_id: string | null
           company_id: string
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           duration_minutes: number
           equipment_id: string | null
@@ -928,7 +928,7 @@ export type Database = {
           client_site_id?: string | null
           company_id: string
           created_at?: string
-          created_by: string
+          created_by?: string | null
           description?: string | null
           duration_minutes?: number
           equipment_id?: string | null
@@ -952,7 +952,7 @@ export type Database = {
           client_site_id?: string | null
           company_id?: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           duration_minutes?: number
           equipment_id?: string | null
