@@ -132,7 +132,6 @@ export default function AdminUsersTab() {
                     <SelectValue placeholder="Rôle..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {isSuperAdmin && <SelectItem value="super_admin">Super Admin</SelectItem>}
                     {(isSuperAdmin || role === "admin") && <SelectItem value="admin">Admin</SelectItem>}
                     <SelectItem value="bureau">Bureau</SelectItem>
                     <SelectItem value="secretariat">Secrétariat</SelectItem>

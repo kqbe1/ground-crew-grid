@@ -25,18 +25,15 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Check if caller is using service role key (internal calls via header or auth)
     const token = authHeader.replace("Bearer ", "");
     const internalKey = req.headers.get("x-internal-key") || "";
     let callerRole = "";
     let callerCompanyId = "";
 
     if (token === serviceRoleKey || internalKey === serviceRoleKey) {
-      // Service role call — treat as super_admin
       callerRole = "super_admin";
       callerCompanyId = "";
     } else {
-      // Normal user call — validate JWT
       const callerClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
         global: { headers: { Authorization: authHeader } },
       });
@@ -74,9 +71,17 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Prevent creating super_admin via API
+    if (role === "super_admin") {
+      return new Response(JSON.stringify({ error: "Impossible de créer un super_admin" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Role hierarchy enforcement
     const allowedRoles: Record<string, string[]> = {
-      super_admin: ["super_admin", "admin", "bureau", "secretariat", "ouvrier"],
+      super_admin: ["admin", "bureau", "secretariat", "ouvrier"],
       admin: ["bureau", "secretariat", "ouvrier"],
     };
 
@@ -92,8 +97,51 @@ Deno.serve(async (req) => {
       ? (company_id || callerCompanyId)
       : callerCompanyId;
 
-    // Create user with service role (bypasses email confirmation)
+    if (!targetCompanyId) {
+      return new Response(JSON.stringify({ error: "Entreprise cible manquante" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
+    // Check company is active
+    const { data: company } = await adminClient
+      .from("companies")
+      .select("is_active, max_users")
+      .eq("id", targetCompanyId)
+      .single();
+
+    if (!company) {
+      return new Response(JSON.stringify({ error: "Entreprise introuvable" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!company.is_active) {
+      return new Response(JSON.stringify({ error: "Cette entreprise est désactivée" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check max_users limit
+    if (company.max_users) {
+      const { count } = await adminClient
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", targetCompanyId)
+        .eq("is_active", true);
+
+      if ((count ?? 0) >= company.max_users) {
+        return new Response(JSON.stringify({ error: `Limite atteinte : ${company.max_users} utilisateurs maximum pour cette entreprise` }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // Create user with service role (bypasses email confirmation)
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -111,6 +159,12 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Insert into user_roles table
+    await adminClient.from("user_roles").insert({
+      user_id: newUser.user.id,
+      role,
+    });
 
     return new Response(JSON.stringify({ user: { id: newUser.user.id, email } }), {
       status: 200,
