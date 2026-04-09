@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     let callerRole = "";
     let callerCompanyId: string | null = null;
+    let callerId: string | null = null;
 
     if (token === serviceRoleKey) {
       callerRole = "super_admin";
@@ -57,6 +58,7 @@ Deno.serve(async (req) => {
       }
       callerRole = callerProfile.role;
       callerCompanyId = callerProfile.company_id;
+      callerId = caller.id;
     }
 
     const body = await req.json();
