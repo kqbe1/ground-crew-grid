@@ -8,6 +8,7 @@ import { lazy, Suspense } from "react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import MobileLayout from "@/components/layout/MobileLayout";
+import SuperAdminLayout from "@/components/layout/SuperAdminLayout";
 import Auth from "@/pages/Auth";
 
 // Lazy-loaded pages for code splitting
@@ -29,6 +30,11 @@ const MobileProfil = lazy(() => import("@/pages/mobile/MobileProfil"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Install = lazy(() => import("@/pages/Install"));
 
+// SuperAdmin pages
+const SuperAdminDashboard = lazy(() => import("@/pages/super-admin/SuperAdminDashboard"));
+const SuperAdminCompanies = lazy(() => import("@/pages/super-admin/SuperAdminCompanies"));
+const SuperAdminUsers = lazy(() => import("@/pages/super-admin/SuperAdminUsers"));
+
 const PageLoader = () => (
   <div className="flex items-center justify-center h-32">
     <div className="animate-spin h-6 w-6 border-4 border-primary border-t-transparent rounded-full" />
@@ -48,6 +54,13 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/install" element={<Install />} />
+
+              {/* SuperAdmin */}
+              <Route path="/super-admin" element={<SuperAdminLayout />}>
+                <Route index element={<SuperAdminDashboard />} />
+                <Route path="companies" element={<SuperAdminCompanies />} />
+                <Route path="users" element={<SuperAdminUsers />} />
+              </Route>
 
               {/* Webapp Admin/Secrétariat */}
               <Route element={<AppLayout />}>
