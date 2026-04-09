@@ -23,7 +23,8 @@ export default function Admin() {
   const [editTemplate, setEditTemplate] = useState<any>(null);
 
   const isSuperAdmin = role === "super_admin";
-
+  const isAdmin = role === "admin";
+  const canManageUsers = isSuperAdmin || isAdmin; // bureau cannot manage users
   const fetchAll = async () => {
     const [usersRes, templatesRes] = await Promise.all([
       supabase.from("profiles").select("*").order("full_name"),
@@ -124,7 +125,9 @@ export default function Admin() {
       <Tabs defaultValue="stats">
         <TabsList>
           <TabsTrigger value="stats" className="gap-1.5"><BarChart3 className="w-4 h-4" /> Statistiques</TabsTrigger>
-          <TabsTrigger value="users" className="gap-1.5"><Users className="w-4 h-4" /> Utilisateurs</TabsTrigger>
+          {canManageUsers && (
+            <TabsTrigger value="users" className="gap-1.5"><Users className="w-4 h-4" /> Utilisateurs</TabsTrigger>
+          )}
           <TabsTrigger value="templates" className="gap-1.5"><FileText className="w-4 h-4" /> Templates</TabsTrigger>
           <TabsTrigger value="pdf" className="gap-1.5"><Printer className="w-4 h-4" /> Config PDF</TabsTrigger>
         </TabsList>
@@ -134,8 +137,8 @@ export default function Admin() {
           <AdminStatsTab />
         </TabsContent>
 
-        {/* ===== UTILISATEURS ===== */}
-        <TabsContent value="users" className="mt-4">
+        {/* ===== UTILISATEURS (admin + super_admin only) ===== */}
+        {canManageUsers && <TabsContent value="users" className="mt-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Utilisateurs ({users.length})</CardTitle>
@@ -203,7 +206,7 @@ export default function Admin() {
               })}
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent>}
 
         {/* ===== TEMPLATES ===== */}
         <TabsContent value="templates" className="mt-4">
