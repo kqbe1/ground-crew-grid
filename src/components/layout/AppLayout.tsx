@@ -19,6 +19,9 @@ export default function AppLayout() {
   // Ouvrier goes to mobile PWA
   if (role === "ouvrier") return <Navigate to="/mobile" replace />;
 
+  // Super admin goes to dedicated console
+  if (role === "super_admin") return <Navigate to="/super-admin" replace />;
+
   // Bureau role also goes to desktop
   if (!role) {
     return (
