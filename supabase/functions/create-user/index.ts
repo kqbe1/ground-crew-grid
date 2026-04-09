@@ -25,12 +25,13 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Check if caller is using service role key (internal calls)
+    // Check if caller is using service role key (internal calls via header or auth)
     const token = authHeader.replace("Bearer ", "");
+    const internalKey = req.headers.get("x-internal-key") || "";
     let callerRole = "";
     let callerCompanyId = "";
 
-    if (token === serviceRoleKey) {
+    if (token === serviceRoleKey || internalKey === serviceRoleKey) {
       // Service role call — treat as super_admin
       callerRole = "super_admin";
       callerCompanyId = "";
