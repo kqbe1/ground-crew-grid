@@ -236,15 +236,14 @@ function PlanningInner() {
   };
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
       {/* Title */}
-      <div>
-        <h1 className="text-2xl font-bold">Planning</h1>
-        <p className="text-muted-foreground text-sm">Gérez le planning de vos équipes</p>
+      <div className="mb-2">
+        <h1 className="text-xl font-bold">Planning</h1>
       </div>
 
       {/* Controls row */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap mb-2">
         {/* View mode toggle */}
         <div className="flex rounded-lg border border-border overflow-hidden">
           {(["day", "week", "month"] as ViewMode[]).map((mode) => (
@@ -343,7 +342,7 @@ function PlanningInner() {
       </div>
 
       {/* Navigation row */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 mb-2">
         <Button variant="outline" size="icon" onClick={() => navigate("prev")}>
           <ChevronLeft className="w-4 h-4" />
         </Button>
