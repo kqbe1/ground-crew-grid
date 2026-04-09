@@ -266,6 +266,15 @@ export default function Admin() {
         template={editTemplate}
         onSaved={fetchAll}
       />
+
+      {canManageUsers && (
+        <CreateUserDialog
+          open={createUserOpen}
+          onOpenChange={setCreateUserOpen}
+          onCreated={fetchAll}
+          callerRole={role || ""}
+        />
+      )}
     </div>
   );
 }
