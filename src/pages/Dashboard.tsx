@@ -295,6 +295,8 @@ export default function Dashboard() {
 
       {/* Status pie chart + detail sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Recent intervention sheets */}
+        <RecentSheetsPanel />
         {/* Legal alerts */}
         <LegalAlertsPanel />
 
