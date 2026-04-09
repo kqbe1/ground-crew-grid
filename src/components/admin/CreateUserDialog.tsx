@@ -35,8 +35,16 @@ export default function CreateUserDialog({ open, onOpenChange, onCreated, caller
       const { data, error } = await supabase.functions.invoke("create-user", {
         body: { email, password, full_name: fullName, role },
       });
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      if (error) {
+        // Try to parse the error context for a meaningful message
+        const msg = typeof error === 'object' && 'context' in error
+          ? (error as any).context?.body
+            ? JSON.parse(new TextDecoder().decode((error as any).context.body)).error
+            : error.message
+          : error.message;
+        throw new Error(msg || "Erreur lors de la création");
+      }
       toast.success("Utilisateur créé avec succès");
       setEmail(""); setPassword(""); setFullName(""); setRole("ouvrier");
       onOpenChange(false);
