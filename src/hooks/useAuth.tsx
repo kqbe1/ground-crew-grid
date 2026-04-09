@@ -27,10 +27,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserData = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("full_name, worker_level, role, company_id")
+      .select("full_name, worker_level, role, company_id, is_active")
       .eq("id", userId)
       .maybeSingle();
     if (data) {
+      // Check if user is active
+      if (!data.is_active) {
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        setRole(null);
+        setProfile(null);
+        alert("Votre compte a été désactivé. Contactez votre administrateur.");
+        return;
+      }
+      // Check if company is active
+      if (data.company_id) {
+        const { data: company } = await supabase
+          .from("companies")
+          .select("is_active")
+          .eq("id", data.company_id)
+          .maybeSingle();
+        if (company && !company.is_active) {
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setRole(null);
+          setProfile(null);
+          alert("Votre entreprise a été désactivée. Contactez votre administrateur.");
+          return;
+        }
+      }
       setRole((data.role as AppRole) ?? null);
       setProfile({ full_name: data.full_name, worker_level: data.worker_level, company_id: data.company_id });
     }
