@@ -132,7 +132,6 @@ export default function AdminUsersTab() {
                   <SelectContent>
                     {(isSuperAdmin || role === "admin") && <SelectItem value="admin">Admin</SelectItem>}
                     <SelectItem value="bureau">Bureau</SelectItem>
-                    <SelectItem value="secretariat">Secrétariat</SelectItem>
                     <SelectItem value="ouvrier">Ouvrier</SelectItem>
                   </SelectContent>
                 </Select>
