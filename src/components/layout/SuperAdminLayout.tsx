@@ -56,6 +56,15 @@ export default function SuperAdminLayout() {
           )}
         </div>
 
+        {!collapsed && (
+          <div className="px-4 py-2 border-b border-sidebar-border">
+            <Badge className="text-[10px] gap-1 bg-amber-600 text-white">
+              <ShieldCheck className="w-3 h-3" />
+              Super Admin
+            </Badge>
+          </div>
+        )}
+
         {/* Nav */}
         <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
           {navItems.map((item) => (
