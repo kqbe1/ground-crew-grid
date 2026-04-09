@@ -73,7 +73,7 @@ export default function DraggableTaskCard({ task, onDragStart, onClick, onResize
 
       if (error) {
         toast.error("Erreur lors du redimensionnement");
-        if (card) card.style.height = `${heightPx}px`;
+        if (card) card.style.height = useRelativeHeight ? (heightPercent || '') : `${heightPx}px`;
       } else {
         toast.success(`Durée: ${pendingDuration} min`);
         onResized();
