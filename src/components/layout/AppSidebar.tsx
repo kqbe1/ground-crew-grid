@@ -56,7 +56,7 @@ export default function AppSidebar() {
       )}
     >
       {/* Logo */}
-      <div className="flex items-center justify-center gap-3 px-4 h-16 border-b border-sidebar-border">
+      <div className={cn("flex items-center gap-3 px-4 h-16 border-b border-sidebar-border", collapsed && "justify-center")}>
         <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
           <WrenchIcon className="w-4 h-4 text-sidebar-primary-foreground" />
         </div>

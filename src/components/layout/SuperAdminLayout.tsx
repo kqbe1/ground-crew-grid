@@ -47,7 +47,7 @@ export default function SuperAdminLayout() {
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-center gap-3 px-4 h-16 border-b border-sidebar-border">
+        <div className={cn("flex items-center gap-3 px-4 h-16 border-b border-sidebar-border", collapsed && "justify-center")}>
           <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-600 flex items-center justify-center">
             <ShieldCheck className="w-4 h-4 text-white" />
           </div>
@@ -62,6 +62,11 @@ export default function SuperAdminLayout() {
               <ShieldCheck className="w-3 h-3" />
               Super Admin
             </Badge>
+          </div>
+        )}
+        {collapsed && (
+          <div className="flex justify-center py-2 border-b border-sidebar-border" title="Super Admin">
+            <ShieldCheck className="w-4 h-4 text-amber-500" />
           </div>
         )}
 
