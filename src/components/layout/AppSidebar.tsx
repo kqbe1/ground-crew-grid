@@ -46,6 +46,7 @@ export default function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
 
   const filteredItems = navItems.filter((item) => role && item.roles.includes(role));
+  const currentRoleConfig = role ? roleConfig[role] : null;
 
   return (
     <aside
@@ -54,18 +55,39 @@ export default function AppSidebar() {
         collapsed ? "w-16" : "w-64"
       )}
     >
-      {/* Logo */}
+      {/* Logo + Role */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border">
         <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
           <WrenchIcon className="w-4 h-4 text-sidebar-primary-foreground" />
         </div>
         {!collapsed && (
-          <div className="overflow-hidden">
+          <div className="overflow-hidden flex-1 min-w-0">
             <h1 className="text-sm font-bold truncate">PME Terrain</h1>
-            <p className="text-xs text-sidebar-foreground/60 truncate">{profile?.full_name}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs text-sidebar-foreground/60 truncate">{profile?.full_name}</p>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Role badge */}
+      {currentRoleConfig && !collapsed && (
+        <div className="px-4 py-2 border-b border-sidebar-border">
+          <Badge className={cn("text-[10px] gap-1", currentRoleConfig.color)}>
+            <currentRoleConfig.icon className="w-3 h-3" />
+            {currentRoleConfig.label}
+          </Badge>
+        </div>
+      )}
+      {currentRoleConfig && collapsed && (
+        <div className="flex justify-center py-2 border-b border-sidebar-border" title={currentRoleConfig.label}>
+          <currentRoleConfig.icon className={cn("w-4 h-4", 
+            role === "super_admin" ? "text-amber-500" : 
+            role === "admin" ? "text-destructive" : 
+            role === "bureau" ? "text-blue-500" : "text-secondary"
+          )} />
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
