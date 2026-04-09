@@ -141,9 +141,14 @@ export default function Admin() {
 
         {/* ===== UTILISATEURS (admin + super_admin only) ===== */}
         {canManageUsers && <TabsContent value="users" className="mt-4">
-          <Card>
-            <CardHeader>
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Utilisateurs ({users.length})</CardTitle>
+              {canManageUsers && (
+                <Button size="sm" onClick={() => setCreateUserOpen(true)}>
+                  <Plus className="w-4 h-4 mr-1" /> Nouvel utilisateur
+                </Button>
+              )}
             </CardHeader>
             <CardContent className="space-y-2">
               {users.map((u) => {
