@@ -33,6 +33,13 @@ const navItems = [
   { to: "/admin", icon: Settings, label: "Admin", roles: ["admin", "bureau", "super_admin"] },
 ];
 
+const roleConfig: Record<string, { label: string; color: string; icon: typeof Shield }> = {
+  super_admin: { label: "Super Admin", color: "bg-amber-600 text-white", icon: ShieldCheck },
+  admin: { label: "Admin", color: "bg-destructive text-destructive-foreground", icon: Shield },
+  bureau: { label: "Bureau", color: "bg-blue-600 text-white", icon: Building2 },
+  secretariat: { label: "Secrétariat", color: "bg-secondary text-secondary-foreground", icon: ClipboardList },
+};
+
 export default function AppSidebar() {
   const { role, profile, signOut } = useAuth();
   const location = useLocation();
