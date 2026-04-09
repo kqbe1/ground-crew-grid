@@ -454,6 +454,7 @@ function PlanningInner() {
 
       {/* Week View */}
       {viewMode === "week" && (
+        <div className="flex-1 min-h-0 overflow-auto">
         <WeekViewGrid
           currentDate={currentDate}
           tasks={filteredTasks}
@@ -469,10 +470,12 @@ function PlanningInner() {
           onRefresh={refreshTasks}
           onPaste={handlePaste}
         />
+        </div>
       )}
 
       {/* Month View */}
       {viewMode === "month" && (
+        <div className="flex-1 min-h-0 overflow-auto">
         <MonthViewCalendar
           currentDate={currentDate}
           tasks={filteredTasks}
@@ -483,6 +486,7 @@ function PlanningInner() {
           }}
           onRefresh={refreshTasks}
         />
+        </div>
       )}
 
       {/* Task Detail Dialog */}
