@@ -1,120 +1,41 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { WORKER_LEVEL_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
-import { Users, FileText, Plus, Pencil, Trash2, ShieldAlert, Printer, BarChart3 } from "lucide-react";
+import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
+import { Users, FileText, Plus, Pencil, Trash2, Printer, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import CreateEditTemplateDialog from "@/components/admin/CreateEditTemplateDialog";
-import CreateUserDialog from "@/components/admin/CreateUserDialog";
+import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import { useAuth } from "@/hooks/useAuth";
 import PdfSettingsTab from "@/components/admin/PdfSettingsTab";
 import AdminStatsTab from "@/components/admin/AdminStatsTab";
 
 export default function Admin() {
-  const { role, user } = useAuth();
-  const [users, setUsers] = useState<any[]>([]);
+  const { role } = useAuth();
   const [templates, setTemplates] = useState<any[]>([]);
   const [templateDialog, setTemplateDialog] = useState(false);
   const [editTemplate, setEditTemplate] = useState<any>(null);
-  const [createUserOpen, setCreateUserOpen] = useState(false);
 
-  const isSuperAdmin = role === "super_admin";
-  const isAdmin = role === "admin";
-  const canManageUsers = isSuperAdmin || isAdmin; // bureau cannot manage users
-  const fetchAll = async () => {
-    const [usersRes, templatesRes] = await Promise.all([
-      supabase.from("profiles").select("*").order("full_name"),
-      supabase.from("task_templates").select("*").order("name"),
-    ]);
+  const canManageUsers = role === "super_admin" || role === "admin";
 
-    setUsers(usersRes.data ?? []);
-    setTemplates(templatesRes.data ?? []);
+  const fetchTemplates = async () => {
+    const { data } = await supabase.from("task_templates").select("*").order("name");
+    setTemplates(data ?? []);
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { fetchTemplates(); }, []);
 
-  // Defense-in-depth: block non-admin access at component level
   if (role && role !== "admin" && role !== "bureau" && role !== "super_admin") {
     return <Navigate to="/" replace />;
   }
 
-  const isTargetProtected = (targetRole: string | null) => {
-    return targetRole === "admin" || targetRole === "super_admin";
-  };
-
-  const canModifyUser = (targetUser: any) => {
-    if (isSuperAdmin) return true;
-    // Admin cannot modify admins or super_admins
-    if (isTargetProtected(targetUser.role)) return false;
-    // Admin cannot modify themselves (deactivation)
-    return true;
-  };
-
-  const canToggleActive = (targetUser: any) => {
-    if (isSuperAdmin) {
-      // Super admin cannot deactivate themselves
-      return targetUser.id !== user?.id;
-    }
-    // Admin cannot deactivate themselves or other admins/super_admins
-    if (targetUser.id === user?.id) return false;
-    if (isTargetProtected(targetUser.role)) return false;
-    return true;
-  };
-
-  const canChangeRole = (targetUser: any) => {
-    if (isSuperAdmin) return true;
-    // Admin cannot change role of admins/super_admins
-    if (isTargetProtected(targetUser.role)) return false;
-    // Admin cannot change their own role
-    if (targetUser.id === user?.id) return false;
-    return true;
-  };
-
-  const assignRole = async (userId: string, newRole: string) => {
-    const { error } = await supabase.from("profiles").update({ role: newRole as any }).eq("id", userId);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Rôle mis à jour");
-    fetchAll();
-  };
-
-  const updateWorkerLevel = async (userId: string, level: string) => {
-    await supabase.from("profiles").update({ worker_level: level as any }).eq("id", userId);
-    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, worker_level: level } : u)));
-    toast.success("Niveau mis à jour");
-  };
-
-  const toggleActive = async (userId: string, active: boolean) => {
-    await supabase.from("profiles").update({ is_active: active }).eq("id", userId);
-    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, is_active: active } : u)));
-    toast.success(active ? "Utilisateur activé" : "Utilisateur désactivé");
-  };
-
   const deleteTemplate = async (id: string) => {
     await supabase.from("task_templates").delete().eq("id", id);
     toast.success("Template supprimé");
-    fetchAll();
-  };
-
-  const roleColors: Record<string, string> = {
-    super_admin: "bg-amber-600 text-white",
-    admin: "bg-destructive text-destructive-foreground",
-    bureau: "bg-blue-600 text-white",
-    secretariat: "bg-secondary text-secondary-foreground",
-    ouvrier: "bg-primary text-primary-foreground",
-  };
-
-  const roleLabels: Record<string, string> = {
-    super_admin: "Super Admin",
-    admin: "Admin",
-    bureau: "Bureau",
-    secretariat: "Secrétariat",
-    ouvrier: "Ouvrier",
+    fetchTemplates();
   };
 
   return (
@@ -134,88 +55,16 @@ export default function Admin() {
           <TabsTrigger value="pdf" className="gap-1.5"><Printer className="w-4 h-4" /> Config PDF</TabsTrigger>
         </TabsList>
 
-        {/* ===== STATISTIQUES ===== */}
         <TabsContent value="stats" className="mt-4">
           <AdminStatsTab />
         </TabsContent>
 
-        {/* ===== UTILISATEURS (admin + super_admin only) ===== */}
-        {canManageUsers && <TabsContent value="users" className="mt-4">
-           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Utilisateurs ({users.length})</CardTitle>
-              {canManageUsers && (
-                <Button size="sm" onClick={() => setCreateUserOpen(true)}>
-                  <Plus className="w-4 h-4 mr-1" /> Nouvel utilisateur
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {users.map((u) => {
-                const isProtected = isTargetProtected(u.role);
-                const isSelf = u.id === user?.id;
+        {canManageUsers && (
+          <TabsContent value="users" className="mt-4">
+            <AdminUsersTab />
+          </TabsContent>
+        )}
 
-                return (
-                  <div key={u.id} className={`flex items-center gap-3 p-3 rounded-lg border ${!u.is_active ? "opacity-50" : ""}`}>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium flex items-center gap-2">
-                        {u.full_name}
-                        {u.role === "super_admin" && <ShieldAlert className="w-4 h-4 text-amber-600" />}
-                        {isSelf && <span className="text-xs text-muted-foreground">(vous)</span>}
-                      </div>
-                      <div className="text-sm text-muted-foreground">{u.email}</div>
-                    </div>
-
-                    <Select
-                      value={u.role || ""}
-                      onValueChange={(v) => assignRole(u.id, v)}
-                      disabled={!canChangeRole(u)}
-                    >
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Rôle..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {isSuperAdmin && <SelectItem value="super_admin">Super Admin</SelectItem>}
-                        {(isSuperAdmin || role === "admin") && <SelectItem value="admin">Admin</SelectItem>}
-                        <SelectItem value="bureau">Bureau</SelectItem>
-                        <SelectItem value="secretariat">Secrétariat</SelectItem>
-                        <SelectItem value="ouvrier">Ouvrier</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    {u.role === "ouvrier" && (
-                      <Select value={u.worker_level || ""} onValueChange={(v) => updateWorkerLevel(u.id, v)}>
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue placeholder="Niveau..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="T0">T0 - Apprenti</SelectItem>
-                          <SelectItem value="T1">T1 - Ouvrier</SelectItem>
-                          <SelectItem value="T2">T2 - Chef</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={u.is_active}
-                        onCheckedChange={(v) => toggleActive(u.id, v)}
-                        disabled={!canToggleActive(u)}
-                      />
-                      {u.role && (
-                        <Badge className={roleColors[u.role] || ""}>
-                          {roleLabels[u.role] || u.role}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </TabsContent>}
-
-        {/* ===== TEMPLATES ===== */}
         <TabsContent value="templates" className="mt-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -254,7 +103,6 @@ export default function Admin() {
           </Card>
         </TabsContent>
 
-        {/* ===== CONFIG PDF ===== */}
         <TabsContent value="pdf" className="mt-4">
           <PdfSettingsTab />
         </TabsContent>
@@ -264,17 +112,8 @@ export default function Admin() {
         open={templateDialog}
         onOpenChange={setTemplateDialog}
         template={editTemplate}
-        onSaved={fetchAll}
+        onSaved={fetchTemplates}
       />
-
-      {canManageUsers && (
-        <CreateUserDialog
-          open={createUserOpen}
-          onOpenChange={setCreateUserOpen}
-          onCreated={fetchAll}
-          callerRole={role || ""}
-        />
-      )}
     </div>
   );
 }
