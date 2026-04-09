@@ -89,6 +89,19 @@ export default function AppSidebar() {
         </div>
       )}
 
+      {/* SuperAdmin link */}
+      {role === "super_admin" && (
+        <div className="px-2 pt-4 pb-1">
+          <NavLink
+            to="/super-admin"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-amber-600/10 text-amber-600 hover:bg-amber-600/20 transition-colors"
+          >
+            <ShieldCheck className="w-5 h-5 flex-shrink-0" />
+            {!collapsed && <span>Console SuperAdmin</span>}
+          </NavLink>
+        </div>
+      )}
+
       {/* Navigation */}
       <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
         {filteredItems.map((item) => (
