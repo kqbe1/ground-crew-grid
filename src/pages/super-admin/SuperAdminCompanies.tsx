@@ -107,10 +107,14 @@ export default function SuperAdminCompanies() {
       <div className="grid gap-4">
         {companies.map((company) => {
           const userCount = profiles.filter((p) => p.company_id === company.id && p.is_active).length;
+          const maxUsers = company.max_users || 25;
+          const usagePercent = Math.min(Math.round((userCount / maxUsers) * 100), 100);
+          const isNearLimit = usagePercent >= 80;
+          const isAtLimit = userCount >= maxUsers;
           return (
             <Card key={company.id} className="cursor-pointer hover:border-primary/40 transition-colors" onClick={() => navigate(`/super-admin/users?company=${company.id}`)}>
               <CardContent className="flex items-center justify-between py-4">
-                <div className="space-y-1 flex-1 min-w-0">
+                <div className="space-y-2 flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">{company.display_name || company.name}</span>
                     <Badge className={company.is_active ? "bg-green-600 text-white" : "bg-muted text-muted-foreground"}>
@@ -119,8 +123,19 @@ export default function SuperAdminCompanies() {
                     <Badge variant="outline" className="capitalize">{company.plan || "standard"}</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {company.contact_email} · {userCount} utilisateur(s) / {company.max_users || "∞"}
+                    {company.contact_email}
                   </p>
+                  <div className="flex items-center gap-3 max-w-xs">
+                    <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${isAtLimit ? "bg-destructive" : isNearLimit ? "bg-amber-500" : "bg-primary"}`}
+                        style={{ width: `${usagePercent}%` }}
+                      />
+                    </div>
+                    <span className={`text-xs font-medium whitespace-nowrap ${isAtLimit ? "text-destructive" : isNearLimit ? "text-amber-600" : "text-muted-foreground"}`}>
+                      {userCount} / {maxUsers}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/super-admin/users?company=${company.id}`); }} title="Voir les utilisateurs">
