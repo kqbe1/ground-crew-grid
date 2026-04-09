@@ -55,18 +55,13 @@ export default function AppSidebar() {
         collapsed ? "w-16" : "w-64"
       )}
     >
-      {/* Logo + Role */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border">
+      {/* Logo */}
+      <div className="flex items-center justify-center gap-3 px-4 h-16 border-b border-sidebar-border">
         <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
           <WrenchIcon className="w-4 h-4 text-sidebar-primary-foreground" />
         </div>
         {!collapsed && (
-          <div className="overflow-hidden flex-1 min-w-0">
-            <h1 className="text-sm font-bold truncate">PME Terrain</h1>
-            <div className="flex items-center gap-1.5">
-              <p className="text-xs text-sidebar-foreground/60 truncate">{profile?.full_name}</p>
-            </div>
-          </div>
+          <h1 className="text-sm font-bold truncate">PME Terrain</h1>
         )}
       </div>
 
