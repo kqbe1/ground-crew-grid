@@ -276,30 +276,34 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="pdf" className="mt-4">
+            {loadingPdf ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+                <p className="text-sm text-muted-foreground">Génération du PDF…</p>
+              </div>
+            ) : pdfUrl ? (
+              <iframe
+                src={pdfUrl}
+                className="w-full rounded-lg border"
+                style={{ height: "60vh" }}
+                title="Aperçu PDF"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <Eye className="w-8 h-8 mb-2 opacity-50" />
+                <p className="text-sm">Cliquez sur l'onglet PDF pour générer l'aperçu</p>
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
 
         {/* Actions */}
         <div className="flex justify-end gap-2 pt-2 border-t">
           <Button
             onClick={async () => {
-              const { data: pdfCfg } = await supabase.from("pdf_settings").select("*").limit(1).single();
-              let logoDataUrl: string | null = null;
-              if (pdfCfg?.logo_url) {
-                try {
-                  const { data: signedData } = await supabase.storage
-                    .from("intervention-photos")
-                    .createSignedUrl(pdfCfg.logo_url, 60);
-                  if (signedData?.signedUrl) {
-                    const resp = await fetch(signedData.signedUrl);
-                    const blob = await resp.blob();
-                    logoDataUrl = await new Promise<string>((res) => {
-                      const r = new FileReader();
-                      r.onloadend = () => res(r.result as string);
-                      r.readAsDataURL(blob);
-                    });
-                  }
-                } catch {}
-              }
+              const { pdfCfg, logoDataUrl } = await loadPdfConfig();
               downloadFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
             }}
             variant="outline"
