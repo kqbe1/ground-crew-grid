@@ -123,7 +123,7 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
   const interventionType = task?.intervention_type;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { setPdfUrl(null); } onOpenChange(v); }}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
