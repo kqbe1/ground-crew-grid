@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,8 +23,9 @@ const roleBadgeClass: Record<string, string> = {
 };
 
 export default function SuperAdminUsers() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const [filterCompany, setFilterCompany] = useState<string>("all");
+  const [filterCompany, setFilterCompany] = useState<string>(searchParams.get("company") || "all");
   const [createOpen, setCreateOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<any>(null);
 

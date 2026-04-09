@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -29,6 +30,7 @@ const emptyForm: CompanyForm = {
 };
 
 export default function SuperAdminCompanies() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -106,9 +108,9 @@ export default function SuperAdminCompanies() {
         {companies.map((company) => {
           const userCount = profiles.filter((p) => p.company_id === company.id && p.is_active).length;
           return (
-            <Card key={company.id}>
+            <Card key={company.id} className="cursor-pointer hover:border-primary/40 transition-colors" onClick={() => navigate(`/super-admin/users?company=${company.id}`)}>
               <CardContent className="flex items-center justify-between py-4">
-                <div className="space-y-1">
+                <div className="space-y-1 flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">{company.display_name || company.name}</span>
                     <Badge className={company.is_active ? "bg-green-600 text-white" : "bg-muted text-muted-foreground"}>
@@ -120,9 +122,14 @@ export default function SuperAdminCompanies() {
                     {company.contact_email} · {userCount} utilisateur(s) / {company.max_users || "∞"}
                   </p>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => openEdit(company)}>
-                  <Pencil className="w-4 h-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/super-admin/users?company=${company.id}`); }} title="Voir les utilisateurs">
+                    <Users className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openEdit(company); }}>
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );
