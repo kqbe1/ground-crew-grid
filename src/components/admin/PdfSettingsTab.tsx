@@ -99,22 +99,28 @@ export default function PdfSettingsTab() {
 
     setUploading(true);
     try {
+      // Get the current user's company_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Non connecté");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error("Entreprise introuvable");
+
       const ext = file.name.split(".").pop();
-      const path = `company-logo.${ext}`;
+      const path = `${profile.company_id}/logo.${ext}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("intervention-photos")
+        .from("company-assets")
         .upload(path, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
-        .from("intervention-photos")
-        .getPublicUrl(path);
-
-      // Store the path for signed URL generation
       update("logo_url", path);
-      // Also update logo data URL for preview
       const reader = new FileReader();
       reader.onloadend = () => setLogoDataUrl(reader.result as string);
       reader.readAsDataURL(file);
