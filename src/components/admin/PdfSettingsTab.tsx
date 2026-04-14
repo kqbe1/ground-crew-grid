@@ -234,7 +234,7 @@ export default function PdfSettingsTab() {
               {settings.logo_url && (
                 <div className="w-20 h-20 border rounded flex items-center justify-center bg-muted overflow-hidden">
                   <img
-                    src={settings.logo_url}
+                    src={getLogoPublicUrl(settings.logo_url) || ""}
                     alt="Logo"
                     className="max-w-full max-h-full object-contain"
                     onError={(e) => {
