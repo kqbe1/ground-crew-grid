@@ -38,12 +38,24 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     )
 
-    const { data: claims, error: claimsErr } = await supabaseUser.auth.getClaims(
-      authHeader.replace('Bearer ', '')
-    )
-    if (claimsErr || !claims?.claims) {
+    const { data: { user: caller }, error: userErr } = await supabaseUser.auth.getUser()
+    if (userErr || !caller) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Verify caller has admin/bureau/super_admin role
+    const { data: callerProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('role, company_id')
+      .eq('id', caller.id)
+      .single()
+
+    if (!callerProfile || !['admin', 'bureau', 'super_admin'].includes(callerProfile.role)) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
