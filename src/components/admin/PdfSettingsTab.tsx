@@ -56,8 +56,13 @@ export default function PdfSettingsTab() {
   
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
 
+  const getLogoPublicUrl = (logoPath: string) => {
+    const { data } = supabase.storage.from("company-assets").getPublicUrl(logoPath);
+    return data?.publicUrl || null;
+  };
+
   useEffect(() => {
-    const fetch = async () => {
+    const fetchSettings = async () => {
       const { data } = await supabase
         .from("pdf_settings")
         .select("*")
@@ -65,25 +70,22 @@ export default function PdfSettingsTab() {
         .single();
       if (data) {
         setSettings(data as unknown as PdfSettings);
-        // Load logo as data URL for preview
         if (data.logo_url) {
-          try {
-            const { data: signedData } = await supabase.storage
-              .from("intervention-photos")
-              .createSignedUrl(data.logo_url as string, 120);
-            if (signedData?.signedUrl) {
-              const resp = await globalThis.fetch(signedData.signedUrl);
+          const publicUrl = getLogoPublicUrl(data.logo_url as string);
+          if (publicUrl) {
+            try {
+              const resp = await globalThis.fetch(publicUrl);
               const blob = await resp.blob();
               const reader = new FileReader();
               reader.onloadend = () => setLogoDataUrl(reader.result as string);
               reader.readAsDataURL(blob);
-            }
-          } catch {}
+            } catch {}
+          }
         }
       }
       setLoading(false);
     };
-    fetch();
+    fetchSettings();
   }, []);
 
   const update = (key: keyof PdfSettings, value: any) => {
@@ -97,22 +99,28 @@ export default function PdfSettingsTab() {
 
     setUploading(true);
     try {
+      // Get the current user's company_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Non connecté");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error("Entreprise introuvable");
+
       const ext = file.name.split(".").pop();
-      const path = `company-logo.${ext}`;
+      const path = `${profile.company_id}/logo.${ext}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("intervention-photos")
+        .from("company-assets")
         .upload(path, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
-        .from("intervention-photos")
-        .getPublicUrl(path);
-
-      // Store the path for signed URL generation
       update("logo_url", path);
-      // Also update logo data URL for preview
       const reader = new FileReader();
       reader.onloadend = () => setLogoDataUrl(reader.result as string);
       reader.readAsDataURL(file);
@@ -226,7 +234,7 @@ export default function PdfSettingsTab() {
               {settings.logo_url && (
                 <div className="w-20 h-20 border rounded flex items-center justify-center bg-muted overflow-hidden">
                   <img
-                    src={settings.logo_url}
+                    src={getLogoPublicUrl(settings.logo_url) || ""}
                     alt="Logo"
                     className="max-w-full max-h-full object-contain"
                     onError={(e) => {
