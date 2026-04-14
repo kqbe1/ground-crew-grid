@@ -56,8 +56,13 @@ export default function PdfSettingsTab() {
   
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
 
+  const getLogoPublicUrl = (logoPath: string) => {
+    const { data } = supabase.storage.from("company-assets").getPublicUrl(logoPath);
+    return data?.publicUrl || null;
+  };
+
   useEffect(() => {
-    const fetch = async () => {
+    const fetchSettings = async () => {
       const { data } = await supabase
         .from("pdf_settings")
         .select("*")
@@ -65,25 +70,22 @@ export default function PdfSettingsTab() {
         .single();
       if (data) {
         setSettings(data as unknown as PdfSettings);
-        // Load logo as data URL for preview
         if (data.logo_url) {
-          try {
-            const { data: signedData } = await supabase.storage
-              .from("intervention-photos")
-              .createSignedUrl(data.logo_url as string, 120);
-            if (signedData?.signedUrl) {
-              const resp = await globalThis.fetch(signedData.signedUrl);
+          const publicUrl = getLogoPublicUrl(data.logo_url as string);
+          if (publicUrl) {
+            try {
+              const resp = await globalThis.fetch(publicUrl);
               const blob = await resp.blob();
               const reader = new FileReader();
               reader.onloadend = () => setLogoDataUrl(reader.result as string);
               reader.readAsDataURL(blob);
-            }
-          } catch {}
+            } catch {}
+          }
         }
       }
       setLoading(false);
     };
-    fetch();
+    fetchSettings();
   }, []);
 
   const update = (key: keyof PdfSettings, value: any) => {
