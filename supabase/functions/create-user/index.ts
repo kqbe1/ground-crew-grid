@@ -142,20 +142,34 @@ Deno.serve(async (req) => {
     }
 
     // Create user with service role (bypasses email confirmation)
+    // NOTE: Do NOT pass role or company_id in metadata — handle_new_user ignores them
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
       user_metadata: {
         full_name,
-        role,
-        company_id: targetCompanyId,
       },
     });
 
     if (createError) {
       return new Response(JSON.stringify({ error: createError.message }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Explicitly set role and company_id on the profile created by handle_new_user
+    const { error: profileError } = await adminClient
+      .from("profiles")
+      .update({ role, company_id: targetCompanyId })
+      .eq("id", newUser.user.id);
+
+    if (profileError) {
+      // Rollback: delete the auth user if profile update fails
+      await adminClient.auth.admin.deleteUser(newUser.user.id);
+      return new Response(JSON.stringify({ error: "Erreur lors de la configuration du profil" }), {
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
