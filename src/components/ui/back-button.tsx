@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 interface BackButtonProps {
   /** Override default navigate(-1) behavior */
   to?: string;
-  /** Button label, defaults to "Retour" */
+  /** Button label, defaults to "Retour". Set to "" for icon-only. */
   label?: string;
   /** Button variant */
   variant?: "outline" | "ghost";
@@ -20,6 +20,14 @@ export default function BackButton({ to, label = "Retour", variant = "outline", 
     if (to) navigate(to);
     else navigate(-1);
   };
+
+  if (size === "icon") {
+    return (
+      <Button variant={variant} size="icon" onClick={handleClick} title={label || "Retour"}>
+        <ArrowLeft className="w-4 h-4" />
+      </Button>
+    );
+  }
 
   return (
     <Button variant={variant} size={size} onClick={handleClick}>
