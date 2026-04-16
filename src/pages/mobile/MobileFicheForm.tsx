@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { useOfflineDrafts } from "@/hooks/useOfflineDrafts";
 import { toast } from "sonner";
-import { ArrowLeft, Send, Save, WifiOff } from "lucide-react";
+import { Send, Save, WifiOff } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import SignatureCanvas from "@/components/mobile/SignatureCanvas";
 import PhotoCapture from "@/components/mobile/PhotoCapture";
 import TimeInput from "@/components/mobile/TimeInput";
@@ -96,9 +97,7 @@ export default function MobileFicheForm() {
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-4 h-4 mr-1" /> Retour
-        </Button>
+        <BackButton variant="ghost" />
         {!isOnline && (
           <div className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-[hsl(var(--color-replanifier))]/10 text-[hsl(var(--color-replanifier))]">
             <WifiOff className="w-3 h-3" /> Hors ligne

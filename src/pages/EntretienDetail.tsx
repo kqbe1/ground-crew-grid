@@ -7,7 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS } from "@/lib/constants";
 import { format, differenceInDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Wrench, MapPin, Calendar, AlertTriangle, Pencil, User, ArrowLeft, Loader2 } from "lucide-react";
+import { Wrench, MapPin, Calendar, AlertTriangle, Pencil, User, Loader2 } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import CreateEditEntretienDialog from "@/components/entretiens/CreateEditEntretienDialog";
@@ -59,9 +60,7 @@ export default function EntretienDetail() {
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
             <Pencil className="w-4 h-4 mr-1" /> Modifier
           </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-4 h-4 mr-1" /> Retour
-          </Button>
+          <BackButton />
         </div>
       </div>
 

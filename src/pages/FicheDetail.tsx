@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, ArrowLeft, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin } from "lucide-react";
+import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
 import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
@@ -132,9 +133,7 @@ export default function FicheDetail() {
             }}>
               <Download className="w-4 h-4 mr-1" /> Télécharger
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-              <ArrowLeft className="w-4 h-4 mr-1" /> Retour
-            </Button>
+            <BackButton />
           </div>
         </div>
 

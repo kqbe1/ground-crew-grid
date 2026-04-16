@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS, TASK_STATUS_LABELS } from "@/lib/constants";
-import { ArrowLeft, Phone, MapPin, ClipboardList, MessageSquare, KeyRound, UserRound, Building2, StickyNote, Package } from "lucide-react";
+import { Phone, MapPin, ClipboardList, MessageSquare, KeyRound, UserRound, Building2, StickyNote, Package } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { toast } from "sonner";
 
 export default function MobileTaskDetail() {
@@ -62,9 +63,7 @@ export default function MobileTaskDetail() {
 
   return (
     <div className="p-4 space-y-4">
-      <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-        <ArrowLeft className="w-4 h-4 mr-1" /> Retour
-      </Button>
+      <BackButton variant="ghost" />
 
       <div>
         <h1 className="text-xl font-bold">{task.title}</h1>

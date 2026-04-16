@@ -13,7 +13,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowLeft, Loader2, Trash2, Pencil, Clock, User, Calendar, MapPin } from "lucide-react";
+import { Loader2, Trash2, Pencil, Clock, User, Calendar, MapPin } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { toast } from "sonner";
 
 const statusColor: Record<string, string> = {
@@ -168,9 +169,7 @@ export default function TacheDetail() {
                 <Pencil className="w-4 h-4 mr-1" /> Modifier
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-              <ArrowLeft className="w-4 h-4 mr-1" /> Retour
-            </Button>
+            <BackButton />
           </div>
         </div>
 

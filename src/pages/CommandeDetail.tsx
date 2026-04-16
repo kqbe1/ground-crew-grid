@@ -6,7 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
-import { Package, ArrowRight, AlertTriangle, User, FileText, ArrowLeft, Loader2, Trash2 } from "lucide-react";
+import { Package, ArrowRight, AlertTriangle, User, FileText, Loader2, Trash2 } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -95,9 +96,7 @@ export default function CommandeDetail() {
               </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-4 h-4 mr-1" /> Retour
-          </Button>
+          <BackButton />
         </div>
 
         {/* Status stepper */}

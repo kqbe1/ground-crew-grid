@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Phone, Mail, MapPin, Calendar, Building2, Wrench, Plus, Trash2, Pencil, AlertTriangle, ArrowLeft, Loader2 } from "lucide-react";
+import { Phone, Mail, MapPin, Calendar, Building2, Wrench, Plus, Trash2, Pencil, AlertTriangle, Loader2 } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -138,9 +139,7 @@ export default function ClientDetail() {
           <Button variant="outline" size="sm" onClick={() => navigate(`/entretiens`)}>
             <Wrench className="w-4 h-4 mr-1" /> Entretien
           </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-4 h-4 mr-1" /> Retour
-          </Button>
+          <BackButton />
         </div>
       </div>
 

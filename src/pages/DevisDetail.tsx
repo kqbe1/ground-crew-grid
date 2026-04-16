@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS, INSTALLATION_TYPE_LABELS } from "@/lib/constants";
-import { ArrowLeft, Download, MessageSquare, Send, Loader2, Trash2 } from "lucide-react";
+import { Download, MessageSquare, Send, Loader2, Trash2 } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -120,9 +121,7 @@ export default function DevisDetail() {
             <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={downloading}>
               <Download className="w-4 h-4 mr-1" /> Télécharger
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-              <ArrowLeft className="w-4 h-4 mr-1" /> Retour
-            </Button>
+            <BackButton />
           </div>
         </div>
 
