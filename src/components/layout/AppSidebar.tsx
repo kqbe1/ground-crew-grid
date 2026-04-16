@@ -63,14 +63,19 @@ export default function AppSidebar() {
       {/* Logo */}
       <div className={cn("flex items-center gap-3 px-4 h-16 border-b border-sidebar-border", collapsed && "justify-center")}>
         {showCompanyLogo && company.logo_url ? (
-          <img
-            src={company.logo_url}
-            alt={companyLabel}
-            className={cn(
-              "object-contain flex-shrink-0",
-              collapsed ? "w-8 h-8" : "max-h-10 max-w-[180px]"
+          <>
+            <img
+              src={company.logo_url}
+              alt={companyLabel}
+              className={cn(
+                "object-contain flex-shrink-0",
+                collapsed ? "w-8 h-8" : "w-8 h-8"
+              )}
+            />
+            {!collapsed && (
+              <h1 className="text-sm font-bold truncate">{companyLabel}</h1>
             )}
-          />
+          </>
         ) : (
           <>
             <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
