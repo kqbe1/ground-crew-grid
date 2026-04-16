@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,6 @@ import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS } from "@/lib/constants";
 import { Wrench, Calendar, TrendingUp, Plus, AlertTriangle, Search, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CreateEditEntretienDialog from "@/components/entretiens/CreateEditEntretienDialog";
-import EntretienDetailDialog from "@/components/entretiens/EntretienDetailDialog";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Schedule = Tables<"maintenance_schedules">;
@@ -24,11 +24,11 @@ const PERIODICITY_MONTHS: Record<string, number> = {
 const ENTRETIEN_TYPES = Object.entries(INTERVENTION_TYPE_LABELS).filter(([k]) => k.startsWith("entretien_"));
 
 export default function Entretiens() {
+  const navigate = useNavigate();
   const [schedules, setSchedules] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("list");
   const [createOpen, setCreateOpen] = useState(false);
   const [editSchedule, setEditSchedule] = useState<Schedule | null>(null);
-  const [detailSchedule, setDetailSchedule] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -223,7 +223,7 @@ export default function Entretiens() {
             </div>
             <div className="space-y-1">
               {legalAlerts.slice(0, 5).map((s) => (
-                <div key={s.id} className="text-sm text-amber-700 cursor-pointer hover:underline" onClick={() => setDetailSchedule(s)}>
+                <div key={s.id} className="text-sm text-amber-700 cursor-pointer hover:underline" onClick={() => navigate(`/entretiens/${s.id}`)}>
                   {s.clients?.name} — {INTERVENTION_TYPE_LABELS[s.intervention_type]} — Échéance : {format(new Date(s.next_due_date), "dd/MM/yyyy")}
                 </div>
               ))}
@@ -285,7 +285,7 @@ export default function Entretiens() {
               <Card
                 key={s.id}
                 className={cn("animate-slide-in cursor-pointer hover:shadow-md transition-shadow", getDueUrgency(s.next_due_date))}
-                onClick={() => setDetailSchedule(s)}
+                onClick={() => navigate(`/entretiens/${s.id}`)}
               >
                 <CardContent className="py-3 flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-primary/10">
@@ -462,12 +462,6 @@ export default function Entretiens() {
         onOpenChange={(o) => { if (!o) { setCreateOpen(false); setEditSchedule(null); } }}
         schedule={editSchedule}
         onSaved={fetchSchedules}
-      />
-      <EntretienDetailDialog
-        open={!!detailSchedule}
-        onOpenChange={(o) => { if (!o) setDetailSchedule(null); }}
-        schedule={detailSchedule}
-        onEdit={() => { setEditSchedule(detailSchedule); setDetailSchedule(null); }}
       />
     </div>
   );

@@ -22,6 +22,11 @@ const Admin = lazy(() => import("@/pages/Admin"));
 const TempsOuvriers = lazy(() => import("@/pages/TempsOuvriers"));
 const Devis = lazy(() => import("@/pages/Devis"));
 const Taches = lazy(() => import("@/pages/Taches"));
+const FicheDetail = lazy(() => import("@/pages/FicheDetail"));
+const DevisDetail = lazy(() => import("@/pages/DevisDetail"));
+const CommandeDetail = lazy(() => import("@/pages/CommandeDetail"));
+const ClientDetail = lazy(() => import("@/pages/ClientDetail"));
+const EntretienDetail = lazy(() => import("@/pages/EntretienDetail"));
 const MobileAgenda = lazy(() => import("@/pages/mobile/MobileAgenda"));
 const MobileTaskDetail = lazy(() => import("@/pages/mobile/MobileTaskDetail"));
 const MobileFicheRouter = lazy(() => import("@/pages/mobile/MobileFicheRouter"));
@@ -81,6 +86,11 @@ const App = () => (
                 <Route path="/taches" element={<Taches />} />
                 <Route path="/devis" element={<Devis />} />
                 <Route path="/devis/nouveau" element={<MobileDevisForm />} />
+                <Route path="/fiches/:id" element={<FicheDetail />} />
+                <Route path="/devis/:id" element={<DevisDetail />} />
+                <Route path="/commandes/:id" element={<CommandeDetail />} />
+                <Route path="/clients/:id" element={<ClientDetail />} />
+                <Route path="/entretiens/:id" element={<EntretienDetail />} />
               </Route>
 
               {/* PWA Mobile Ouvrier */}
