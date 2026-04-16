@@ -46,6 +46,7 @@ export default function Planning() {
 
 function PlanningInner() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [tasks, setTasks] = useState<any[]>([]);
@@ -486,15 +487,6 @@ function PlanningInner() {
         />
       )}
 
-      {/* Task Detail Dialog */}
-      <TaskDetailDialog
-        task={selectedTask}
-        onClose={() => setSelectedTask(null)}
-        onUpdated={() => {
-          setSelectedTask(null);
-          refreshTasks();
-        }}
-      />
     </div>
   );
 }
