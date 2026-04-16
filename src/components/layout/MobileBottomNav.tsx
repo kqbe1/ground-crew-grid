@@ -19,19 +19,19 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const primaryNav = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard", roles: ["admin", "bureau", "super_admin"] },
-  { to: "/planning", icon: Calendar, label: "Planning", roles: ["admin", "bureau", "super_admin"] },
-  { to: "/taches", icon: ListTodo, label: "Tâches", roles: ["admin", "bureau", "super_admin"] },
-  { to: "/devis", icon: FileText, label: "Devis", roles: ["admin", "bureau", "super_admin"] },
+  { to: "/", icon: LayoutDashboard, label: "Dashboard", roles: ["admin", "bureau"] },
+  { to: "/planning", icon: Calendar, label: "Planning", roles: ["admin", "bureau"] },
+  { to: "/taches", icon: ListTodo, label: "Tâches", roles: ["admin", "bureau"] },
+  { to: "/devis", icon: FileText, label: "Devis", roles: ["admin", "bureau"] },
 ];
 
 const secondaryNav = [
-  { to: "/clients", icon: Users, label: "Clients", roles: ["admin", "bureau", "super_admin"] },
-  { to: "/entretiens", icon: Wrench, label: "Entretiens", roles: ["admin", "bureau", "super_admin"] },
-  { to: "/commandes", icon: Package, label: "Commandes", roles: ["admin", "bureau", "super_admin"] },
-  { to: "/fiches", icon: ClipboardList, label: "Fiches", roles: ["admin", "bureau", "super_admin"] },
-  { to: "/temps-ouvriers", icon: Clock, label: "Temps", roles: ["admin", "bureau", "super_admin"] },
-  { to: "/admin", icon: Settings, label: "Admin", roles: ["admin", "bureau", "super_admin"] },
+  { to: "/clients", icon: Users, label: "Clients", roles: ["admin", "bureau"] },
+  { to: "/entretiens", icon: Wrench, label: "Entretiens", roles: ["admin", "bureau"] },
+  { to: "/commandes", icon: Package, label: "Commandes", roles: ["admin", "bureau"] },
+  { to: "/fiches", icon: ClipboardList, label: "Fiches", roles: ["admin", "bureau"] },
+  { to: "/temps-ouvriers", icon: Clock, label: "Temps", roles: ["admin", "bureau"] },
+  { to: "/admin", icon: Settings, label: "Admin", roles: ["admin", "bureau"] },
 ];
 
 export default function MobileBottomNav() {
