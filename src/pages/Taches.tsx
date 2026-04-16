@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { FILTER_TYPE_GROUPS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
+import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
 
 const statusLabels: Record<string, string> = {
   planifie: "Planifié",
@@ -100,7 +101,10 @@ export default function Taches() {
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl md:text-2xl font-bold">Tâches</h1>
-        <span className="text-sm text-muted-foreground">{filtered.length} tâche{filtered.length !== 1 ? "s" : ""}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">{filtered.length} tâche{filtered.length !== 1 ? "s" : ""}</span>
+          <CreateTaskDialog defaultDate={new Date()} onCreated={() => refetch()} />
+        </div>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
