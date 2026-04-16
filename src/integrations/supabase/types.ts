@@ -1223,6 +1223,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_create_devis_db: { Args: never; Returns: boolean }
       get_my_clients_safe: {
         Args: never
         Returns: {
