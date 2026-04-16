@@ -54,16 +54,16 @@ export default function Clients() {
   };
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-6 space-y-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold">Clients</h1>
+          <h1 className="text-xl md:text-2xl font-bold">Clients</h1>
           <p className="text-muted-foreground">{clients.length} client(s)</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportCsv}><Download className="w-4 h-4 mr-2" /> Exporter CSV</Button>
-          <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="w-4 h-4 mr-2" /> Importer CSV</Button>
-          <Button onClick={() => setCreateOpen(true)}><Plus className="w-4 h-4 mr-2" /> Nouveau client</Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={exportCsv}><Download className="w-4 h-4 mr-1" /> CSV</Button>
+          <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={() => setImportOpen(true)}><Upload className="w-4 h-4 mr-1" /> Importer</Button>
+          <Button size={isMobile ? "sm" : "default"} onClick={() => setCreateOpen(true)}><Plus className="w-4 h-4 mr-1" /> Nouveau</Button>
         </div>
       </div>
 
@@ -72,53 +72,75 @@ export default function Clients() {
         <Input placeholder="Rechercher un client..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
       </div>
 
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nom</TableHead>
-              <TableHead>Téléphone</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Adresse intervention</TableHead>
-              <TableHead>Région</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {clients.map((client) => (
-              <TableRow key={client.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleCardClick(client)}>
-                <TableCell className="font-medium">{client.name}</TableCell>
-                <TableCell>
-                  {client.phone && (
-                    <span className="flex items-center gap-1.5 text-muted-foreground">
-                      <Phone className="w-3.5 h-3.5" /> {client.phone}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {client.email && (
-                    <span className="flex items-center gap-1.5 text-muted-foreground">
-                      <Mail className="w-3.5 h-3.5" /> {client.email}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {client.address_intervention && (
-                    <span className="flex items-center gap-1.5 text-muted-foreground">
-                      <MapPin className="w-3.5 h-3.5" /> <span className="truncate max-w-[250px] inline-block">{client.address_intervention}</span>
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="text-muted-foreground capitalize">{client.region ?? "—"}</TableCell>
-              </TableRow>
-            ))}
-            {clients.length === 0 && (
+      {/* Desktop table */}
+      {!isMobile ? (
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">Aucun client trouvé</TableCell>
+                <TableHead>Nom</TableHead>
+                <TableHead>Téléphone</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Adresse intervention</TableHead>
+                <TableHead>Région</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {clients.map((client) => (
+                <TableRow key={client.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleCardClick(client)}>
+                  <TableCell className="font-medium">{client.name}</TableCell>
+                  <TableCell>
+                    {client.phone && (
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <Phone className="w-3.5 h-3.5" /> {client.phone}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {client.email && (
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <Mail className="w-3.5 h-3.5" /> {client.email}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {client.address_intervention && (
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <MapPin className="w-3.5 h-3.5" /> <span className="truncate max-w-[250px] inline-block">{client.address_intervention}</span>
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground capitalize">{client.region ?? "—"}</TableCell>
+                </TableRow>
+              ))}
+              {clients.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">Aucun client trouvé</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        /* Mobile cards */
+        <div className="space-y-2">
+          {clients.map((client) => (
+            <Card key={client.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick(client)}>
+              <CardContent className="py-3 space-y-1">
+                <p className="font-medium">{client.name}</p>
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                  {client.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {client.phone}</span>}
+                  {client.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {client.email}</span>}
+                </div>
+                {client.address_intervention && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3 shrink-0" /> {client.address_intervention}</p>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+          {clients.length === 0 && <div className="py-12 text-center text-muted-foreground">Aucun client trouvé</div>}
+        </div>
+      )}
 
       {/* Create / Edit dialog */}
       <CreateEditClientDialog
