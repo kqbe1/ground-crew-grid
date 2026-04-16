@@ -45,6 +45,7 @@ export default function Taches() {
   const isMobile = useIsMobile();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
 
   const { data: tasks = [], refetch } = useQuery({
@@ -61,6 +62,10 @@ export default function Taches() {
 
   const filtered = useMemo(() => {
     let result = tasks;
+    // Status filter
+    if (statusFilter !== "all") {
+      result = result.filter((t) => t.status === statusFilter);
+    }
     // Type filter
     if (typeFilter !== "all") {
       if (typeFilter === "entretien") {
@@ -89,7 +94,7 @@ export default function Taches() {
         .toLowerCase();
       return terms.every((term) => haystack.includes(term));
     });
-  }, [tasks, search, typeFilter]);
+  }, [tasks, search, typeFilter, statusFilter]);
 
   return (
     <div className="p-4 md:p-6 space-y-4">
@@ -116,6 +121,17 @@ export default function Taches() {
             <SelectItem value="all">Tous les types</SelectItem>
             {FILTER_TYPE_GROUPS.map((g) => (
               <SelectItem key={g.key} value={g.key}>{g.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Statut" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les statuts</SelectItem>
+            {Object.entries(statusLabels).map(([k, v]) => (
+              <SelectItem key={k} value={k}>{v}</SelectItem>
             ))}
           </SelectContent>
         </Select>
