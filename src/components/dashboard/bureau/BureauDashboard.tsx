@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { downloadFichesZip } from "@/lib/downloadFichesZip";
 import { RefreshCw, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -238,7 +239,13 @@ export default function BureauDashboard() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled={filteredFiches.length === 0 || loading} onClick={async () => {
+            toast.info("Génération du ZIP en cours…");
+            try {
+              await downloadFichesZip(filteredFiches);
+              toast.success("ZIP téléchargé !");
+            } catch (e) { toast.error("Erreur lors de la génération du ZIP"); }
+          }}>
             <Download className="w-4 h-4 mr-1" />Télécharger ZIP
           </Button>
           <Button variant="outline" size="sm" onClick={() => fetchData()} disabled={loading}>
