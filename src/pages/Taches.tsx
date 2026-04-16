@@ -43,10 +43,10 @@ const typeLabels: Record<string, string> = {
 
 export default function Taches() {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedTask, setSelectedTask] = useState<any | null>(null);
 
   const { data: tasks = [], refetch } = useQuery({
     queryKey: ["all-tasks"],
@@ -143,7 +143,7 @@ export default function Taches() {
             <div className="py-8 text-center text-muted-foreground">Aucune tâche trouvée</div>
           ) : (
             filtered.map((task) => (
-              <Card key={task.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedTask(task)}>
+              <Card key={task.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/taches/${task.id}`)}>
                 <CardContent className="py-3 space-y-1">
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-sm truncate">{task.title}</p>
@@ -179,7 +179,7 @@ export default function Taches() {
               filtered.map((task) => (
                 <button
                   key={task.id}
-                  onClick={() => setSelectedTask(task)}
+                  onClick={() => navigate(`/taches/${task.id}`)}
                   className="w-full grid grid-cols-[1fr_150px_140px_120px_130px] gap-2 px-4 py-3 text-left hover:bg-muted/30 transition-colors text-sm"
                 >
                   <div>
@@ -207,13 +207,6 @@ export default function Taches() {
         </div>
       )}
 
-      {selectedTask && (
-        <TaskDetailDialog
-          task={selectedTask}
-          onClose={() => { setSelectedTask(null); refetch(); }}
-          onUpdated={() => refetch()}
-        />
-      )}
     </div>
   );
 }
