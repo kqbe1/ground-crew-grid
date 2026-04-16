@@ -63,17 +63,22 @@ export default function MobileFicheForm() {
     const result = await save({
       work_task_id: taskId,
       worker_id: user.id,
-      arrival_time: arrivalTime ? `${now}T${arrivalTime}:00` : null,
-      departure_time: departureTime ? `${now}T${departureTime}:00` : null,
-      description,
       final_status: finalStatus,
-      client_present: clientPresent,
-      client_absent: !clientPresent,
-      signature_data: finalSignature || null,
-      signed_at: signatureData ? new Date().toISOString() : null,
-      photos_before: finalPhotosBefore.length > 0 ? finalPhotosBefore : null,
-      photos_after: finalPhotosAfter.length > 0 ? finalPhotosAfter : null,
-      is_draft: isDraft,
+      payload: {
+        work_task_id: taskId,
+        worker_id: user.id,
+        arrival_time: arrivalTime ? `${now}T${arrivalTime}:00` : null,
+        departure_time: departureTime ? `${now}T${departureTime}:00` : null,
+        description,
+        final_status: finalStatus,
+        client_present: clientPresent,
+        client_absent: !clientPresent,
+        signature_data: finalSignature || null,
+        signed_at: signatureData ? new Date().toISOString() : null,
+        photos_before: finalPhotosBefore.length > 0 ? finalPhotosBefore : null,
+        photos_after: finalPhotosAfter.length > 0 ? finalPhotosAfter : null,
+        is_draft: isDraft,
+      },
     });
 
     setSubmitting(false);
