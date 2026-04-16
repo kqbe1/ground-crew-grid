@@ -1,143 +1,101 @@
 
 
-# 🏗️ Planning, Interventions & Entretiens – PME Terrain
+# Plan mis à jour : Module Devis + Responsive mobile tous rôles
 
-## Vue d'ensemble
-Application SaaS complète pour PME du bâtiment/terrain (3-50 ouvriers), composée d'une **webapp admin/secrétariat** et d'une **PWA mobile ouvrier**, connectées à une base de données unique via Lovable Cloud (Supabase).
+## Ajout par rapport au plan précédent
 
-**Style visuel** : Interface colorée & intuitive avec codes couleur prononcés, badges visuels, lecture rapide d'un coup d'œil.
-
----
-
-## 🔐 Authentification & Rôles (RBAC)
-
-- **Connexion email/mot de passe** avec gestion de session
-- **3 rôles** : Admin, Secrétariat, Ouvrier
-- **Niveaux hiérarchiques ouvriers** : T0 / T1 / T2
-- **Gestion des binômes** avec répartition en % du travail
-- Accès conditionnel selon le rôle (l'ouvrier ne voit que ses tâches, le secrétariat n'accède pas aux paramètres critiques)
+Actuellement, seul le rôle `ouvrier` accède à l'interface mobile (`/mobile`). Les rôles `admin` et `bureau` sont redirigés vers la webapp desktop, qui n'est pas optimisée pour mobile (sidebar fixe, tableaux larges). L'objectif est que **tous les rôles** bénéficient d'une expérience mobile adaptée quand ils utilisent un petit écran.
 
 ---
 
-## 📅 WEBAPP — Module Planning (Vue Principale)
+## Stratégie responsive
 
-- **Grille horaire** : heures en vertical, ouvriers/binômes en horizontal
-- **Navigation** : Jour / Semaine / Mois avec flèches de navigation
-- **Filtres** : par ouvrier, binôme, domaine, type d'intervention, statut
-- **Cartes de travail** : heure, durée, titre, client, localisation, badge couleur par type, indicateurs (message secrétariat, terminé, statut pièce)
-- **Interactions** : drag & drop, redimensionnement durée, copier/coller, alerte chevauchement, clic pour créer/voir tâche
-- **Mémo secrétariat** attachable aux tâches
-- Colonne(s) optionnelle(s) pour calendriers externes (Google, Apple, Outlook — préparation future)
+```text
+┌──────────────────────────────────────────────────┐
+│  Écran < 768px (mobile)                          │
+│  ─────────────────────                           │
+│  Admin/Bureau : AppLayout adapté                 │
+│    - Sidebar → bottom nav ou hamburger menu      │
+│    - Tableaux → cards empilées                   │
+│    - Accès au formulaire devis mobile            │
+│  Ouvrier : MobileLayout (inchangé)               │
+│  SuperAdmin : layout responsive aussi            │
+└──────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│  Écran ≥ 768px (desktop/tablette)                │
+│  ─────────────────────────────                   │
+│  Tous rôles : layout actuel inchangé             │
+└──────────────────────────────────────────────────┘
+```
 
----
+## Modifications responsive (en plus du module Devis)
 
-## 📊 WEBAPP — Dashboard (Accueil)
+### 1. AppLayout responsive
 
-- **Pièces** : compteurs demandées / commandées / reçues
-- **Clients** : à planifier, suite commande reçue
-- **Entretiens** : ce mois, mois suivant, par type (gaz, mazout, pellets, clim, VMC)
-- **Alertes légales** Belgique (1 / 2 / 3 ans)
-- **Travaux en attente** avec raisons
+- Détecter la taille écran via `useIsMobile()`
+- **Mobile** : masquer la sidebar, afficher une **bottom navigation bar** (même style que MobileLayout) avec les onglets principaux + un menu hamburger pour les secondaires
+- **Desktop** : comportement actuel inchangé
 
----
+### 2. AppSidebar → MobileBottomNav conditionnel
 
-## 🔧 WEBAPP — Module Entretiens
+- Créer `src/components/layout/MobileBottomNav.tsx` : barre de navigation fixe en bas avec les 4-5 onglets les plus importants (Dashboard, Planning, Tâches, Devis, Plus…)
+- Le bouton "Plus…" ouvre un drawer/sheet avec les onglets restants (Clients, Entretiens, Commandes, Fiches, Temps, Admin)
+- Filtré par rôle comme la sidebar actuelle
 
-- **Liste globale** : client, adresse, type, appareil (marque/modèle), dernière date, prochaine échéance, périodicité, statut
-- **Statistiques** : total annuel par type, total mensuel
-- **Projections** : N+1, N+2, N+3 — anticipation de charge future
+### 3. Pages liste responsives
 
----
+Adapter les pages existantes (Fiches, Commandes, Clients, Entretiens, Tâches, Temps, Devis) :
+- **Mobile** : remplacer les tableaux par des listes de cards empilées (même style que MobileFiches/MobilePieces)
+- **Desktop** : tableaux inchangés
+- Utiliser `useIsMobile()` pour switcher entre les deux rendus
+- Les filtres passent dans un drawer/sheet au lieu d'être en ligne
 
-## 👥 WEBAPP — Module Clients
+### 4. Dialogs responsifs
 
-- Coordonnées complètes (intervention, facturation, syndic, locataire)
-- Plusieurs adresses/sites par client
-- Appareils installés : énergie, marque, modèle, périodicité entretien, prochaine date
-- Notes internes (syndic, clés, codes)
-- Date d'anniversaire client
+- Les dialogs de détail (FicheDetailDialog, DevisDetailDialog, etc.) utilisent `Drawer` sur mobile au lieu de `Dialog`
+- Pattern : composant wrapper qui choisit Dialog ou Drawer selon `useIsMobile()`
 
----
+### 5. SuperAdminLayout responsive
 
-## 📦 WEBAPP — Module Commandes / Pièces
+- Même approche : bottom nav sur mobile avec les onglets super-admin
 
-- Liées à un client + un travail
-- **Statuts** : Demandée → Commandée → Reçue → Clôturée
-- Urgence indiquée par couleur
-- **Automatisation** : quand une commande passe à "Reçue", suggestion automatique de créer une suite de travail liée au client + commande
+### 6. Formulaire Devis accessible à admin/bureau sur mobile
 
----
-
-## 📋 WEBAPP — Module Fiches d'Intervention
-
-- Liste complète avec accès aux photos, signature client, historique
-- Possibilité de renvoyer par email au client
-- Templates de fiches par type d'intervention (configurables par l'admin)
-
----
-
-## ⚙️ WEBAPP — Module Admin
-
-- Statistiques globales (nombre d'entretiens annuels, projections)
-- Gestion des ouvriers et niveaux T0/T1/T2
-- Gestion des binômes
-- Templates de fiches d'intervention
-- Paramètres globaux de l'application
+- La route `/mobile/devis/nouveau` reste le formulaire multi-étapes
+- Depuis l'AppLayout mobile (admin/bureau sur petit écran), un bouton FAB ou lien dans la nav mène à ce formulaire
+- Le admin n'a pas besoin d'être redirigé vers `/mobile` — il accède au formulaire devis directement depuis son layout adapté
 
 ---
 
-## 📱 PWA MOBILE — Ouvrier
+## Fichiers impactés (responsive uniquement, en plus du plan Devis)
 
-### Accueil = Agenda
-- Vue par défaut : **Jour** (colonne unique verticale)
-- Possibilité : Semaine / Mois
-- Cartes travail : heure, titre, client, adresse, message secrétariat, matériel à prévoir, badge type, statut
+| Fichier | Action |
+|---------|--------|
+| `src/components/layout/AppLayout.tsx` | Détection mobile, switch sidebar → bottom nav |
+| `src/components/layout/MobileBottomNav.tsx` | **Nouveau** — bottom nav pour admin/bureau mobile |
+| `src/components/layout/SuperAdminLayout.tsx` | Même adaptation responsive |
+| `src/pages/Fiches.tsx` | Vue cards mobile |
+| `src/pages/Commandes.tsx` | Vue cards mobile |
+| `src/pages/Clients.tsx` | Vue cards mobile |
+| `src/pages/Entretiens.tsx` | Vue cards mobile |
+| `src/pages/Taches.tsx` | Vue cards mobile |
+| `src/pages/TempsOuvriers.tsx` | Vue cards mobile |
+| `src/pages/Devis.tsx` | Vue cards mobile (intégré dès la création) |
+| `src/pages/Dashboard.tsx` | Grille responsive (colonnes empilées) |
+| `src/components/devis/DevisDetailDialog.tsx` | Drawer sur mobile |
+| `src/components/fiches/FicheDetailDialog.tsx` | Drawer sur mobile |
+| Autres dialogs de détail | Drawer sur mobile |
 
-### Détail Tâche
-- Informations complètes
-- **Boutons 1-clic** : appeler client, ouvrir GPS
-- Bouton principal : compléter la fiche d'intervention
+## Ordre d'implémentation
 
-### Fiche d'Intervention (Mobile)
-- Formulaire selon template du type d'intervention
-- Photos avant / après
-- Heure arrivée / départ
-- Description libre
-- Statut final : Terminé / Pièce à commander
-- **Signature CLIENT** obligatoire (ou case "Client absent")
-- Bouton envoyer
-
-### Mode Offline
-- Sauvegarde locale en brouillon si pas de connexion
-- Indicateur visuel clair "brouillon"
-- Envoi automatique dès retour réseau
-
-### Pièces (Mobile)
-- Consultation des demandes liées
-- Création demande en fin d'intervention
-- Notification immédiate au bureau
-
----
-
-## 🗄️ Base de données (Lovable Cloud / Supabase)
-
-- Tables : users, user_roles, profiles, clients, client_sites, client_equipment, work_tasks, intervention_sheets, parts_orders, maintenance_schedules, task_templates, binomes
-- RLS strict par rôle
-- Stockage fichiers (photos, signatures) via Supabase Storage
-- Logique offline avec sync automatique
-
----
-
-## 🔗 Intégrations (futures)
-
-- **Odoo** : synchronisation contacts — préparé mais implémenté ultérieurement
-- **Calendriers externes** : Google/Apple/Outlook — colonnes prévues dans le planning
-
----
-
-## 📋 Statuts officiels
-
-**Travaux** : Planifié → Terminé / À replanifier / Pièce à commander
-
-**Commandes** : Demandée → Commandée → Reçue → Clôturée
+1. Migration DB + table quotes + bucket storage + colonne profiles
+2. Constants et types devis
+3. MobileBottomNav + AppLayout responsive
+4. Page Devis webapp (liste + détail) — responsive dès le départ
+5. Formulaire mobile devis 8 étapes
+6. Adaptation responsive des pages existantes (Fiches, Commandes, etc.)
+7. SuperAdminLayout responsive
+8. Toggle admin can_create_devis
+9. PDF devis
+10. Mémoire projet mise à jour
 
