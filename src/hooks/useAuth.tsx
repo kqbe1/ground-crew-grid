@@ -99,17 +99,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (data.company_id) {
-      const { data: company } = await supabase
+      const { data: companyData } = await supabase
         .from("companies")
-        .select("is_active")
+        .select("is_active, logo_url, display_name, name")
         .eq("id", data.company_id)
         .maybeSingle();
 
-      if (company && !company.is_active) {
+      if (companyData && !companyData.is_active) {
         await supabase.auth.signOut();
         resetAuthState();
         alert("Votre entreprise a été désactivée. Contactez votre administrateur.");
         return;
+      }
+
+      if (companyData) {
+        setCompany({
+          logo_url: companyData.logo_url,
+          display_name: companyData.display_name,
+          name: companyData.name,
+        });
       }
     }
 
