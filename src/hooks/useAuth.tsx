@@ -4,11 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "admin" | "bureau" | "ouvrier" | "super_admin";
 
+interface ProfileData {
+  full_name: string;
+  worker_level: string | null;
+  company_id: string | null;
+  can_create_devis: boolean;
+}
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   role: AppRole | null;
-  profile: { full_name: string; worker_level: string | null; company_id: string | null } | null;
+  profile: ProfileData | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
@@ -33,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
-  const [profile, setProfile] = useState<{ full_name: string; worker_level: string | null; company_id: string | null } | null>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const resetAuthState = () => {
@@ -56,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         "",
       worker_level: current?.worker_level ?? null,
       company_id: current?.company_id ?? sessionCompanyId,
+      can_create_devis: current?.can_create_devis ?? false,
     }));
   };
 
@@ -64,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("full_name, worker_level, role, company_id, is_active")
+      .select("full_name, worker_level, role, company_id, is_active, can_create_devis")
       .eq("id", session.user.id)
       .maybeSingle();
 
@@ -103,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       full_name: data.full_name,
       worker_level: data.worker_level,
       company_id: data.company_id ?? extractSessionCompanyId(session),
+      can_create_devis: data.can_create_devis ?? false,
     });
   };
 

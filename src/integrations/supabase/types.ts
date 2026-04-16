@@ -747,6 +747,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          can_create_devis: boolean
           company_id: string | null
           created_at: string
           email: string | null
@@ -760,6 +761,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          can_create_devis?: boolean
           company_id?: string | null
           created_at?: string
           email?: string | null
@@ -773,6 +775,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          can_create_devis?: boolean
           company_id?: string | null
           created_at?: string
           email?: string | null
@@ -820,6 +823,111 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      quotes: {
+        Row: {
+          billing_address: string | null
+          billing_city: string | null
+          billing_postal_code: string | null
+          billing_same_as_intervention: boolean
+          checklist_data: Json
+          client_address: string | null
+          client_city: string | null
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          client_postal_code: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          existing_installation_complete: boolean
+          existing_installation_remove: boolean
+          id: string
+          installation_type: Database["public"]["Enums"]["installation_type"]
+          internal_comments: Json
+          is_urgent: boolean
+          photos: Json
+          plan_photos: Json
+          rooms_data: Json
+          status: Database["public"]["Enums"]["quote_status"]
+          updated_at: string
+          voice_notes: Json
+          work_description: string | null
+        }
+        Insert: {
+          billing_address?: string | null
+          billing_city?: string | null
+          billing_postal_code?: string | null
+          billing_same_as_intervention?: boolean
+          checklist_data?: Json
+          client_address?: string | null
+          client_city?: string | null
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          client_postal_code?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          existing_installation_complete?: boolean
+          existing_installation_remove?: boolean
+          id?: string
+          installation_type?: Database["public"]["Enums"]["installation_type"]
+          internal_comments?: Json
+          is_urgent?: boolean
+          photos?: Json
+          plan_photos?: Json
+          rooms_data?: Json
+          status?: Database["public"]["Enums"]["quote_status"]
+          updated_at?: string
+          voice_notes?: Json
+          work_description?: string | null
+        }
+        Update: {
+          billing_address?: string | null
+          billing_city?: string | null
+          billing_postal_code?: string | null
+          billing_same_as_intervention?: boolean
+          checklist_data?: Json
+          client_address?: string | null
+          client_city?: string | null
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          client_postal_code?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          existing_installation_complete?: boolean
+          existing_installation_remove?: boolean
+          id?: string
+          installation_type?: Database["public"]["Enums"]["installation_type"]
+          internal_comments?: Json
+          is_urgent?: boolean
+          photos?: Json
+          plan_photos?: Json
+          rooms_data?: Json
+          status?: Database["public"]["Enums"]["quote_status"]
+          updated_at?: string
+          voice_notes?: Json
+          work_description?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_templates: {
         Row: {
@@ -1095,6 +1203,12 @@ export type Database = {
         | "clim"
         | "vmc"
         | "autre"
+      installation_type:
+        | "chaudiere"
+        | "climatisation"
+        | "vmc"
+        | "salle_de_bain"
+        | "autre"
       intervention_type:
         | "entretien_gaz"
         | "entretien_mazout"
@@ -1115,6 +1229,12 @@ export type Database = {
         | "triennal"
       order_status: "demandee" | "commandee" | "recue" | "cloturee"
       order_urgency: "normal" | "urgent" | "critique"
+      quote_status:
+        | "en_attente"
+        | "dossier_en_cours"
+        | "en_commande"
+        | "sav"
+        | "cloture"
       task_status:
         | "planifie"
         | "termine"
@@ -1259,6 +1379,13 @@ export const Constants = {
         "vmc",
         "autre",
       ],
+      installation_type: [
+        "chaudiere",
+        "climatisation",
+        "vmc",
+        "salle_de_bain",
+        "autre",
+      ],
       intervention_type: [
         "entretien_gaz",
         "entretien_mazout",
@@ -1281,6 +1408,13 @@ export const Constants = {
       ],
       order_status: ["demandee", "commandee", "recue", "cloturee"],
       order_urgency: ["normal", "urgent", "critique"],
+      quote_status: [
+        "en_attente",
+        "dossier_en_cours",
+        "en_commande",
+        "sav",
+        "cloture",
+      ],
       task_status: [
         "planifie",
         "termine",

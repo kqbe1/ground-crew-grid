@@ -1,22 +1,30 @@
-import { Outlet, Navigate, NavLink } from "react-router-dom";
+import { Outlet, Navigate, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Calendar, ClipboardList, Package, User, WifiOff, RefreshCw } from "lucide-react";
+import { Calendar, ClipboardList, Package, User, WifiOff, RefreshCw, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOfflineDrafts } from "@/hooks/useOfflineDrafts";
 import { toast } from "sonner";
 import MobileTaskNotifications from "@/components/mobile/MobileTaskNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-const mobileNav = [
+
+const baseMobileNav = [
   { to: "/mobile", icon: Calendar, label: "Agenda" },
   { to: "/mobile/fiches", icon: ClipboardList, label: "Fiches" },
   { to: "/mobile/pieces", icon: Package, label: "Pièces" },
-  { to: "/mobile/profil", icon: User, label: "Profil" },
 ];
 
 export default function MobileLayout() {
-  const { session, loading } = useAuth();
+  const { session, loading, role, profile } = useAuth();
   usePushNotifications();
   const { isOnline, pendingCount, syncing, syncAll } = useOfflineDrafts();
+
+  const showDevis = role === "admin" || (role === "ouvrier" && profile?.can_create_devis);
+  
+  const mobileNav = [
+    ...baseMobileNav,
+    ...(showDevis ? [{ to: "/mobile/devis/nouveau", icon: FileText, label: "Devis" }] : []),
+    { to: "/mobile/profil", icon: User, label: "Profil" },
+  ];
 
   if (loading) {
     return (

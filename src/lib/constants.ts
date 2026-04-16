@@ -71,3 +71,86 @@ export const FILTER_TYPE_GROUPS = [
   { key: "entretien", label: "Entretien", types: ENTRETIEN_SUBTYPES },
   ...STANDALONE_INTERVENTION_TYPES.map((t) => ({ key: t, label: INTERVENTION_TYPE_LABELS[t], types: [t] })),
 ];
+
+export const QUOTE_STATUS_LABELS: Record<string, string> = {
+  en_attente: "En attente",
+  dossier_en_cours: "Dossier en cours",
+  en_commande: "En commande",
+  sav: "SAV",
+  cloture: "Clôturé",
+};
+
+export const QUOTE_STATUS_COLORS: Record<string, string> = {
+  en_attente: "bg-amber-500",
+  dossier_en_cours: "bg-blue-500",
+  en_commande: "bg-purple-500",
+  sav: "bg-orange-500",
+  cloture: "bg-emerald-500",
+};
+
+export const INSTALLATION_TYPE_LABELS: Record<string, string> = {
+  chaudiere: "Chaudière",
+  climatisation: "Climatisation",
+  vmc: "VMC",
+  salle_de_bain: "Salle de bain",
+  autre: "Autre",
+};
+
+export const INSTALLATION_TYPE_ICONS: Record<string, string> = {
+  chaudiere: "wrench",
+  climatisation: "snowflake",
+  vmc: "wind",
+  salle_de_bain: "droplets",
+  autre: "settings",
+};
+
+export const DEVIS_CHECKLISTS: Record<string, string[]> = {
+  chaudiere: [
+    "Évacuation ancienne chaudière",
+    "Nouvelle alimentation d'électricité",
+    "Cheminée existante",
+    "Placement thermostat",
+    "Raccordement gaz",
+    "Raccordement eau",
+    "Mise en service",
+    "Tubage cheminée",
+    "Vase d'expansion",
+    "Circulateur",
+  ],
+  climatisation: [
+    "Distance entre les éléments (m)",
+    "Hauteur approximative unité extérieure (m)",
+    "Nombre de splits intérieurs",
+    "Passage de gaines",
+    "Alimentation électrique dédiée",
+    "Support mural/sol unité extérieure",
+    "Évacuation condensats",
+  ],
+  vmc: [
+    "Type VMC (simple flux / double flux)",
+    "Nombre de bouches d'extraction",
+    "Nombre de bouches d'insufflation",
+    "Passage de gaines",
+    "Sortie toiture existante",
+    "Alimentation électrique",
+    "Isolation des gaines",
+  ],
+  salle_de_bain: [
+    "Plomberie existante",
+    "Évacuation existante",
+    "Carrelage à poser",
+    "Électricité à revoir",
+    "Meuble vasque",
+    "Douche / Baignoire",
+    "WC à installer",
+    "Sèche-serviettes",
+    "Ventilation",
+  ],
+  autre: [
+    "Alimentation électrique",
+    "Alimentation eau",
+    "Évacuation",
+    "Accès chantier",
+    "Protection sols/murs",
+  ],
+};
