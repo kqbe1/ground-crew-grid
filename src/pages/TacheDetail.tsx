@@ -146,7 +146,7 @@ export default function TacheDetail() {
   const interventionLabel = INTERVENTION_TYPE_LABELS[task.intervention_type] || task.intervention_type;
 
   return (
-    <div className="p-4 md:p-8 lg:p-10 max-w-6xl mx-auto space-y-8">
+    <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
