@@ -130,7 +130,35 @@ export default function RealtimeOrderNotifications() {
       )
       .subscribe();
 
-    channelsRef.current = [ordersChannel, orderUpdateChannel, sheetChannel];
+    // 4. New quote from mobile
+    const quotesChannel = supabase
+      .channel("bureau-quotes")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "quotes" },
+        async (payload) => {
+          const q = payload.new as any;
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", q.created_by)
+            .maybeSingle();
+
+          const notif: Notification = {
+            id: `quote-${q.id}`,
+            type: "new_quote",
+            title: `📋 Nouveau devis reçu${q.is_urgent ? " 🔴 URGENT" : ""}`,
+            description: `${profile?.full_name ?? "Inconnu"} — ${q.client_name}`,
+            created_at: q.created_at,
+            read: false,
+          };
+          addNotification(notif);
+          toast.info(notif.title, { description: notif.description });
+        }
+      )
+      .subscribe();
+
+    channelsRef.current = [ordersChannel, orderUpdateChannel, sheetChannel, quotesChannel];
 
     return () => {
       channelsRef.current.forEach((ch) => ch.unsubscribe());
