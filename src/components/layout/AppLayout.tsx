@@ -1,10 +1,13 @@
 import { Outlet, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import AppSidebar from "./AppSidebar";
+import MobileBottomNav from "./MobileBottomNav";
 import RealtimeOrderNotifications from "./RealtimeOrderNotifications";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function AppLayout() {
   const { session, loading, role } = useAuth();
+  const isMobile = useIsMobile();
 
   if (loading) {
     return (
@@ -36,6 +39,20 @@ export default function AppLayout() {
             Contactez votre administrateur.
           </p>
         </div>
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-screen overflow-hidden">
+        <header className="flex items-center justify-end px-4 py-2 border-b border-border bg-background">
+          <RealtimeOrderNotifications />
+        </header>
+        <main className="flex-1 overflow-y-auto pb-16">
+          <Outlet />
+        </main>
+        <MobileBottomNav />
       </div>
     );
   }
