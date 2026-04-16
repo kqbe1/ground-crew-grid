@@ -374,64 +374,139 @@ export type Database = {
       intervention_sheets: {
         Row: {
           arrival_time: string | null
+          billing_address: string | null
+          billing_city: string | null
+          billing_email: string | null
+          billing_name: string | null
+          billing_phone: string | null
+          billing_postal_code: string | null
+          billing_same_as_intervention: boolean | null
+          binome_name: string | null
+          binome_percentage: number | null
           checklist_results: Json | null
           client_absent: boolean
+          client_address_override: string | null
+          client_city_override: string | null
+          client_email_override: string | null
+          client_name_override: string | null
+          client_phone_override: string | null
+          client_postal_override: string | null
           client_present: boolean
           company_id: string
           created_at: string
           departure_time: string | null
           description: string | null
+          entretien_subtype: Json | null
+          entretien_type: string | null
           final_status: Database["public"]["Enums"]["task_status"]
           id: string
+          internal_comment: string | null
+          internal_photos: string[] | null
           is_draft: boolean
+          nameplate_data: Json | null
+          observations_before: string | null
           photos_after: string[] | null
           photos_before: string[] | null
+          photos_nameplate: string[] | null
           sent_to_client: boolean
           signature_data: string | null
           signed_at: string | null
+          status_comment: string | null
+          supplies_description: string | null
           updated_at: string
+          work_status_detail: string | null
           work_task_id: string
           worker_id: string | null
         }
         Insert: {
           arrival_time?: string | null
+          billing_address?: string | null
+          billing_city?: string | null
+          billing_email?: string | null
+          billing_name?: string | null
+          billing_phone?: string | null
+          billing_postal_code?: string | null
+          billing_same_as_intervention?: boolean | null
+          binome_name?: string | null
+          binome_percentage?: number | null
           checklist_results?: Json | null
           client_absent?: boolean
+          client_address_override?: string | null
+          client_city_override?: string | null
+          client_email_override?: string | null
+          client_name_override?: string | null
+          client_phone_override?: string | null
+          client_postal_override?: string | null
           client_present?: boolean
           company_id: string
           created_at?: string
           departure_time?: string | null
           description?: string | null
+          entretien_subtype?: Json | null
+          entretien_type?: string | null
           final_status?: Database["public"]["Enums"]["task_status"]
           id?: string
+          internal_comment?: string | null
+          internal_photos?: string[] | null
           is_draft?: boolean
+          nameplate_data?: Json | null
+          observations_before?: string | null
           photos_after?: string[] | null
           photos_before?: string[] | null
+          photos_nameplate?: string[] | null
           sent_to_client?: boolean
           signature_data?: string | null
           signed_at?: string | null
+          status_comment?: string | null
+          supplies_description?: string | null
           updated_at?: string
+          work_status_detail?: string | null
           work_task_id: string
           worker_id?: string | null
         }
         Update: {
           arrival_time?: string | null
+          billing_address?: string | null
+          billing_city?: string | null
+          billing_email?: string | null
+          billing_name?: string | null
+          billing_phone?: string | null
+          billing_postal_code?: string | null
+          billing_same_as_intervention?: boolean | null
+          binome_name?: string | null
+          binome_percentage?: number | null
           checklist_results?: Json | null
           client_absent?: boolean
+          client_address_override?: string | null
+          client_city_override?: string | null
+          client_email_override?: string | null
+          client_name_override?: string | null
+          client_phone_override?: string | null
+          client_postal_override?: string | null
           client_present?: boolean
           company_id?: string
           created_at?: string
           departure_time?: string | null
           description?: string | null
+          entretien_subtype?: Json | null
+          entretien_type?: string | null
           final_status?: Database["public"]["Enums"]["task_status"]
           id?: string
+          internal_comment?: string | null
+          internal_photos?: string[] | null
           is_draft?: boolean
+          nameplate_data?: Json | null
+          observations_before?: string | null
           photos_after?: string[] | null
           photos_before?: string[] | null
+          photos_nameplate?: string[] | null
           sent_to_client?: boolean
           signature_data?: string | null
           signed_at?: string | null
+          status_comment?: string | null
+          supplies_description?: string | null
           updated_at?: string
+          work_status_detail?: string | null
           work_task_id?: string
           worker_id?: string | null
         }

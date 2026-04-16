@@ -55,17 +55,17 @@ export default function Fiches() {
   };
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Fiches d'intervention</h1>
+          <h1 className="text-xl md:text-2xl font-bold">Fiches d'intervention</h1>
           <p className="text-muted-foreground">{filtered.length} fiche(s)</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Rechercher..."
@@ -74,28 +74,30 @@ export default function Fiches() {
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les statuts</SelectItem>
-            {Object.entries(TASK_STATUS_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les types</SelectItem>
-            {FILTER_TYPE_GROUPS.map((g) => (
-              <SelectItem key={g.key} value={g.key}>{g.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              {Object.entries(TASK_STATUS_LABELS).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              {FILTER_TYPE_GROUPS.map((g) => (
+                <SelectItem key={g.key} value={g.key}>{g.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* List */}
@@ -108,24 +110,26 @@ export default function Fiches() {
               className="hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => setSelected(sheet)}
             >
-              <CardContent className="py-3 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <ClipboardList className="w-4 h-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium flex items-center gap-2">
-                    {sheet.work_tasks?.title}
-                    {intType && (
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${INTERVENTION_TYPE_COLORS[intType]}`}>
-                        {INTERVENTION_TYPE_LABELS[intType]}
-                      </span>
-                    )}
+            <CardContent className="py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                    <ClipboardList className="w-4 h-4 text-primary" />
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {sheet.work_tasks?.clients?.name} · {sheet.profiles?.full_name}
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm flex items-center gap-2 flex-wrap">
+                      {sheet.work_tasks?.title}
+                      {intType && (
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${INTERVENTION_TYPE_COLORS[intType]}`}>
+                          {INTERVENTION_TYPE_LABELS[intType]}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {sheet.work_tasks?.clients?.name} · {sheet.profiles?.full_name}
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-1.5 items-center">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   {sheet.sent_to_client && (
                     <div className="p-1 rounded bg-[hsl(var(--color-termine))]/10" title="Envoyé au client">
                       <Mail className="w-3.5 h-3.5 text-[hsl(var(--color-termine))]" />
@@ -142,12 +146,12 @@ export default function Fiches() {
                     </div>
                   )}
                   {sheet.is_draft && <Badge variant="outline" className="border-dashed text-xs">Brouillon</Badge>}
-                </div>
-                <Badge className={`${statusColor[sheet.final_status]} text-white text-xs`}>
-                  {TASK_STATUS_LABELS[sheet.final_status]}
-                </Badge>
-                <div className="text-xs text-muted-foreground whitespace-nowrap">
-                  {format(new Date(sheet.created_at), "d MMM yyyy", { locale: fr })}
+                  <Badge className={`${statusColor[sheet.final_status]} text-white text-xs`}>
+                    {TASK_STATUS_LABELS[sheet.final_status]}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {format(new Date(sheet.created_at), "d MMM yyyy", { locale: fr })}
+                  </span>
                 </div>
               </CardContent>
             </Card>

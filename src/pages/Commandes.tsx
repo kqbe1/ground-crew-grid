@@ -51,19 +51,19 @@ export default function Commandes() {
   };
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-6 space-y-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold">Commandes & Pièces</h1>
+          <h1 className="text-xl md:text-2xl font-bold">Commandes & Pièces</h1>
           <p className="text-muted-foreground">{orders.length} commande(s)</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" /> Nouvelle commande
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Plus className="w-4 h-4 mr-1" /> Nouvelle
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="all">Toutes</TabsTrigger>
           <TabsTrigger value="demandee">Demandées</TabsTrigger>
           <TabsTrigger value="commandee">Commandées</TabsTrigger>
@@ -79,27 +79,31 @@ export default function Commandes() {
             className={cn("animate-slide-in cursor-pointer hover:shadow-md transition-shadow", urgencyColors[order.urgency])}
             onClick={() => setSelectedOrder(order)}
           >
-            <CardContent className="py-3 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Package className="w-4 h-4 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium">{order.part_name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {order.clients?.name} · {order.work_tasks?.title} · Qté: {order.quantity}
+            <CardContent className="py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                  <Package className="w-4 h-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-medium text-sm">{order.part_name}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {order.clients?.name} · Qté: {order.quantity}
+                  </div>
                 </div>
               </div>
-              {order.urgency !== "normal" && (
-                <Badge variant="destructive" className="gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  {order.urgency === "critique" ? "Critique" : "Urgent"}
+              <div className="flex items-center gap-2 flex-wrap">
+                {order.urgency !== "normal" && (
+                  <Badge variant="destructive" className="gap-1 text-xs">
+                    <AlertTriangle className="w-3 h-3" />
+                    {order.urgency === "critique" ? "Critique" : "Urgent"}
+                  </Badge>
+                )}
+                <Badge className={cn(statusColors[order.status], "text-xs")}>
+                  {ORDER_STATUS_LABELS[order.status]}
                 </Badge>
-              )}
-              <Badge className={cn(statusColors[order.status])}>
-                {ORDER_STATUS_LABELS[order.status]}
-              </Badge>
-              <div className="text-xs text-muted-foreground">
-                {format(new Date(order.created_at), "d MMM", { locale: fr })}
+                <span className="text-xs text-muted-foreground">
+                  {format(new Date(order.created_at), "d MMM", { locale: fr })}
+                </span>
               </div>
             </CardContent>
           </Card>
