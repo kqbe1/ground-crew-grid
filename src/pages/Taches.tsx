@@ -45,6 +45,7 @@ export default function Taches() {
   const isMobile = useIsMobile();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
 
   const { data: tasks = [], refetch } = useQuery({
