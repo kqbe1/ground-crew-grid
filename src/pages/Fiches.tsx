@@ -52,6 +52,7 @@ export default function Fiches() {
     termine: "bg-[hsl(var(--color-termine))]",
     a_replanifier: "bg-[hsl(var(--color-replanifier))]",
     piece_a_commander: "bg-[hsl(var(--color-piece))]",
+    sav: "bg-[hsl(var(--color-sav))]",
   };
 
   return (

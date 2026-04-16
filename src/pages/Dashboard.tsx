@@ -72,10 +72,10 @@ export default function Dashboard() {
         supabase.from("parts_orders").select("id", { count: "exact" }).eq("status", "recue"),
         supabase.from("maintenance_schedules").select("id", { count: "exact" }).gte("next_due_date", monthStart).lte("next_due_date", monthEnd),
         supabase.from("maintenance_schedules").select("id", { count: "exact" }).gte("next_due_date", nextMonthStart).lte("next_due_date", nextMonthEnd),
-        supabase.from("work_tasks").select("id", { count: "exact" }).in("status", ["a_replanifier", "piece_a_commander"]),
+        supabase.from("work_tasks").select("id", { count: "exact" }).in("status", ["a_replanifier", "piece_a_commander", "sav"]),
         supabase.from("clients").select("id", { count: "exact" }),
         supabase.from("intervention_sheets").select("id", { count: "exact" }).gte("created_at", new Date(now.getFullYear(), now.getMonth(), 1).toISOString()),
-        supabase.from("work_tasks").select("id, title, status, wait_reason, clients(name)").in("status", ["a_replanifier", "piece_a_commander"]).order("updated_at", { ascending: false }).limit(5),
+        supabase.from("work_tasks").select("id, title, status, wait_reason, clients(name)").in("status", ["a_replanifier", "piece_a_commander", "sav"]).order("updated_at", { ascending: false }).limit(5),
         supabase.from("parts_orders").select("id, part_name, status, urgency, clients(name)").neq("status", "cloturee").order("created_at", { ascending: false }).limit(5),
         supabase.from("maintenance_schedules").select("id, intervention_type, next_due_date, clients(name)").lte("next_due_date", in30days).order("next_due_date", { ascending: true }).limit(5),
         supabase.from("work_tasks").select("intervention_type, status, scheduled_date").gte("scheduled_date", sixMonthsAgo.toISOString().split("T")[0]),
@@ -123,6 +123,7 @@ export default function Dashboard() {
         termine: "hsl(142, 55%, 42%)",
         a_replanifier: "hsl(38, 92%, 50%)",
         piece_a_commander: "hsl(280, 60%, 55%)",
+        sav: "hsl(15, 80%, 50%)",
       };
       setTaskStatusDistribution(
         Object.entries(statusCounts).map(([key, value]) => ({
@@ -173,6 +174,7 @@ export default function Dashboard() {
   const statusColor: Record<string, string> = {
     a_replanifier: "bg-[hsl(var(--color-replanifier))] text-white",
     piece_a_commander: "bg-[hsl(var(--color-piece))] text-white",
+    sav: "bg-[hsl(var(--color-sav))] text-white",
   };
 
   return (

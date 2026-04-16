@@ -112,7 +112,7 @@ export default function MobileFicheEntretienForm() {
     const map: Record<string, string> = {
       termine: "termine", piece_a_commander: "piece_a_commander",
       piece_commandee: "piece_a_commander", a_refixer: "a_replanifier",
-      sav: "a_replanifier", autre: "planifie",
+      sav: "sav", autre: "planifie",
     };
     return map[detail] || "termine";
   };
