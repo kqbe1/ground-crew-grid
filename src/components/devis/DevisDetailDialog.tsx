@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { ArrowLeft, Download, MessageSquare, Send } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { downloadDevisPdf } from "@/lib/generateDevisPdf";
 
 interface Props {
   quote: any;
@@ -21,6 +22,30 @@ const statuses = ["en_attente", "dossier_en_cours", "en_commande", "sav", "clotu
 
 export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated }: Props) {
   const [newComment, setNewComment] = useState("");
+  const [pdfSettings, setPdfSettings] = useState<any>(null);
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user?.user) return;
+      const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.user.id).single();
+      if (!profile?.company_id) return;
+      const { data: settings } = await supabase.from("pdf_settings").select("*").eq("company_id", profile.company_id).maybeSingle();
+      setPdfSettings(settings);
+      if (settings?.logo_url) {
+        try {
+          const resp = await fetch(settings.logo_url);
+          const blob = await resp.blob();
+          const reader = new FileReader();
+          reader.onload = () => setLogoDataUrl(reader.result as string);
+          reader.readAsDataURL(blob);
+        } catch { /* skip */ }
+      }
+    })();
+  }, [open]);
 
   if (!quote) return null;
 
@@ -42,6 +67,31 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
     toast.success("Commentaire ajouté");
     setNewComment("");
     onUpdated();
+  };
+
+  const handleDownloadPdf = async () => {
+    setDownloading(true);
+    try {
+      downloadDevisPdf(
+        quote,
+        pdfSettings ? {
+          company_name: pdfSettings.company_name,
+          company_address: pdfSettings.company_address,
+          company_phone: pdfSettings.company_phone,
+          company_email: pdfSettings.company_email,
+          company_website: pdfSettings.company_website,
+          company_vat: pdfSettings.company_vat,
+          primary_color: pdfSettings.primary_color,
+          footer_text: pdfSettings.footer_text,
+        } : undefined,
+        logoDataUrl
+      );
+      toast.success("PDF téléchargé");
+    } catch (err) {
+      toast.error("Erreur lors de la génération du PDF");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const rooms = Array.isArray(quote.rooms_data) ? quote.rooms_data : [];
@@ -67,6 +117,10 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
                 {INSTALLATION_TYPE_LABELS[quote.installation_type]} · {format(new Date(quote.created_at), "d MMMM yyyy HH:mm", { locale: fr })}
               </p>
             </div>
+            <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={downloading}>
+              <Download className="w-4 h-4 mr-1" />
+              PDF
+            </Button>
           </div>
         </DialogHeader>
 
