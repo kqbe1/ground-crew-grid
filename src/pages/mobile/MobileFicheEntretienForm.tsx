@@ -24,48 +24,31 @@ export default function MobileFicheEntretienForm() {
   const { taskId } = useParams();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const { isOnline } = useOfflineDrafts();
+  const { isOnline, save } = useOfflineDrafts();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [dirty, setDirty] = useState(false);
 
-  // Step 1
   const [coords, setCoords] = useState<CoordinatesData>({
     clientName: "", clientAddress: "", clientPostal: "", clientCity: "",
     clientPhone: "", clientEmail: "", billingSame: true, billingName: "",
     billingAddress: "", billingPostal: "", billingCity: "", billingPhone: "", billingEmail: "",
   });
-
-  // Step 2
   const [entretienType, setEntretienType] = useState<EntretienTypeData>(emptyEntretienType);
-
-  // Step 3
   const [photosBefore, setPhotosBefore] = useState<string[]>([]);
   const [observationsBefore, setObservationsBefore] = useState("");
-
-  // Step 4
   const [nameplate, setNameplate] = useState<NameplateData>(emptyNameplate);
   const [nameplatePhotos, setNameplatePhotos] = useState<string[]>([]);
-
-  // Step 5
   const [supplies, setSupplies] = useState("");
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
-
-  // Step 6
   const [photosAfter, setPhotosAfter] = useState<string[]>([]);
-
-  // Step 7
   const [hoursStatus, setHoursStatus] = useState<HoursStatusData>({
     arrivalTime: "", departureTime: "", statusDetail: "", statusComment: "",
   });
-
-  // Step 8
   const [signature, setSignature] = useState<SignatureData>({
     technicianName: profile?.full_name || "",
     binomeName: "", binomePercentage: 0, clientAbsent: false, signatureData: "",
   });
-
-  // Step 9
   const [description, setDescription] = useState("");
   const [internalComment, setInternalComment] = useState("");
   const [internalPhotos, setInternalPhotos] = useState<string[]>([]);
@@ -134,10 +117,58 @@ export default function MobileFicheEntretienForm() {
     return map[detail] || "termine";
   };
 
+  const buildPayload = (
+    finalPhotosBefore: string[], finalPhotosAfter: string[],
+    finalNameplatePhotos: string[], finalInternalPhotos: string[],
+    finalSignature: string,
+  ) => {
+    const now = new Date().toISOString().split("T")[0];
+    return {
+      work_task_id: taskId,
+      worker_id: user!.id,
+      arrival_time: hoursStatus.arrivalTime ? `${now}T${hoursStatus.arrivalTime}:00` : null,
+      departure_time: hoursStatus.departureTime ? `${now}T${hoursStatus.departureTime}:00` : null,
+      description,
+      final_status: mapStatusToFinal(hoursStatus.statusDetail),
+      client_present: !signature.clientAbsent,
+      client_absent: signature.clientAbsent,
+      signature_data: finalSignature || null,
+      signed_at: signature.signatureData ? new Date().toISOString() : null,
+      photos_before: finalPhotosBefore.length > 0 ? finalPhotosBefore : null,
+      photos_after: finalPhotosAfter.length > 0 ? finalPhotosAfter : null,
+      is_draft: false,
+      nameplate_data: nameplate,
+      photos_nameplate: finalNameplatePhotos,
+      supplies_description: supplies || null,
+      checklist_results: checkedItems,
+      internal_comment: internalComment || null,
+      internal_photos: finalInternalPhotos,
+      observations_before: observationsBefore || null,
+      billing_same_as_intervention: coords.billingSame,
+      billing_name: coords.billingName || null,
+      billing_address: coords.billingAddress || null,
+      billing_postal_code: coords.billingPostal || null,
+      billing_city: coords.billingCity || null,
+      billing_phone: coords.billingPhone || null,
+      billing_email: coords.billingEmail || null,
+      client_name_override: coords.clientName || null,
+      client_address_override: coords.clientAddress || null,
+      client_postal_override: coords.clientPostal || null,
+      client_city_override: coords.clientCity || null,
+      client_phone_override: coords.clientPhone || null,
+      client_email_override: coords.clientEmail || null,
+      entretien_type: entretienType.type || null,
+      entretien_subtype: entretienType,
+      binome_name: signature.binomeName || null,
+      binome_percentage: signature.binomePercentage || null,
+      work_status_detail: hoursStatus.statusDetail || null,
+      status_comment: hoursStatus.statusComment || null,
+    };
+  };
+
   const handleSubmit = async () => {
     if (!user || !taskId) return;
     setSubmitting(true);
-    const now = new Date().toISOString().split("T")[0];
 
     try {
       let finalPhotosBefore = photosBefore;
@@ -156,55 +187,22 @@ export default function MobileFicheEntretienForm() {
         }
       }
 
-      const { error } = await supabase.from("intervention_sheets").insert({
+      const payload = buildPayload(finalPhotosBefore, finalPhotosAfter, finalNameplatePhotos, finalInternalPhotos, finalSignature);
+
+      const result = await save({
         work_task_id: taskId,
         worker_id: user.id,
-        arrival_time: hoursStatus.arrivalTime ? `${now}T${hoursStatus.arrivalTime}:00` : null,
-        departure_time: hoursStatus.departureTime ? `${now}T${hoursStatus.departureTime}:00` : null,
-        description,
-        final_status: mapStatusToFinal(hoursStatus.statusDetail) as any,
-        client_present: !signature.clientAbsent,
-        client_absent: signature.clientAbsent,
-        signature_data: finalSignature || null,
-        signed_at: signature.signatureData ? new Date().toISOString() : null,
-        photos_before: finalPhotosBefore.length > 0 ? finalPhotosBefore : null,
-        photos_after: finalPhotosAfter.length > 0 ? finalPhotosAfter : null,
-        is_draft: false,
-        nameplate_data: nameplate as any,
-        photos_nameplate: finalNameplatePhotos,
-        supplies_description: supplies || null,
-        checklist_results: checkedItems as any,
-        internal_comment: internalComment || null,
-        internal_photos: finalInternalPhotos,
-        observations_before: observationsBefore || null,
-        billing_same_as_intervention: coords.billingSame,
-        billing_name: coords.billingName || null,
-        billing_address: coords.billingAddress || null,
-        billing_postal_code: coords.billingPostal || null,
-        billing_city: coords.billingCity || null,
-        billing_phone: coords.billingPhone || null,
-        billing_email: coords.billingEmail || null,
-        client_name_override: coords.clientName || null,
-        client_address_override: coords.clientAddress || null,
-        client_postal_override: coords.clientPostal || null,
-        client_city_override: coords.clientCity || null,
-        client_phone_override: coords.clientPhone || null,
-        client_email_override: coords.clientEmail || null,
-        entretien_type: entretienType.type || null,
-        entretien_subtype: entretienType as any,
-        binome_name: signature.binomeName || null,
-        binome_percentage: signature.binomePercentage || null,
-        work_status_detail: hoursStatus.statusDetail || null,
-        status_comment: hoursStatus.statusComment || null,
-      } as any);
+        final_status: payload.final_status,
+        payload,
+      });
 
-      if (error) throw error;
-
-      await supabase.from("work_tasks").update({
-        status: mapStatusToFinal(hoursStatus.statusDetail) as any,
-      }).eq("id", taskId);
-
-      toast.success("Fiche envoyée ✓");
+      if (result.synced) {
+        toast.success("Fiche envoyée ✓");
+      } else {
+        toast.success("Sauvegardé localement — sera envoyé au retour réseau", {
+          icon: <WifiOff className="w-4 h-4" />,
+        });
+      }
       navigate("/mobile");
     } catch (err) {
       console.error(err);

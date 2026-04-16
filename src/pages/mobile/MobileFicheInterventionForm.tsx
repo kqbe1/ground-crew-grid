@@ -16,7 +16,6 @@ import HoursStatusStep, { type HoursStatusData } from "@/components/mobile/steps
 import SignatureStep, { type SignatureData } from "@/components/mobile/steps/SignatureStep";
 import InternalStep from "@/components/mobile/steps/InternalStep";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 
 const TOTAL_STEPS = 9;
 
@@ -24,51 +23,33 @@ export default function MobileFicheInterventionForm() {
   const { taskId } = useParams();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const { isOnline } = useOfflineDrafts();
+  const { isOnline, save } = useOfflineDrafts();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [dirty, setDirty] = useState(false);
 
-  // Step 1 - Coordinates
   const [coords, setCoords] = useState<CoordinatesData>({
     clientName: "", clientAddress: "", clientPostal: "", clientCity: "",
     clientPhone: "", clientEmail: "", billingSame: true, billingName: "",
     billingAddress: "", billingPostal: "", billingCity: "", billingPhone: "", billingEmail: "",
   });
-
-  // Step 2 - Photos before
   const [photosBefore, setPhotosBefore] = useState<string[]>([]);
   const [observationsBefore, setObservationsBefore] = useState("");
-
-  // Step 3 - Nameplate
   const [nameplate, setNameplate] = useState<NameplateData>(emptyNameplate);
   const [nameplatePhotos, setNameplatePhotos] = useState<string[]>([]);
-
-  // Step 4 - Description
   const [description, setDescription] = useState("");
-
-  // Step 5 - Supplies
   const [supplies, setSupplies] = useState("");
-
-  // Step 6 - Photos after
   const [photosAfter, setPhotosAfter] = useState<string[]>([]);
-
-  // Step 7 - Hours & Status
   const [hoursStatus, setHoursStatus] = useState<HoursStatusData>({
     arrivalTime: "", departureTime: "", statusDetail: "", statusComment: "",
   });
-
-  // Step 8 - Signature
   const [signature, setSignature] = useState<SignatureData>({
     technicianName: profile?.full_name || "",
     binomeName: "", binomePercentage: 0, clientAbsent: false, signatureData: "",
   });
-
-  // Step 9 - Internal
   const [internalComment, setInternalComment] = useState("");
   const [internalPhotos, setInternalPhotos] = useState<string[]>([]);
 
-  // Pre-fill from task/client
   useEffect(() => {
     if (!taskId) return;
     (async () => {
@@ -79,11 +60,10 @@ export default function MobileFicheInterventionForm() {
         .maybeSingle();
       if (task?.clients) {
         const c = task.clients as any;
-        const addr = c.address_intervention || "";
         setCoords((prev) => ({
           ...prev,
           clientName: c.name || "",
-          clientAddress: addr,
+          clientAddress: c.address_intervention || "",
           clientPhone: c.phone || "",
           clientEmail: c.email || "",
         }));
@@ -98,9 +78,7 @@ export default function MobileFicheInterventionForm() {
   }, [profile?.full_name]);
 
   const handleClose = () => {
-    if (dirty) {
-      if (!confirm("Quitter sans enregistrer ?")) return;
-    }
+    if (dirty && !confirm("Quitter sans enregistrer ?")) return;
     navigate(-1);
   };
 
@@ -124,27 +102,66 @@ export default function MobileFicheInterventionForm() {
     }
   };
 
-  const handleBack = () => {
-    if (step > 1) setStep(step - 1);
-  };
+  const handleBack = () => { if (step > 1) setStep(step - 1); };
 
   const mapStatusToFinal = (detail: string): string => {
     const map: Record<string, string> = {
-      termine: "termine",
-      piece_a_commander: "piece_a_commander",
-      piece_commandee: "piece_a_commander",
-      a_refixer: "a_replanifier",
-      sav: "a_replanifier",
-      autre: "planifie",
+      termine: "termine", piece_a_commander: "piece_a_commander",
+      piece_commandee: "piece_a_commander", a_refixer: "a_replanifier",
+      sav: "a_replanifier", autre: "planifie",
     };
     return map[detail] || "termine";
+  };
+
+  const buildPayload = (
+    finalPhotosBefore: string[], finalPhotosAfter: string[],
+    finalNameplatePhotos: string[], finalInternalPhotos: string[],
+    finalSignature: string,
+  ) => {
+    const now = new Date().toISOString().split("T")[0];
+    return {
+      work_task_id: taskId,
+      worker_id: user!.id,
+      arrival_time: hoursStatus.arrivalTime ? `${now}T${hoursStatus.arrivalTime}:00` : null,
+      departure_time: hoursStatus.departureTime ? `${now}T${hoursStatus.departureTime}:00` : null,
+      description,
+      final_status: mapStatusToFinal(hoursStatus.statusDetail),
+      client_present: !signature.clientAbsent,
+      client_absent: signature.clientAbsent,
+      signature_data: finalSignature || null,
+      signed_at: signature.signatureData ? new Date().toISOString() : null,
+      photos_before: finalPhotosBefore.length > 0 ? finalPhotosBefore : null,
+      photos_after: finalPhotosAfter.length > 0 ? finalPhotosAfter : null,
+      is_draft: false,
+      nameplate_data: nameplate,
+      photos_nameplate: finalNameplatePhotos,
+      supplies_description: supplies || null,
+      internal_comment: internalComment || null,
+      internal_photos: finalInternalPhotos,
+      observations_before: observationsBefore || null,
+      billing_same_as_intervention: coords.billingSame,
+      billing_name: coords.billingName || null,
+      billing_address: coords.billingAddress || null,
+      billing_postal_code: coords.billingPostal || null,
+      billing_city: coords.billingCity || null,
+      billing_phone: coords.billingPhone || null,
+      billing_email: coords.billingEmail || null,
+      client_name_override: coords.clientName || null,
+      client_address_override: coords.clientAddress || null,
+      client_postal_override: coords.clientPostal || null,
+      client_city_override: coords.clientCity || null,
+      client_phone_override: coords.clientPhone || null,
+      client_email_override: coords.clientEmail || null,
+      binome_name: signature.binomeName || null,
+      binome_percentage: signature.binomePercentage || null,
+      work_status_detail: hoursStatus.statusDetail || null,
+      status_comment: hoursStatus.statusComment || null,
+    };
   };
 
   const handleSubmit = async () => {
     if (!user || !taskId) return;
     setSubmitting(true);
-
-    const now = new Date().toISOString().split("T")[0];
 
     try {
       let finalPhotosBefore = photosBefore;
@@ -163,52 +180,22 @@ export default function MobileFicheInterventionForm() {
         }
       }
 
-      const { error } = await supabase.from("intervention_sheets").insert({
+      const payload = buildPayload(finalPhotosBefore, finalPhotosAfter, finalNameplatePhotos, finalInternalPhotos, finalSignature);
+
+      const result = await save({
         work_task_id: taskId,
         worker_id: user.id,
-        arrival_time: hoursStatus.arrivalTime ? `${now}T${hoursStatus.arrivalTime}:00` : null,
-        departure_time: hoursStatus.departureTime ? `${now}T${hoursStatus.departureTime}:00` : null,
-        description,
-        final_status: mapStatusToFinal(hoursStatus.statusDetail) as any,
-        client_present: !signature.clientAbsent,
-        client_absent: signature.clientAbsent,
-        signature_data: finalSignature || null,
-        signed_at: signature.signatureData ? new Date().toISOString() : null,
-        photos_before: finalPhotosBefore.length > 0 ? finalPhotosBefore : null,
-        photos_after: finalPhotosAfter.length > 0 ? finalPhotosAfter : null,
-        is_draft: false,
-        nameplate_data: nameplate as any,
-        photos_nameplate: finalNameplatePhotos,
-        supplies_description: supplies || null,
-        internal_comment: internalComment || null,
-        internal_photos: finalInternalPhotos,
-        observations_before: observationsBefore || null,
-        billing_same_as_intervention: coords.billingSame,
-        billing_name: coords.billingName || null,
-        billing_address: coords.billingAddress || null,
-        billing_postal_code: coords.billingPostal || null,
-        billing_city: coords.billingCity || null,
-        billing_phone: coords.billingPhone || null,
-        billing_email: coords.billingEmail || null,
-        client_name_override: coords.clientName || null,
-        client_address_override: coords.clientAddress || null,
-        client_postal_override: coords.clientPostal || null,
-        client_city_override: coords.clientCity || null,
-        client_phone_override: coords.clientPhone || null,
-        client_email_override: coords.clientEmail || null,
-        binome_name: signature.binomeName || null,
-        binome_percentage: signature.binomePercentage || null,
-        work_status_detail: hoursStatus.statusDetail || null,
-        status_comment: hoursStatus.statusComment || null,
-      } as any);
+        final_status: payload.final_status,
+        payload,
+      });
 
-      if (error) throw error;
-
-      await supabase.from("work_tasks").update({
-        status: mapStatusToFinal(hoursStatus.statusDetail) as any,
-      }).eq("id", taskId);
-
-      toast.success("Fiche envoyée ✓");
+      if (result.synced) {
+        toast.success("Fiche envoyée ✓");
+      } else {
+        toast.success("Sauvegardé localement — sera envoyé au retour réseau", {
+          icon: <WifiOff className="w-4 h-4" />,
+        });
+      }
       navigate("/mobile");
     } catch (err) {
       console.error(err);
@@ -227,33 +214,21 @@ export default function MobileFicheInterventionForm() {
     switch (step) {
       case 1: return <CoordinatesStep data={coords} onChange={handleChange(setCoords)} />;
       case 2: return (
-        <PhotoStep
-          title="Photos avant travaux"
-          sectionLabel="Photos avant travaux"
-          photos={photosBefore}
-          onPhotosChange={handleChange(setPhotosBefore)}
-          showObservations
-          observations={observationsBefore}
-          onObservationsChange={handleChange(setObservationsBefore)}
-        />
+        <PhotoStep title="Photos avant travaux" sectionLabel="Photos avant travaux"
+          photos={photosBefore} onPhotosChange={handleChange(setPhotosBefore)}
+          showObservations observations={observationsBefore}
+          onObservationsChange={handleChange(setObservationsBefore)} />
       );
       case 3: return (
-        <NameplateStep
-          data={nameplate}
-          onChange={handleChange(setNameplate)}
-          photos={nameplatePhotos}
-          onPhotosChange={handleChange(setNameplatePhotos)}
-        />
+        <NameplateStep data={nameplate} onChange={handleChange(setNameplate)}
+          photos={nameplatePhotos} onPhotosChange={handleChange(setNameplatePhotos)} />
       );
       case 4: return (
         <div className="space-y-4">
           <h2 className="text-lg font-bold">Description du travail</h2>
-          <Textarea
-            value={description}
+          <Textarea value={description}
             onChange={(e) => { setDirty(true); setDescription(e.target.value); }}
-            placeholder="Décrivez le travail effectué ici..."
-            rows={6}
-          />
+            placeholder="Décrivez le travail effectué ici..." rows={6} />
         </div>
       );
       case 5: return (
@@ -262,32 +237,21 @@ export default function MobileFicheInterventionForm() {
           <div className="bg-muted/50 rounded-lg px-3 py-2">
             <span className="text-sm font-semibold text-muted-foreground">Fournitures utilisées</span>
           </div>
-          <Textarea
-            value={supplies}
+          <Textarea value={supplies}
             onChange={(e) => { setDirty(true); setSupplies(e.target.value); }}
-            placeholder="Décrivez les fournitures utilisées..."
-            rows={4}
-          />
+            placeholder="Décrivez les fournitures utilisées..." rows={4} />
         </div>
       );
       case 6: return (
-        <PhotoStep
-          title="Photos après travaux"
-          sectionLabel="Photos après travaux"
-          photos={photosAfter}
-          onPhotosChange={handleChange(setPhotosAfter)}
-        />
+        <PhotoStep title="Photos après travaux" sectionLabel="Photos après travaux"
+          photos={photosAfter} onPhotosChange={handleChange(setPhotosAfter)} />
       );
       case 7: return <HoursStatusStep data={hoursStatus} onChange={handleChange(setHoursStatus)} />;
       case 8: return <SignatureStep data={signature} onChange={handleChange(setSignature)} />;
       case 9: return (
-        <InternalStep
-          title="Commentaire interne & Achats"
-          internalComment={internalComment}
-          onCommentChange={handleChange(setInternalComment)}
-          internalPhotos={internalPhotos}
-          onPhotosChange={handleChange(setInternalPhotos)}
-        />
+        <InternalStep title="Commentaire interne & Achats"
+          internalComment={internalComment} onCommentChange={handleChange(setInternalComment)}
+          internalPhotos={internalPhotos} onPhotosChange={handleChange(setInternalPhotos)} />
       );
       default: return null;
     }
@@ -296,25 +260,16 @@ export default function MobileFicheInterventionForm() {
   return (
     <div className="p-4 space-y-4 pb-24">
       <StepProgressBar currentStep={step} totalSteps={TOTAL_STEPS} />
-
       <div className="flex items-center justify-between">
-        <StepNavigation
-          currentStep={step}
-          totalSteps={TOTAL_STEPS}
-          onNext={handleNext}
-          onBack={handleBack}
-          onClose={handleClose}
-          nextDisabled={!validateStep()}
-          isSubmitting={submitting}
-        />
+        <StepNavigation currentStep={step} totalSteps={TOTAL_STEPS}
+          onNext={handleNext} onBack={handleBack} onClose={handleClose}
+          nextDisabled={!validateStep()} isSubmitting={submitting} />
       </div>
-
       {!isOnline && (
         <div className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700 w-fit">
           <WifiOff className="w-3 h-3" /> Hors ligne
         </div>
       )}
-
       {renderStep()}
     </div>
   );
