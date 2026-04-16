@@ -28,7 +28,7 @@ export default function SuperAdminDashboard() {
   const { data: taskCount = 0 } = useQuery({
     queryKey: ["sa-task-count"],
     queryFn: async () => {
-      const { count, error } = await supabase.from("work_tasks").select("id", { count: "exact", head: true });
+      const { count, error } = await supabase.from("work_tasks").select("id", { count: "exact" });
       if (error) throw error;
       return count ?? 0;
     },
