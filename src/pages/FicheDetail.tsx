@@ -7,6 +7,7 @@ import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, ArrowLeft, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin } from "lucide-react";
+import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
 import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
 import { Textarea } from "@/components/ui/textarea";
@@ -228,32 +229,13 @@ export default function FicheDetail() {
       )}
 
       {/* Photos avant */}
-      {photosBefore.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="font-semibold text-sm">Photos avant travaux ({photosBefore.length})</h2>
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-            {photosBefore.map((url, i) => (
-              <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                <img src={url} alt={`Avant ${i + 1}`} className="rounded-lg object-cover aspect-square w-full hover:opacity-90 transition" />
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
+      <PhotoGrid photos={photosBefore} label="Photos avant travaux" />
 
       {/* Plaque signalétique */}
       {(photosNameplate.length > 0 || (sheet.nameplate_data && Object.keys(sheet.nameplate_data).length > 0)) && (
         <section className="space-y-2">
           <h2 className="font-semibold text-sm">Plaque signalétique</h2>
-          {photosNameplate.length > 0 && (
-            <div className="grid grid-cols-3 gap-2 mb-2">
-              {photosNameplate.map((url, i) => (
-                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                  <img src={url} alt={`Plaque ${i + 1}`} className="rounded-lg object-cover aspect-square w-full hover:opacity-90 transition" />
-                </a>
-              ))}
-            </div>
-          )}
+          <PhotoGrid photos={photosNameplate} label="Photos plaque" />
           {sheet.nameplate_data && Object.keys(sheet.nameplate_data).length > 0 && (
             <div className="p-3 rounded-lg border text-sm grid grid-cols-2 gap-2">
               {Object.entries(sheet.nameplate_data).map(([key, val]) => (
@@ -298,18 +280,7 @@ export default function FicheDetail() {
       )}
 
       {/* Photos après */}
-      {photosAfter.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="font-semibold text-sm">Photos après travaux ({photosAfter.length})</h2>
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-            {photosAfter.map((url, i) => (
-              <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                <img src={url} alt={`Après ${i + 1}`} className="rounded-lg object-cover aspect-square w-full hover:opacity-90 transition" />
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
+      <PhotoGrid photos={photosAfter} label="Photos après travaux" />
 
       {/* Horaires */}
       <section className="space-y-2">
@@ -380,18 +351,8 @@ export default function FicheDetail() {
       </section>
 
       {/* Internal photos */}
-      {internalPhotos.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="font-semibold text-sm">Photos internes ({internalPhotos.length})</h2>
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-            {internalPhotos.map((url, i) => (
-              <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                <img src={url} alt={`Interne ${i + 1}`} className="rounded-lg object-cover aspect-square w-full hover:opacity-90 transition" />
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Photos internes */}
+      <PhotoGrid photos={internalPhotos} label="Photos internes" />
     </div>
   );
 }
