@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("full_name, worker_level, role, company_id, is_active")
+      .select("full_name, worker_level, role, company_id, is_active, can_create_devis")
       .eq("id", session.user.id)
       .maybeSingle();
 
@@ -111,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       full_name: data.full_name,
       worker_level: data.worker_level,
       company_id: data.company_id ?? extractSessionCompanyId(session),
+      can_create_devis: data.can_create_devis ?? false,
     });
   };
 
