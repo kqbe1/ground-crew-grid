@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +12,6 @@ import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS } from "@/lib/constants";
 import { Wrench, Calendar, TrendingUp, Plus, AlertTriangle, Search, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CreateEditEntretienDialog from "@/components/entretiens/CreateEditEntretienDialog";
-import EntretienDetailDialog from "@/components/entretiens/EntretienDetailDialog";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Schedule = Tables<"maintenance_schedules">;
