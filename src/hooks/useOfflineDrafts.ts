@@ -4,26 +4,18 @@ import { toast } from "sonner";
 import { uploadPhotos, uploadSignature } from "@/lib/storageUpload";
 
 const DB_NAME = "pme-terrain-offline";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = "draft_sheets";
 
 export interface OfflineDraft {
-  id: string; // local UUID
+  id: string;
   work_task_id: string;
   worker_id: string;
-  arrival_time: string | null;
-  departure_time: string | null;
-  description: string;
+  /** Full intervention_sheets insert payload */
+  payload: Record<string, any>;
   final_status: string;
-  client_present: boolean;
-  client_absent: boolean;
-  signature_data: string | null;
-  signed_at: string | null;
-  photos_before: string[] | null;
-  photos_after: string[] | null;
-  is_draft: boolean;
-  created_at: string;
   synced: boolean;
+  created_at: string;
 }
 
 function openDB(): Promise<IDBDatabase> {
@@ -73,37 +65,36 @@ async function deleteDraft(id: string): Promise<void> {
   });
 }
 
-async function syncDraft(draft: OfflineDraft): Promise<boolean> {
-  const { id, synced, created_at, ...payload } = draft;
-
-  // Upload base64 photos/signatures to Storage before inserting
+/** Upload base64 media inside a payload before syncing */
+async function uploadPayloadMedia(payload: Record<string, any>, workerId: string): Promise<Record<string, any>> {
+  const p = { ...payload };
   try {
-    if (payload.photos_before && payload.photos_before.length > 0) {
-      payload.photos_before = await uploadPhotos(payload.photos_before, payload.worker_id);
+    const photoFields = ["photos_before", "photos_after", "photos_nameplate", "internal_photos"];
+    for (const field of photoFields) {
+      if (Array.isArray(p[field]) && p[field].length > 0 && typeof p[field][0] === "string" && p[field][0].startsWith("data:")) {
+        p[field] = await uploadPhotos(p[field], workerId);
+      }
     }
-    if (payload.photos_after && payload.photos_after.length > 0) {
-      payload.photos_after = await uploadPhotos(payload.photos_after, payload.worker_id);
-    }
-    if (payload.signature_data && !payload.signature_data.startsWith("http")) {
-      payload.signature_data = await uploadSignature(payload.signature_data, payload.worker_id);
+    if (p.signature_data && typeof p.signature_data === "string" && p.signature_data.startsWith("data:")) {
+      p.signature_data = await uploadSignature(p.signature_data, workerId);
     }
   } catch (err) {
     console.error("Storage upload during sync failed:", err);
-    // Continue with base64 fallback rather than losing data
   }
+  return p;
+}
 
-  const { error } = await supabase.from("intervention_sheets").insert({
-    ...payload as any,
-    arrival_time: payload.arrival_time || null,
-    departure_time: payload.departure_time || null,
-    final_status: payload.final_status as any,
-  });
+async function syncDraft(draft: OfflineDraft): Promise<boolean> {
+  const uploaded = await uploadPayloadMedia(draft.payload, draft.worker_id);
+
+  const { error } = await supabase.from("intervention_sheets").insert(uploaded as any);
 
   if (!error) {
-    await supabase.from("work_tasks").update({ status: payload.final_status as any }).eq("id", payload.work_task_id);
-    await deleteDraft(id);
+    await supabase.from("work_tasks").update({ status: draft.final_status as any }).eq("id", draft.work_task_id);
+    await deleteDraft(draft.id);
     return true;
   }
+  console.error("Sync draft error:", error);
   return false;
 }
 
@@ -144,16 +135,13 @@ export function useOfflineDrafts() {
   const syncAllRef = useRef(syncAll);
   syncAllRef.current = syncAll;
 
-  // Listen for online/offline events — auto-sync on reconnect
   useEffect(() => {
     const goOnline = () => {
       setIsOnline(true);
-      // Small delay to let the network stabilise
       setTimeout(async () => {
         const all = await getAllDrafts();
         const pending = all.filter((d) => !d.synced).length;
         if (pending === 0) return;
-
         toast.info("Connexion rétablie — synchronisation…");
         const count = await syncAllRef.current();
         if (count && count > 0) {
@@ -185,7 +173,6 @@ export function useOfflineDrafts() {
     };
     await saveDraft(fullDraft);
 
-    // If online, try to sync immediately
     if (navigator.onLine) {
       const ok = await syncDraft(fullDraft);
       if (!ok) {
@@ -200,13 +187,5 @@ export function useOfflineDrafts() {
     return { synced: false };
   }, [refreshDrafts]);
 
-  return {
-    drafts,
-    pendingCount,
-    syncing,
-    isOnline,
-    save,
-    syncAll,
-    refreshDrafts,
-  };
+  return { drafts, pendingCount, syncing, isOnline, save, syncAll, refreshDrafts };
 }
