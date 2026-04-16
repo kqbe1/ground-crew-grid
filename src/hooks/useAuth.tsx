@@ -17,6 +17,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const extractSessionRole = (session: Session | null): AppRole | null => {
+  const rawRole = session?.user?.user_metadata?.role;
+  return rawRole === "admin" || rawRole === "bureau" || rawRole === "ouvrier" || rawRole === "super_admin"
+    ? rawRole
+    : null;
+};
+
+const extractSessionCompanyId = (session: Session | null): string | null => {
+  const rawCompanyId = session?.user?.user_metadata?.company_id;
+  return typeof rawCompanyId === "string" && rawCompanyId.length > 0 ? rawCompanyId : null;
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -24,80 +36,113 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<{ full_name: string; worker_level: string | null; company_id: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (userId: string) => {
-    const { data } = await supabase
+  const resetAuthState = () => {
+    setSession(null);
+    setUser(null);
+    setRole(null);
+    setProfile(null);
+  };
+
+  const applySessionFallback = (session: Session | null) => {
+    const sessionRole = extractSessionRole(session);
+    const sessionCompanyId = extractSessionCompanyId(session);
+
+    setRole(sessionRole);
+    setProfile((current) => ({
+      full_name:
+        current?.full_name ||
+        session?.user?.user_metadata?.full_name ||
+        session?.user?.email ||
+        "",
+      worker_level: current?.worker_level ?? null,
+      company_id: current?.company_id ?? sessionCompanyId,
+    }));
+  };
+
+  const fetchUserData = async (session: Session) => {
+    applySessionFallback(session);
+
+    const { data, error } = await supabase
       .from("profiles")
       .select("full_name, worker_level, role, company_id, is_active")
-      .eq("id", userId)
+      .eq("id", session.user.id)
       .maybeSingle();
-    if (data) {
-      // Check if user is active
-      if (!data.is_active) {
+
+    if (error) {
+      return;
+    }
+
+    if (!data) {
+      return;
+    }
+
+    if (!data.is_active) {
+      await supabase.auth.signOut();
+      resetAuthState();
+      alert("Votre compte a été désactivé. Contactez votre administrateur.");
+      return;
+    }
+
+    if (data.company_id) {
+      const { data: company } = await supabase
+        .from("companies")
+        .select("is_active")
+        .eq("id", data.company_id)
+        .maybeSingle();
+
+      if (company && !company.is_active) {
         await supabase.auth.signOut();
-        setSession(null);
-        setUser(null);
-        setRole(null);
-        setProfile(null);
-        alert("Votre compte a été désactivé. Contactez votre administrateur.");
+        resetAuthState();
+        alert("Votre entreprise a été désactivée. Contactez votre administrateur.");
         return;
       }
-      // Check if company is active
-      if (data.company_id) {
-        const { data: company } = await supabase
-          .from("companies")
-          .select("is_active")
-          .eq("id", data.company_id)
-          .maybeSingle();
-        if (company && !company.is_active) {
-          await supabase.auth.signOut();
-          setSession(null);
-          setUser(null);
-          setRole(null);
-          setProfile(null);
-          alert("Votre entreprise a été désactivée. Contactez votre administrateur.");
-          return;
-        }
-      }
-      setRole((data.role as AppRole) ?? null);
-      setProfile({ full_name: data.full_name, worker_level: data.worker_level, company_id: data.company_id });
     }
+
+    setRole((data.role as AppRole) ?? extractSessionRole(session) ?? null);
+    setProfile({
+      full_name: data.full_name,
+      worker_level: data.worker_level,
+      company_id: data.company_id ?? extractSessionCompanyId(session),
+    });
+  };
+
+  const syncAuthState = async (session: Session | null) => {
+    setSession(session);
+    setUser(session?.user ?? null);
+
+    if (!session?.user) {
+      setRole(null);
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
+
+    await fetchUserData(session);
+    setLoading(false);
   };
 
   useEffect(() => {
     let initialSessionHandled = false;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // Skip the initial INITIAL_SESSION event — handled by getSession below
       if (event === "INITIAL_SESSION") return;
 
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchUserData(session.user.id);
-        // Log login event
-        if (event === "SIGNED_IN") {
-          supabase.from("activity_logs").insert({
-            action: "login",
-            actor_id: session.user.id,
-            metadata: { email: session.user.email },
-          }).then(() => {});
-        }
-      } else {
-        setRole(null);
-        setProfile(null);
+      void syncAuthState(session);
+
+      if (session?.user && event === "SIGNED_IN") {
+        supabase.from("activity_logs").insert({
+          action: "login",
+          actor_id: session.user.id,
+          metadata: { email: session.user.email },
+        }).then(() => {});
       }
-      setLoading(false);
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (initialSessionHandled) return;
       initialSessionHandled = true;
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchUserData(session.user.id);
-      }
-      setLoading(false);
+      await syncAuthState(session);
     });
 
     return () => subscription.unsubscribe();
