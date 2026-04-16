@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         "",
       worker_level: current?.worker_level ?? null,
       company_id: current?.company_id ?? sessionCompanyId,
+      can_create_devis: current?.can_create_devis ?? false,
     }));
   };
 
