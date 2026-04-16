@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS, INSTALLATION_TYPE_LABELS } from "@/lib/constants";
 import { ArrowLeft, Download, MessageSquare, Send, Loader2, Trash2 } from "lucide-react";
+import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -222,16 +223,8 @@ export default function DevisDetail() {
       )}
 
       {/* Photos & Plans */}
-      {(photos.length > 0 || planPhotos.length > 0) && (
-        <section className="space-y-2">
-          <h2 className="font-semibold text-sm">Photos & Plans</h2>
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-            {[...planPhotos, ...photos].map((url: string, i: number) => (
-              <img key={i} src={url} alt={`Photo ${i + 1}`} className="rounded-lg w-full aspect-square object-cover" />
-            ))}
-          </div>
-        </section>
-      )}
+      <PhotoGrid photos={planPhotos} label="Plans" />
+      <PhotoGrid photos={photos} label="Photos" />
 
       {/* Voice notes */}
       {voiceNotes.length > 0 && (
