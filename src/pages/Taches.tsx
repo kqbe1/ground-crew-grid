@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import TaskDetailDialog from "@/components/planning/TaskDetailDialog";
@@ -38,6 +40,7 @@ const typeLabels: Record<string, string> = {
 };
 
 export default function Taches() {
+  const isMobile = useIsMobile();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
@@ -87,24 +90,24 @@ export default function Taches() {
   }, [tasks, search, typeFilter]);
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Tâches</h1>
+        <h1 className="text-xl md:text-2xl font-bold">Tâches</h1>
         <span className="text-sm text-muted-foreground">{filtered.length} tâche{filtered.length !== 1 ? "s" : ""}</span>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 max-w-md">
+        <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Rechercher par client, titre, statut, type…"
+            placeholder="Rechercher..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Type" />
           </SelectTrigger>
           <SelectContent>
@@ -116,48 +119,75 @@ export default function Taches() {
         </Select>
       </div>
 
-      <div className="rounded-lg border border-border overflow-hidden">
-        <div className="grid grid-cols-[1fr_150px_140px_120px_130px] gap-2 px-4 py-3 bg-muted/50 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          <span>Titre</span>
-          <span>Client</span>
-          <span>Type</span>
-          <span>Statut</span>
-          <span>Date prévue</span>
-        </div>
-
-        <div className="divide-y divide-border max-h-[calc(100vh-220px)] overflow-y-auto">
+      {isMobile ? (
+        <div className="space-y-2">
           {filtered.length === 0 ? (
-            <div className="px-4 py-8 text-center text-muted-foreground">Aucune tâche trouvée</div>
+            <div className="py-8 text-center text-muted-foreground">Aucune tâche trouvée</div>
           ) : (
             filtered.map((task) => (
-              <button
-                key={task.id}
-                onClick={() => setSelectedTask(task)}
-                className="w-full grid grid-cols-[1fr_150px_140px_120px_130px] gap-2 px-4 py-3 text-left hover:bg-muted/30 transition-colors text-sm"
-              >
-                <div>
-                  <p className="font-medium truncate">{task.title}</p>
+              <Card key={task.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedTask(task)}>
+                <CardContent className="py-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-sm truncate">{task.title}</p>
+                    <Badge variant="outline" className={`${statusColors[task.status]} text-xs shrink-0 ml-2`}>
+                      {statusLabels[task.status] || task.status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{task.clients?.name || "—"}</span>
+                    <span>{format(new Date(task.scheduled_date), "dd MMM yyyy", { locale: fr })}</span>
+                  </div>
                   {task.profiles?.full_name && (
-                    <p className="text-xs text-muted-foreground truncate">{task.profiles.full_name}</p>
+                    <p className="text-xs text-muted-foreground">{task.profiles.full_name}</p>
                   )}
-                </div>
-                <span className="truncate self-center">{task.clients?.name || "—"}</span>
-                <span className="truncate self-center text-muted-foreground">
-                  {typeLabels[task.intervention_type] || task.intervention_type}
-                </span>
-                <div className="self-center">
-                  <Badge variant="outline" className={statusColors[task.status]}>
-                    {statusLabels[task.status] || task.status}
-                  </Badge>
-                </div>
-                <span className="self-center text-muted-foreground">
-                  {format(new Date(task.scheduled_date), "dd MMM yyyy", { locale: fr })}
-                </span>
-              </button>
+                </CardContent>
+              </Card>
             ))
           )}
         </div>
-      </div>
+      ) : (
+        <div className="rounded-lg border border-border overflow-hidden">
+          <div className="grid grid-cols-[1fr_150px_140px_120px_130px] gap-2 px-4 py-3 bg-muted/50 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <span>Titre</span>
+            <span>Client</span>
+            <span>Type</span>
+            <span>Statut</span>
+            <span>Date prévue</span>
+          </div>
+          <div className="divide-y divide-border max-h-[calc(100vh-220px)] overflow-y-auto">
+            {filtered.length === 0 ? (
+              <div className="px-4 py-8 text-center text-muted-foreground">Aucune tâche trouvée</div>
+            ) : (
+              filtered.map((task) => (
+                <button
+                  key={task.id}
+                  onClick={() => setSelectedTask(task)}
+                  className="w-full grid grid-cols-[1fr_150px_140px_120px_130px] gap-2 px-4 py-3 text-left hover:bg-muted/30 transition-colors text-sm"
+                >
+                  <div>
+                    <p className="font-medium truncate">{task.title}</p>
+                    {task.profiles?.full_name && (
+                      <p className="text-xs text-muted-foreground truncate">{task.profiles.full_name}</p>
+                    )}
+                  </div>
+                  <span className="truncate self-center">{task.clients?.name || "—"}</span>
+                  <span className="truncate self-center text-muted-foreground">
+                    {typeLabels[task.intervention_type] || task.intervention_type}
+                  </span>
+                  <div className="self-center">
+                    <Badge variant="outline" className={statusColors[task.status]}>
+                      {statusLabels[task.status] || task.status}
+                    </Badge>
+                  </div>
+                  <span className="self-center text-muted-foreground">
+                    {format(new Date(task.scheduled_date), "dd MMM yyyy", { locale: fr })}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       {selectedTask && (
         <TaskDetailDialog
