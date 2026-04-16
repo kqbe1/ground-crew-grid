@@ -11,11 +11,18 @@ interface ProfileData {
   can_create_devis: boolean;
 }
 
+interface CompanyData {
+  logo_url: string | null;
+  display_name: string | null;
+  name: string;
+}
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   role: AppRole | null;
   profile: ProfileData | null;
+  company: CompanyData | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
@@ -41,13 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [company, setCompany] = useState<CompanyData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const resetAuthState = () => {
-    setSession(null);
-    setUser(null);
     setRole(null);
     setProfile(null);
+    setCompany(null);
   };
 
   const applySessionFallback = (session: Session | null) => {
