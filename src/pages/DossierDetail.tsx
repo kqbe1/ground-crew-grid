@@ -103,7 +103,7 @@ export default function DossierDetail() {
   if (!client) {
     return (
       <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
-        <BackButton fallback="/dossiers" />
+        <BackButton to="/dossiers" />
         <p className="text-muted-foreground text-center py-12">Client introuvable</p>
       </div>
     );
@@ -133,7 +133,7 @@ export default function DossierDetail() {
 
   return (
     <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
-      <BackButton fallback="/dossiers" />
+      <BackButton to="/dossiers" />
 
       {/* Client header */}
       <div className="flex flex-col lg:flex-row lg:items-start gap-6">
