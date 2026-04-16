@@ -1315,6 +1315,7 @@ export type Database = {
         | "termine"
         | "a_replanifier"
         | "piece_a_commander"
+        | "sav"
       worker_level: "T0" | "T1" | "T2"
     }
     CompositeTypes: {
@@ -1495,6 +1496,7 @@ export const Constants = {
         "termine",
         "a_replanifier",
         "piece_a_commander",
+        "sav",
       ],
       worker_level: ["T0", "T1", "T2"],
     },
