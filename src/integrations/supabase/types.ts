@@ -1234,6 +1234,14 @@ export type Database = {
         }[]
       }
       get_my_company_id: { Args: never; Returns: string }
+      get_my_profile_protected: {
+        Args: never
+        Returns: {
+          company_id: string
+          is_active: boolean
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       get_my_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
