@@ -33,10 +33,9 @@ interface PhotoCaptureProps {
   label: string;
   photos: string[];
   onPhotosChange: (photos: string[]) => void;
-  maxPhotos?: number;
 }
 
-export default function PhotoCapture({ label, photos, onPhotosChange, maxPhotos = 5 }: PhotoCaptureProps) {
+export default function PhotoCapture({ label, photos, onPhotosChange }: PhotoCaptureProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [compressing, setCompressing] = useState(false);
 
@@ -47,7 +46,6 @@ export default function PhotoCapture({ label, photos, onPhotosChange, maxPhotos 
     setCompressing(true);
     const newPhotos = [...photos];
     for (const file of Array.from(files)) {
-      if (newPhotos.length >= maxPhotos) break;
       try {
         const compressed = await compressImage(file);
         newPhotos.push(compressed);
@@ -86,33 +84,29 @@ export default function PhotoCapture({ label, photos, onPhotosChange, maxPhotos 
         </div>
       )}
 
-      {photos.length < maxPhotos && (
-        <>
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={handleCapture}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={() => inputRef.current?.click()}
-            disabled={compressing}
-          >
-            {compressing ? (
-              <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-            ) : (
-              <Camera className="w-4 h-4 mr-1.5" />
-            )}
-            {compressing ? "Compression..." : `Prendre une photo (${photos.length}/${maxPhotos})`}
-          </Button>
-        </>
-      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleCapture}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={() => inputRef.current?.click()}
+        disabled={compressing}
+      >
+        {compressing ? (
+          <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+        ) : (
+          <Camera className="w-4 h-4 mr-1.5" />
+        )}
+        {compressing ? "Compression..." : `Prendre une photo (${photos.length})`}
+      </Button>
     </div>
   );
 }
