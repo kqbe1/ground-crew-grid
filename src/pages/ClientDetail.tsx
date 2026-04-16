@@ -122,7 +122,7 @@ export default function ClientDetail() {
   if (!client) return <div className="p-6 text-center text-muted-foreground">Client introuvable</div>;
 
   return (
-    <div className="p-4 md:p-8 lg:p-10 max-w-6xl mx-auto space-y-8">
+    <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
