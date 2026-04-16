@@ -7,6 +7,7 @@ import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, ArrowLeft, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin } from "lucide-react";
+import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
 import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
 import { Textarea } from "@/components/ui/textarea";
