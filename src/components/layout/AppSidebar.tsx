@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Building2,
   FileText,
+  FolderOpen,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ const navItems = [
   { to: "/taches", icon: ListTodo, label: "Tâches", roles: ["admin", "bureau"] },
   { to: "/devis", icon: FileText, label: "Devis", roles: ["admin", "bureau"] },
   { to: "/fiches", icon: ClipboardList, label: "Fiches", roles: ["admin", "bureau"] },
+  { to: "/dossiers", icon: FolderOpen, label: "Dossiers", roles: ["admin", "bureau"] },
   { to: "/temps-ouvriers", icon: Clock, label: "Temps", roles: ["admin", "bureau"] },
   { to: "/admin", icon: Settings, label: "Admin", roles: ["admin", "bureau"] },
 ];
