@@ -426,7 +426,7 @@ function PlanningInner() {
                             <DraggableTaskCard
                               task={task}
                               onDragStart={handleDragStart}
-                              onClick={setSelectedTask}
+                              onClick={openTaskDetail}
                               onResized={refreshTasks}
                               hasOverlap={overlappingIds.has(task.id)}
                             />
@@ -460,7 +460,7 @@ function PlanningInner() {
           currentDate={currentDate}
           tasks={filteredTasks}
           workers={displayedWorkers}
-          onTaskClick={(task) => setSelectedTask(task)}
+          onTaskClick={openTaskDetail}
           onCellClick={(date, hour, workerId) => {
             setClickContext({ hour, workerId });
             setCurrentDate(date);
@@ -478,7 +478,7 @@ function PlanningInner() {
         <MonthViewCalendar
           currentDate={currentDate}
           tasks={filteredTasks}
-          onTaskClick={(task) => setSelectedTask(task)}
+          onTaskClick={openTaskDetail}
           onDayClick={(date) => {
             setCurrentDate(date);
             setViewMode("day");
