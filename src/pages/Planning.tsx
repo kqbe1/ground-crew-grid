@@ -58,7 +58,7 @@ function PlanningInner() {
   const refreshTasks = useCallback(() => setRefreshKey((k) => k + 1), []);
   const { copiedTask, clearClipboard } = useTaskClipboard();
 
-  const [selectedTask, setSelectedTask] = useState<any | null>(null);
+  const openTaskDetail = (task: any) => routerNavigate(`/taches/${task.id}`);
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
   const dragScrollRef = useDragScroll();
 
