@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
-import TaskDetailDialog from "@/components/planning/TaskDetailDialog";
+import { useNavigate } from "react-router-dom";
 import WeekViewGrid from "@/components/planning/WeekViewGrid";
 import MonthViewCalendar from "@/components/planning/MonthViewCalendar";
 import DraggableTaskCard from "@/components/planning/DraggableTaskCard";
@@ -46,6 +46,7 @@ export default function Planning() {
 
 function PlanningInner() {
   const { user } = useAuth();
+  const routerNavigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [tasks, setTasks] = useState<any[]>([]);
@@ -57,7 +58,7 @@ function PlanningInner() {
   const refreshTasks = useCallback(() => setRefreshKey((k) => k + 1), []);
   const { copiedTask, clearClipboard } = useTaskClipboard();
 
-  const [selectedTask, setSelectedTask] = useState<any | null>(null);
+  const openTaskDetail = (task: any) => routerNavigate(`/taches/${task.id}`);
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
   const dragScrollRef = useDragScroll();
 
@@ -425,7 +426,7 @@ function PlanningInner() {
                             <DraggableTaskCard
                               task={task}
                               onDragStart={handleDragStart}
-                              onClick={setSelectedTask}
+                              onClick={openTaskDetail}
                               onResized={refreshTasks}
                               hasOverlap={overlappingIds.has(task.id)}
                             />
@@ -459,7 +460,7 @@ function PlanningInner() {
           currentDate={currentDate}
           tasks={filteredTasks}
           workers={displayedWorkers}
-          onTaskClick={(task) => setSelectedTask(task)}
+          onTaskClick={openTaskDetail}
           onCellClick={(date, hour, workerId) => {
             setClickContext({ hour, workerId });
             setCurrentDate(date);
@@ -477,7 +478,7 @@ function PlanningInner() {
         <MonthViewCalendar
           currentDate={currentDate}
           tasks={filteredTasks}
-          onTaskClick={(task) => setSelectedTask(task)}
+          onTaskClick={openTaskDetail}
           onDayClick={(date) => {
             setCurrentDate(date);
             setViewMode("day");
@@ -486,15 +487,6 @@ function PlanningInner() {
         />
       )}
 
-      {/* Task Detail Dialog */}
-      <TaskDetailDialog
-        task={selectedTask}
-        onClose={() => setSelectedTask(null)}
-        onUpdated={() => {
-          setSelectedTask(null);
-          refreshTasks();
-        }}
-      />
     </div>
   );
 }
