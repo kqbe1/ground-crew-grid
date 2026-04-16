@@ -237,16 +237,49 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
   // ═══════════════════════════ CLIENT ═══════════════════════════
   if (cfg.show_client_info) {
     addSection("Client");
-    addField("Nom :", task?.clients?.name || "—");
-    if (task?.clients?.email) addField("Email :", task.clients.email);
-    if (task?.clients?.phone) addField("Téléphone :", task.clients.phone);
-    if (task?.clients?.address_intervention) addField("Adresse :", task.clients.address_intervention);
+    // Use override coordinates if available
+    const clientName = sheet.client_name_override || task?.clients?.name || "—";
+    const clientEmail = sheet.client_email_override || task?.clients?.email;
+    const clientPhone = sheet.client_phone_override || task?.clients?.phone;
+    const clientAddress = sheet.client_address_override || task?.clients?.address_intervention;
+    const clientPostal = sheet.client_postal_override;
+    const clientCity = sheet.client_city_override;
+
+    addField("Nom :", clientName);
+    if (clientEmail) addField("Email :", clientEmail);
+    if (clientPhone) addField("Téléphone :", clientPhone);
+    if (clientAddress) {
+      let addr = clientAddress;
+      if (clientPostal || clientCity) addr += `, ${clientPostal || ""} ${clientCity || ""}`.trim();
+      addField("Adresse :", addr);
+    }
+
+    // Billing address if different
+    if (sheet.billing_same_as_intervention === false && sheet.billing_name) {
+      y += 2;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(80);
+      doc.text("Adresse de facturation :", margin + 2, y);
+      y += 5;
+      addField("Nom :", sheet.billing_name || "—");
+      if (sheet.billing_address) {
+        let bAddr = sheet.billing_address;
+        if (sheet.billing_postal_code || sheet.billing_city) bAddr += `, ${sheet.billing_postal_code || ""} ${sheet.billing_city || ""}`.trim();
+        addField("Adresse :", bAddr);
+      }
+      if (sheet.billing_phone) addField("Téléphone :", sheet.billing_phone);
+      if (sheet.billing_email) addField("Email :", sheet.billing_email);
+    }
   }
 
   // ═══════════════════════════ WORKER ═══════════════════════════
   if (cfg.show_worker_info) {
     addSection("Technicien");
     addField("Nom :", worker?.full_name || "—");
+    if (sheet.binome_name) {
+      addField("Binôme :", `${sheet.binome_name} (${sheet.binome_percentage || 0}%)`);
+    }
   }
 
   // ═══════════════════════════ HORAIRES ═══════════════════════════
@@ -258,9 +291,24 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
     ]);
   }
 
+  // ═══════════════════════════ OBSERVATIONS ═══════════════════════════
+  if (sheet.observations_before) {
+    addSection("Observations à l'arrivée");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(30);
+    const lines = doc.splitTextToSize(sheet.observations_before, contentW - 4);
+    for (const line of lines) {
+      checkPage(5);
+      doc.text(line, margin + 2, y);
+      y += 4.5;
+    }
+    y += 2;
+  }
+
   // ═══════════════════════════ DESCRIPTION ═══════════════════════════
   if (cfg.show_description && sheet.description) {
-    addSection("Description");
+    addSection("Description du travail");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(30);
@@ -273,25 +321,82 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
     y += 2;
   }
 
-  // ═══════════════════════════ CHECKLIST ═══════════════════════════
-  if (cfg.show_checklist && sheet.checklist_results && Array.isArray(sheet.checklist_results) && sheet.checklist_results.length > 0) {
-    addSection("Points de contrôle");
-    for (const item of sheet.checklist_results as any[]) {
-      checkPage(6);
-      const checked = item.checked;
-      // Draw checkbox
-      doc.setDrawColor(pr, pg, pb);
-      doc.setLineWidth(0.3);
-      doc.rect(margin + 2, y - 3, 3.5, 3.5);
-      if (checked) {
-        doc.setFillColor(pr, pg, pb);
-        doc.rect(margin + 2.5, y - 2.5, 2.5, 2.5, "F");
+  // ═══════════════════════════ SUPPLIES ═══════════════════════════
+  if (sheet.supplies_description) {
+    addSection("Fournitures utilisées");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(30);
+    const lines = doc.splitTextToSize(sheet.supplies_description, contentW - 4);
+    for (const line of lines) {
+      checkPage(5);
+      doc.text(line, margin + 2, y);
+      y += 4.5;
+    }
+    y += 2;
+  }
+
+  // ═══════════════════════════ NAMEPLATE ═══════════════════════════
+  if (sheet.nameplate_data && typeof sheet.nameplate_data === "object") {
+    const np = sheet.nameplate_data as Record<string, string>;
+    const hasData = Object.values(np).some((v) => v && v.trim());
+    if (hasData) {
+      addSection("Plaque signalétique");
+      const npFields: [string, string][] = [
+        ["Marque", np.brand], ["Modèle", np.model], ["N° série", np.serialNumber],
+        ["Puiss. nominale", np.nominalPower], ["Puiss. utile", np.usefulPower],
+        ["Combustible", np.fuelType], ["Pression", np.servicePressure],
+        ["Débit calor.", np.caloricFlow], ["Année", np.yearOfManufacture],
+        ["N° CE", np.ceNumber], ["Catégorie", np.category], ["Autres", np.otherInfo],
+      ];
+      for (const [label, value] of npFields) {
+        if (value && value.trim()) addField(`${label} :`, value);
       }
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(30);
-      doc.text(item.label || item.name || "—", margin + 8, y);
-      y += 5.5;
+    }
+  }
+
+  // ═══════════════════════════ CHECKLIST ═══════════════════════════
+  if (cfg.show_checklist && sheet.checklist_results) {
+    // Handle both old array format and new object format
+    if (Array.isArray(sheet.checklist_results) && sheet.checklist_results.length > 0) {
+      addSection("Points de contrôle");
+      for (const item of sheet.checklist_results as any[]) {
+        checkPage(6);
+        const checked = item.checked;
+        doc.setDrawColor(pr, pg, pb);
+        doc.setLineWidth(0.3);
+        doc.rect(margin + 2, y - 3, 3.5, 3.5);
+        if (checked) {
+          doc.setFillColor(pr, pg, pb);
+          doc.rect(margin + 2.5, y - 2.5, 2.5, 2.5, "F");
+        }
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(30);
+        doc.text(item.label || item.name || "—", margin + 8, y);
+        y += 5.5;
+      }
+    } else if (typeof sheet.checklist_results === "object" && !Array.isArray(sheet.checklist_results)) {
+      const items = Object.entries(sheet.checklist_results as Record<string, boolean>);
+      const checked = items.filter(([, v]) => v);
+      if (checked.length > 0) {
+        addSection("Checklist entretien");
+        for (const [name, isChecked] of items) {
+          checkPage(6);
+          doc.setDrawColor(pr, pg, pb);
+          doc.setLineWidth(0.3);
+          doc.rect(margin + 2, y - 3, 3.5, 3.5);
+          if (isChecked) {
+            doc.setFillColor(pr, pg, pb);
+            doc.rect(margin + 2.5, y - 2.5, 2.5, 2.5, "F");
+          }
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9);
+          doc.setTextColor(30);
+          doc.text(name, margin + 8, y);
+          y += 5.5;
+        }
+      }
     }
   }
 
