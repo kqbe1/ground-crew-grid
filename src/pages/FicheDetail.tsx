@@ -6,11 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { FileSignature, Camera, Clock, Mail, Check, User, AlertTriangle, Download, ArrowLeft, Loader2, Trash2, MessageSquare, Send } from "lucide-react";
+import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, ArrowLeft, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { useSignedUrls } from "@/hooks/useSignedUrl";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const statusColor: Record<string, string> = {
@@ -34,7 +35,7 @@ export default function FicheDetail() {
     if (!id) return;
     const { data } = await supabase
       .from("intervention_sheets")
-      .select("*, work_tasks(title, intervention_type, clients(name, email, phone, address_intervention), client_sites(address)), profiles!intervention_sheets_worker_id_fkey(full_name)")
+      .select("*, work_tasks(title, intervention_type, scheduled_date, start_time, duration_minutes, clients(name, email, phone, address_intervention), client_sites(name, address)), profiles!intervention_sheets_worker_id_fkey(full_name)")
       .eq("id", id)
       .single();
     setSheet(data);
@@ -42,6 +43,12 @@ export default function FicheDetail() {
   }, [id]);
 
   useEffect(() => { fetchSheet(); }, [fetchSheet]);
+
+  // Re-sign photo URLs
+  const photosBefore = useSignedUrls(sheet?.photos_before || []);
+  const photosAfter = useSignedUrls(sheet?.photos_after || []);
+  const photosNameplate = useSignedUrls(sheet?.photos_nameplate || []);
+  const internalPhotos = useSignedUrls(sheet?.internal_photos || []);
 
   const loadPdfConfig = useCallback(async () => {
     const { data: pdfCfg } = await supabase.from("pdf_settings").select("*").limit(1).single();
@@ -133,13 +140,7 @@ export default function FicheDetail() {
         {/* Status buttons */}
         <div className="flex flex-wrap gap-2">
           {ALL_STATUSES.map((s) => (
-            <Button
-              key={s}
-              size="sm"
-              variant={sheet.final_status === s ? "default" : "outline"}
-              className={sheet.final_status === s ? `${statusColor[s]} text-white` : ""}
-              onClick={() => updateStatus(s)}
-            >
+            <Button key={s} size="sm" variant={sheet.final_status === s ? "default" : "outline"} className={sheet.final_status === s ? `${statusColor[s]} text-white` : ""} onClick={() => updateStatus(s)}>
               {TASK_STATUS_LABELS[s]}
             </Button>
           ))}
@@ -166,44 +167,90 @@ export default function FicheDetail() {
           {sheet.sent_to_client && <Badge variant="outline" className="text-[hsl(var(--color-termine))] border-[hsl(var(--color-termine))]"><Mail className="w-3 h-3 mr-1" /> Envoyé</Badge>}
           {sheet.signature_data && <Badge variant="outline" className="text-[hsl(var(--color-termine))] border-[hsl(var(--color-termine))]"><FileSignature className="w-3 h-3 mr-1" /> Signé</Badge>}
           {sheet.client_absent && <Badge variant="outline" className="text-[hsl(var(--color-replanifier))] border-[hsl(var(--color-replanifier))]"><AlertTriangle className="w-3 h-3 mr-1" /> Client absent</Badge>}
+          {sheet.client_present && !sheet.client_absent && <Badge variant="outline" className="text-[hsl(var(--color-termine))] border-[hsl(var(--color-termine))]"><User className="w-3 h-3 mr-1" /> Client présent</Badge>}
+          {sheet.binome_name && <Badge variant="outline"><User className="w-3 h-3 mr-1" /> Binôme: {sheet.binome_name} ({sheet.binome_percentage}%)</Badge>}
         </div>
       </div>
 
       <Separator />
 
+      {/* Type d'entretien */}
+      {sheet.entretien_type && (
+        <section className="space-y-2">
+          <h2 className="font-semibold text-sm flex items-center gap-2"><Wrench className="w-4 h-4" /> Type d'entretien</h2>
+          <div className="p-4 rounded-lg border text-sm">
+            <p className="font-medium">{sheet.entretien_type}</p>
+            {sheet.entretien_subtype && typeof sheet.entretien_subtype === 'object' && Object.keys(sheet.entretien_subtype).length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {Object.entries(sheet.entretien_subtype).filter(([, v]) => v).map(([key]) => (
+                  <Badge key={key} variant="outline" className="text-xs">{key}</Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Coordonnées client */}
       <section className="space-y-2">
         <h2 className="font-semibold text-sm">Coordonnées client</h2>
-        <div className="p-4 rounded-lg border text-sm space-y-1">
-          <p className="font-medium">{task?.clients?.name}</p>
-          {task?.clients?.address_intervention && <p className="text-muted-foreground">{task.clients.address_intervention}</p>}
-          {sheet.work_tasks?.client_sites?.address && <p className="text-muted-foreground">Site : {sheet.work_tasks.client_sites.address}</p>}
-          {task?.clients?.phone && <p className="text-muted-foreground">📞 {task.clients.phone}</p>}
-          {task?.clients?.email && <p className="text-muted-foreground">✉️ {task.clients.email}</p>}
-          {sheet.client_name_override && <p className="text-muted-foreground">Override : {sheet.client_name_override}</p>}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 rounded-lg border text-sm space-y-1">
+            <h3 className="font-semibold text-xs text-muted-foreground uppercase">Intervention</h3>
+            <p className="font-medium">{sheet.client_name_override || task?.clients?.name}</p>
+            {(sheet.client_address_override || task?.clients?.address_intervention) && (
+              <p className="text-muted-foreground flex items-start gap-1"><MapPin className="w-3 h-3 mt-0.5 shrink-0" />{sheet.client_address_override || task.clients.address_intervention}</p>
+            )}
+            {sheet.client_postal_override && <p className="text-muted-foreground">{sheet.client_postal_override} {sheet.client_city_override}</p>}
+            {task?.client_sites?.name && <p className="text-muted-foreground">Site : {task.client_sites.name} — {task.client_sites.address}</p>}
+            {(sheet.client_phone_override || task?.clients?.phone) && <p className="text-muted-foreground">📞 {sheet.client_phone_override || task.clients.phone}</p>}
+            {(sheet.client_email_override || task?.clients?.email) && <p className="text-muted-foreground">✉️ {sheet.client_email_override || task.clients.email}</p>}
+          </div>
+          {!sheet.billing_same_as_intervention && sheet.billing_name && (
+            <div className="p-4 rounded-lg border text-sm space-y-1">
+              <h3 className="font-semibold text-xs text-muted-foreground uppercase">Facturation</h3>
+              <p className="font-medium">{sheet.billing_name}</p>
+              {sheet.billing_address && <p className="text-muted-foreground">{sheet.billing_address}</p>}
+              {sheet.billing_postal_code && <p className="text-muted-foreground">{sheet.billing_postal_code} {sheet.billing_city}</p>}
+              {sheet.billing_phone && <p className="text-muted-foreground">📞 {sheet.billing_phone}</p>}
+              {sheet.billing_email && <p className="text-muted-foreground">✉️ {sheet.billing_email}</p>}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Photos avant */}
-      {sheet.photos_before?.length > 0 && (
+      {/* Observations avant intervention */}
+      {sheet.observations_before && (
         <section className="space-y-2">
-          <h2 className="font-semibold text-sm">Photos avant travaux</h2>
+          <h2 className="font-semibold text-sm">Observations avant intervention</h2>
+          <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{sheet.observations_before}</p>
+        </section>
+      )}
+
+      {/* Photos avant */}
+      {photosBefore.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="font-semibold text-sm">Photos avant travaux ({photosBefore.length})</h2>
           <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-            {sheet.photos_before.map((url: string, i: number) => (
-              <img key={i} src={url} alt={`Avant ${i + 1}`} className="rounded-lg object-cover aspect-square w-full" />
+            {photosBefore.map((url, i) => (
+              <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                <img src={url} alt={`Avant ${i + 1}`} className="rounded-lg object-cover aspect-square w-full hover:opacity-90 transition" />
+              </a>
             ))}
           </div>
         </section>
       )}
 
       {/* Plaque signalétique */}
-      {(sheet.photos_nameplate?.length > 0 || (sheet.nameplate_data && Object.keys(sheet.nameplate_data).length > 0)) && (
+      {(photosNameplate.length > 0 || (sheet.nameplate_data && Object.keys(sheet.nameplate_data).length > 0)) && (
         <section className="space-y-2">
           <h2 className="font-semibold text-sm">Plaque signalétique</h2>
-          {sheet.photos_nameplate?.length > 0 && (
+          {photosNameplate.length > 0 && (
             <div className="grid grid-cols-3 gap-2 mb-2">
-              {sheet.photos_nameplate.map((url: string, i: number) => (
-                <img key={i} src={url} alt={`Plaque ${i + 1}`} className="rounded-lg object-cover aspect-square w-full" />
+              {photosNameplate.map((url, i) => (
+                <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                  <img src={url} alt={`Plaque ${i + 1}`} className="rounded-lg object-cover aspect-square w-full hover:opacity-90 transition" />
+                </a>
               ))}
             </div>
           )}
@@ -230,7 +277,7 @@ export default function FicheDetail() {
 
       {sheet.checklist_results && Array.isArray(sheet.checklist_results) && sheet.checklist_results.length > 0 && (
         <section className="space-y-2">
-          <h2 className="font-semibold text-sm">Checklist</h2>
+          <h2 className="font-semibold text-sm">Checklist ({(sheet.checklist_results as any[]).filter((c: any) => c.checked).length}/{(sheet.checklist_results as any[]).length})</h2>
           <div className="space-y-1">
             {(sheet.checklist_results as any[]).map((item: any, i: number) => (
               <div key={i} className="flex items-center gap-2 text-sm">
@@ -251,12 +298,14 @@ export default function FicheDetail() {
       )}
 
       {/* Photos après */}
-      {sheet.photos_after?.length > 0 && (
+      {photosAfter.length > 0 && (
         <section className="space-y-2">
-          <h2 className="font-semibold text-sm">Photos après travaux</h2>
+          <h2 className="font-semibold text-sm">Photos après travaux ({photosAfter.length})</h2>
           <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-            {sheet.photos_after.map((url: string, i: number) => (
-              <img key={i} src={url} alt={`Après ${i + 1}`} className="rounded-lg object-cover aspect-square w-full" />
+            {photosAfter.map((url, i) => (
+              <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                <img src={url} alt={`Après ${i + 1}`} className="rounded-lg object-cover aspect-square w-full hover:opacity-90 transition" />
+              </a>
             ))}
           </div>
         </section>
@@ -265,7 +314,7 @@ export default function FicheDetail() {
       {/* Horaires */}
       <section className="space-y-2">
         <h2 className="font-semibold text-sm">Horaires et statut</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
             <Clock className="w-4 h-4 text-muted-foreground" />
             <div>
@@ -280,12 +329,12 @@ export default function FicheDetail() {
               <div className="font-medium">{sheet.departure_time ? format(new Date(sheet.departure_time), "HH:mm") : "—"}</div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
-          <User className="w-4 h-4 text-muted-foreground" />
-          <div>
-            <div className="text-xs text-muted-foreground">Ouvrier</div>
-            <div className="font-medium">{worker?.full_name || "—"}</div>
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+            <User className="w-4 h-4 text-muted-foreground" />
+            <div>
+              <div className="text-xs text-muted-foreground">Ouvrier</div>
+              <div className="font-medium">{worker?.full_name || "—"}</div>
+            </div>
           </div>
         </div>
         {sheet.work_status_detail && (
@@ -331,12 +380,14 @@ export default function FicheDetail() {
       </section>
 
       {/* Internal photos */}
-      {sheet.internal_photos?.length > 0 && (
+      {internalPhotos.length > 0 && (
         <section className="space-y-2">
-          <h2 className="font-semibold text-sm">Photos internes</h2>
+          <h2 className="font-semibold text-sm">Photos internes ({internalPhotos.length})</h2>
           <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-            {sheet.internal_photos.map((url: string, i: number) => (
-              <img key={i} src={url} alt={`Interne ${i + 1}`} className="rounded-lg object-cover aspect-square w-full" />
+            {internalPhotos.map((url, i) => (
+              <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                <img src={url} alt={`Interne ${i + 1}`} className="rounded-lg object-cover aspect-square w-full hover:opacity-90 transition" />
+              </a>
             ))}
           </div>
         </section>
