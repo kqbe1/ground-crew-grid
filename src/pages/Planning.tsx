@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
-import TaskDetailDialog from "@/components/planning/TaskDetailDialog";
+import { useNavigate } from "react-router-dom";
 import WeekViewGrid from "@/components/planning/WeekViewGrid";
 import MonthViewCalendar from "@/components/planning/MonthViewCalendar";
 import DraggableTaskCard from "@/components/planning/DraggableTaskCard";
