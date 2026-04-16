@@ -13,7 +13,7 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
-type NotifType = "new_order" | "order_received" | "task_completed";
+type NotifType = "new_order" | "order_received" | "task_completed" | "new_quote";
 
 interface Notification {
   id: string;
@@ -130,7 +130,35 @@ export default function RealtimeOrderNotifications() {
       )
       .subscribe();
 
-    channelsRef.current = [ordersChannel, orderUpdateChannel, sheetChannel];
+    // 4. New quote from mobile
+    const quotesChannel = supabase
+      .channel("bureau-quotes")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "quotes" },
+        async (payload) => {
+          const q = payload.new as any;
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", q.created_by)
+            .maybeSingle();
+
+          const notif: Notification = {
+            id: `quote-${q.id}`,
+            type: "new_quote",
+            title: `📋 Nouveau devis reçu${q.is_urgent ? " 🔴 URGENT" : ""}`,
+            description: `${profile?.full_name ?? "Inconnu"} — ${q.client_name}`,
+            created_at: q.created_at,
+            read: false,
+          };
+          addNotification(notif);
+          toast.info(notif.title, { description: notif.description });
+        }
+      )
+      .subscribe();
+
+    channelsRef.current = [ordersChannel, orderUpdateChannel, sheetChannel, quotesChannel];
 
     return () => {
       channelsRef.current.forEach((ch) => ch.unsubscribe());
@@ -147,12 +175,14 @@ export default function RealtimeOrderNotifications() {
     new_order: "📦",
     order_received: "✅",
     task_completed: "🏁",
+    new_quote: "📋",
   };
 
   const typeBg: Record<NotifType, string> = {
     new_order: "bg-[hsl(var(--color-demandee))]/10",
     order_received: "bg-[hsl(var(--color-recue))]/10",
     task_completed: "bg-[hsl(var(--color-termine))]/10",
+    new_quote: "bg-rose-500/10",
   };
 
   return (
