@@ -1,15 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Pencil, Users } from "lucide-react";
-import { useState } from "react";
+import { Plus, Pencil, Users, Upload, X, Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface CompanyForm {
@@ -22,11 +22,12 @@ interface CompanyForm {
   plan: string;
   max_users: number;
   is_active: boolean;
+  logo_url: string;
 }
 
 const emptyForm: CompanyForm = {
   name: "", slug: "", display_name: "", contact_email: "", contact_phone: "",
-  address: "", plan: "standard", max_users: 15, is_active: true,
+  address: "", plan: "standard", max_users: 15, is_active: true, logo_url: "",
 };
 
 export default function SuperAdminCompanies() {
@@ -35,6 +36,8 @@ export default function SuperAdminCompanies() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CompanyForm>(emptyForm);
+  const [uploading, setUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["sa-companies"],
@@ -56,11 +59,13 @@ export default function SuperAdminCompanies() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const payload: any = { ...form };
+      if (!payload.logo_url) payload.logo_url = null;
       if (editingId) {
-        const { error } = await supabase.from("companies").update(form).eq("id", editingId);
+        const { error } = await supabase.from("companies").update(payload).eq("id", editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("companies").insert(form);
+        const { error } = await supabase.from("companies").insert(payload);
         if (error) throw error;
       }
     },
@@ -71,6 +76,27 @@ export default function SuperAdminCompanies() {
     },
     onError: (err: Error) => toast.error(err.message),
   });
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const id = editingId || "new";
+    const ext = file.name.split(".").pop() || "png";
+    const path = `logos/${id}_${Date.now()}.${ext}`;
+    setUploading(true);
+    try {
+      const { error } = await supabase.storage.from("company-assets").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("company-assets").getPublicUrl(path);
+      updateField("logo_url", urlData.publicUrl);
+      toast.success("Logo uploadé");
+    } catch (err: any) {
+      toast.error(err.message || "Erreur d'upload");
+    } finally {
+      setUploading(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
+  };
 
   const openCreate = () => {
     setEditingId(null);
@@ -85,6 +111,7 @@ export default function SuperAdminCompanies() {
       contact_email: company.contact_email || "", contact_phone: company.contact_phone || "",
       address: company.address || "", plan: company.plan || "standard",
       max_users: company.max_users || 15, is_active: company.is_active ?? true,
+      logo_url: company.logo_url || "",
     });
     setDialogOpen(true);
   };
@@ -114,27 +141,34 @@ export default function SuperAdminCompanies() {
           return (
             <Card key={company.id} className="cursor-pointer hover:border-primary/40 transition-colors" onClick={() => navigate(`/super-admin/users?company=${company.id}`)}>
               <CardContent className="flex items-center justify-between py-4">
-                <div className="space-y-2 flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{company.display_name || company.name}</span>
-                    <Badge className={company.is_active ? "bg-green-600 text-white" : "bg-muted text-muted-foreground"}>
-                      {company.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                    <Badge variant="outline" className="capitalize">{company.plan || "standard"}</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {company.contact_email}
-                  </p>
-                  <div className="flex items-center gap-3 max-w-xs">
-                    <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${isAtLimit ? "bg-destructive" : isNearLimit ? "bg-amber-500" : "bg-primary"}`}
-                        style={{ width: `${usagePercent}%` }}
-                      />
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {company.logo_url ? (
+                    <img src={company.logo_url} alt="" className="w-10 h-10 object-contain rounded flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0 text-xs font-bold text-muted-foreground">
+                      {(company.display_name || company.name || "?").charAt(0).toUpperCase()}
                     </div>
-                    <span className={`text-xs font-medium whitespace-nowrap ${isAtLimit ? "text-destructive" : isNearLimit ? "text-amber-600" : "text-muted-foreground"}`}>
-                      {userCount} / {maxUsers}
-                    </span>
+                  )}
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{company.display_name || company.name}</span>
+                      <Badge className={company.is_active ? "bg-green-600 text-white" : "bg-muted text-muted-foreground"}>
+                        {company.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                      <Badge variant="outline" className="capitalize">{company.plan || "standard"}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{company.contact_email}</p>
+                    <div className="flex items-center gap-3 max-w-xs">
+                      <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${isAtLimit ? "bg-destructive" : isNearLimit ? "bg-amber-500" : "bg-primary"}`}
+                          style={{ width: `${usagePercent}%` }}
+                        />
+                      </div>
+                      <span className={`text-xs font-medium whitespace-nowrap ${isAtLimit ? "text-destructive" : isNearLimit ? "text-amber-600" : "text-muted-foreground"}`}>
+                        {userCount} / {maxUsers}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -153,11 +187,42 @@ export default function SuperAdminCompanies() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Modifier l'entreprise" : "Nouvelle entreprise"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            {/* Logo */}
+            <div className="space-y-2">
+              <Label>Logo de l'entreprise</Label>
+              <div className="flex items-center gap-4">
+                {form.logo_url ? (
+                  <div className="relative">
+                    <img src={form.logo_url} alt="Logo" className="w-16 h-16 object-contain rounded border" />
+                    <button
+                      type="button"
+                      onClick={() => updateField("logo_url", "")}
+                      className="absolute -top-1.5 -right-1.5 rounded-full bg-destructive p-0.5 text-destructive-foreground shadow"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded border border-dashed border-muted-foreground/30 flex items-center justify-center text-muted-foreground">
+                    <Upload className="w-5 h-5" />
+                  </div>
+                )}
+                <div>
+                  <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                  <Button type="button" variant="outline" size="sm" onClick={() => logoInputRef.current?.click()} disabled={uploading}>
+                    {uploading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+                    {uploading ? "Upload..." : "Choisir un logo"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-1">PNG ou JPG, max 2 Mo</p>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Nom technique</Label>
