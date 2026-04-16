@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, FILTER_TYPE_GROUPS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
-import { ClipboardList, FileSignature, Camera, Mail, Search } from "lucide-react";
+import { FileSignature, Camera, Mail, Search } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -91,8 +91,13 @@ export default function Fiches() {
           return (
             <Card key={sheet.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/fiches/${sheet.id}`)}>
               <CardContent className="py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="p-2 rounded-lg bg-primary/10 shrink-0"><ClipboardList className="w-4 h-4 text-primary" /></div>
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {(() => {
+                    const isEntretien = intType?.startsWith("entretien_");
+                    const badgeType = isEntretien ? "+FE" : "+FI";
+                    const badgeColor = isEntretien ? "bg-blue-500" : "bg-primary";
+                    return <Badge className={`${badgeColor} text-white shrink-0 text-[10px] px-1.5`}>{badgeType}</Badge>;
+                  })()}
                   <div className="min-w-0">
                     <div className="font-medium text-sm flex items-center gap-2 flex-wrap">
                       {sheet.work_tasks?.title}
