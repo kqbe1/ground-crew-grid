@@ -14,6 +14,7 @@ import ImportCsvDialog from "@/components/clients/ImportCsvDialog";
 type Client = Tables<"clients">;
 
 export default function Clients() {
+  const isMobile = useIsMobile();
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
