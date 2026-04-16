@@ -14,9 +14,17 @@ const baseMobileNav = [
 ];
 
 export default function MobileLayout() {
-  const { session, loading } = useAuth();
+  const { session, loading, role, profile } = useAuth();
   usePushNotifications();
   const { isOnline, pendingCount, syncing, syncAll } = useOfflineDrafts();
+
+  const showDevis = role === "admin" || (role === "ouvrier" && profile?.can_create_devis);
+  
+  const mobileNav = [
+    ...baseMobileNav,
+    ...(showDevis ? [{ to: "/mobile/devis/nouveau", icon: FileText, label: "Devis" }] : []),
+    { to: "/mobile/profil", icon: User, label: "Profil" },
+  ];
 
   if (loading) {
     return (

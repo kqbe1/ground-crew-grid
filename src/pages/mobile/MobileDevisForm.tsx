@@ -164,17 +164,17 @@ export default function MobileDevisForm() {
         billing_address: billingSame ? null : billingAddress,
         billing_postal_code: billingSame ? null : billingPostal,
         billing_city: billingSame ? null : billingCity,
-        installation_type: installationType as any,
-        rooms_data: roomsData as any,
-        plan_photos: planUrls as any,
+        installation_type: installationType,
+        rooms_data: roomsData,
+        plan_photos: planUrls,
         is_urgent: isUrgent,
         existing_installation_remove: removeExisting,
         existing_installation_complete: completeExisting,
         work_description: workDescription,
-        checklist_data: checklistData as any,
-        photos: photoUrls as any,
-        voice_notes: voiceUrls as any,
-      });
+        checklist_data: checklistData,
+        photos: photoUrls,
+        voice_notes: voiceUrls,
+      } as any);
 
       if (error) throw error;
       toast.success("Devis envoyé !");
