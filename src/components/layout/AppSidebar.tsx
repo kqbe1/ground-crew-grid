@@ -18,18 +18,6 @@ import {
   Building2,
   FileText,
 } from "lucide-react";
-  Clock,
-  Package,
-  ListTodo,
-  ClipboardList,
-  Settings,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  Shield,
-  ShieldCheck,
-  Building2,
-} from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
