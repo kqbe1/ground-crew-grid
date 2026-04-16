@@ -22,6 +22,7 @@ const Admin = lazy(() => import("@/pages/Admin"));
 const TempsOuvriers = lazy(() => import("@/pages/TempsOuvriers"));
 const Devis = lazy(() => import("@/pages/Devis"));
 const Taches = lazy(() => import("@/pages/Taches"));
+const TacheDetail = lazy(() => import("@/pages/TacheDetail"));
 const FicheDetail = lazy(() => import("@/pages/FicheDetail"));
 const DevisDetail = lazy(() => import("@/pages/DevisDetail"));
 const CommandeDetail = lazy(() => import("@/pages/CommandeDetail"));
@@ -84,6 +85,7 @@ const App = () => (
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/temps-ouvriers" element={<TempsOuvriers />} />
                 <Route path="/taches" element={<Taches />} />
+                <Route path="/taches/:id" element={<TacheDetail />} />
                 <Route path="/devis" element={<Devis />} />
                 <Route path="/devis/nouveau" element={<MobileDevisForm />} />
                 <Route path="/fiches/:id" element={<FicheDetail />} />
