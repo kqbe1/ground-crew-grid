@@ -175,12 +175,14 @@ export default function RealtimeOrderNotifications() {
     new_order: "📦",
     order_received: "✅",
     task_completed: "🏁",
+    new_quote: "📋",
   };
 
   const typeBg: Record<NotifType, string> = {
     new_order: "bg-[hsl(var(--color-demandee))]/10",
     order_received: "bg-[hsl(var(--color-recue))]/10",
     task_completed: "bg-[hsl(var(--color-termine))]/10",
+    new_quote: "bg-rose-500/10",
   };
 
   return (
