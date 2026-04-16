@@ -110,24 +110,26 @@ export default function Fiches() {
               className="hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => setSelected(sheet)}
             >
-              <CardContent className="py-3 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <ClipboardList className="w-4 h-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium flex items-center gap-2">
-                    {sheet.work_tasks?.title}
-                    {intType && (
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${INTERVENTION_TYPE_COLORS[intType]}`}>
-                        {INTERVENTION_TYPE_LABELS[intType]}
-                      </span>
-                    )}
+            <CardContent className="py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                    <ClipboardList className="w-4 h-4 text-primary" />
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {sheet.work_tasks?.clients?.name} · {sheet.profiles?.full_name}
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm flex items-center gap-2 flex-wrap">
+                      {sheet.work_tasks?.title}
+                      {intType && (
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${INTERVENTION_TYPE_COLORS[intType]}`}>
+                          {INTERVENTION_TYPE_LABELS[intType]}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {sheet.work_tasks?.clients?.name} · {sheet.profiles?.full_name}
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-1.5 items-center">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   {sheet.sent_to_client && (
                     <div className="p-1 rounded bg-[hsl(var(--color-termine))]/10" title="Envoyé au client">
                       <Mail className="w-3.5 h-3.5 text-[hsl(var(--color-termine))]" />
@@ -144,12 +146,12 @@ export default function Fiches() {
                     </div>
                   )}
                   {sheet.is_draft && <Badge variant="outline" className="border-dashed text-xs">Brouillon</Badge>}
-                </div>
-                <Badge className={`${statusColor[sheet.final_status]} text-white text-xs`}>
-                  {TASK_STATUS_LABELS[sheet.final_status]}
-                </Badge>
-                <div className="text-xs text-muted-foreground whitespace-nowrap">
-                  {format(new Date(sheet.created_at), "d MMM yyyy", { locale: fr })}
+                  <Badge className={`${statusColor[sheet.final_status]} text-white text-xs`}>
+                    {TASK_STATUS_LABELS[sheet.final_status]}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {format(new Date(sheet.created_at), "d MMM yyyy", { locale: fr })}
+                  </span>
                 </div>
               </CardContent>
             </Card>
