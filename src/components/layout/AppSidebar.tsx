@@ -16,6 +16,19 @@ import {
   Shield,
   ShieldCheck,
   Building2,
+  FileText,
+} from "lucide-react";
+  Clock,
+  Package,
+  ListTodo,
+  ClipboardList,
+  Settings,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  Shield,
+  ShieldCheck,
+  Building2,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -28,6 +41,7 @@ const navItems = [
   { to: "/entretiens", icon: WrenchIcon, label: "Entretiens", roles: ["admin", "bureau", "super_admin"] },
   { to: "/commandes", icon: Package, label: "Commandes", roles: ["admin", "bureau", "super_admin"] },
   { to: "/taches", icon: ListTodo, label: "Tâches", roles: ["admin", "bureau", "super_admin"] },
+  { to: "/devis", icon: FileText, label: "Devis", roles: ["admin", "bureau", "super_admin"] },
   { to: "/fiches", icon: ClipboardList, label: "Fiches", roles: ["admin", "bureau", "super_admin"] },
   { to: "/temps-ouvriers", icon: Clock, label: "Temps", roles: ["admin", "bureau", "super_admin"] },
   { to: "/admin", icon: Settings, label: "Admin", roles: ["admin", "bureau", "super_admin"] },
