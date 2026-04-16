@@ -43,12 +43,15 @@ const roleConfig: Record<string, { label: string; color: string; icon: typeof Sh
 };
 
 export default function AppSidebar() {
-  const { role, profile, signOut } = useAuth();
+  const { role, profile, company, signOut } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
   const filteredItems = navItems.filter((item) => role && item.roles.includes(role));
   const currentRoleConfig = role ? roleConfig[role] : null;
+
+  const showCompanyLogo = role !== "super_admin" && company;
+  const companyLabel = company?.display_name || company?.name || "PME Terrain";
 
   return (
     <aside
@@ -59,11 +62,24 @@ export default function AppSidebar() {
     >
       {/* Logo */}
       <div className={cn("flex items-center gap-3 px-4 h-16 border-b border-sidebar-border", collapsed && "justify-center")}>
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-          <WrenchIcon className="w-4 h-4 text-sidebar-primary-foreground" />
-        </div>
-        {!collapsed && (
-          <h1 className="text-sm font-bold truncate">PME Terrain</h1>
+        {showCompanyLogo && company.logo_url ? (
+          <img
+            src={company.logo_url}
+            alt={companyLabel}
+            className={cn(
+              "object-contain flex-shrink-0",
+              collapsed ? "w-8 h-8" : "max-h-10 max-w-[180px]"
+            )}
+          />
+        ) : (
+          <>
+            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
+              <WrenchIcon className="w-4 h-4 text-sidebar-primary-foreground" />
+            </div>
+            {!collapsed && (
+              <h1 className="text-sm font-bold truncate">{showCompanyLogo ? companyLabel : "PME Terrain"}</h1>
+            )}
+          </>
         )}
       </div>
 

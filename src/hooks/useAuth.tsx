@@ -11,11 +11,18 @@ interface ProfileData {
   can_create_devis: boolean;
 }
 
+interface CompanyData {
+  logo_url: string | null;
+  display_name: string | null;
+  name: string;
+}
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   role: AppRole | null;
   profile: ProfileData | null;
+  company: CompanyData | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
@@ -41,13 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [company, setCompany] = useState<CompanyData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const resetAuthState = () => {
-    setSession(null);
-    setUser(null);
     setRole(null);
     setProfile(null);
+    setCompany(null);
   };
 
   const applySessionFallback = (session: Session | null) => {
@@ -92,17 +99,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (data.company_id) {
-      const { data: company } = await supabase
+      const { data: companyData } = await supabase
         .from("companies")
-        .select("is_active")
+        .select("is_active, logo_url, display_name, name")
         .eq("id", data.company_id)
         .maybeSingle();
 
-      if (company && !company.is_active) {
+      if (companyData && !companyData.is_active) {
         await supabase.auth.signOut();
         resetAuthState();
         alert("Votre entreprise a été désactivée. Contactez votre administrateur.");
         return;
+      }
+
+      if (companyData) {
+        setCompany({
+          logo_url: companyData.logo_url,
+          display_name: companyData.display_name,
+          name: companyData.name,
+        });
       }
     }
 
@@ -179,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, role, profile, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ session, user, role, profile, company, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
