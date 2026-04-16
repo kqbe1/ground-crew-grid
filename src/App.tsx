@@ -24,7 +24,7 @@ const Devis = lazy(() => import("@/pages/Devis"));
 const Taches = lazy(() => import("@/pages/Taches"));
 const MobileAgenda = lazy(() => import("@/pages/mobile/MobileAgenda"));
 const MobileTaskDetail = lazy(() => import("@/pages/mobile/MobileTaskDetail"));
-const MobileFicheForm = lazy(() => import("@/pages/mobile/MobileFicheForm"));
+const MobileFicheRouter = lazy(() => import("@/pages/mobile/MobileFicheRouter"));
 const MobileFiches = lazy(() => import("@/pages/mobile/MobileFiches"));
 const MobilePieces = lazy(() => import("@/pages/mobile/MobilePieces"));
 const MobileProfil = lazy(() => import("@/pages/mobile/MobileProfil"));
