@@ -13,7 +13,7 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
-type NotifType = "new_order" | "order_received" | "task_completed";
+type NotifType = "new_order" | "order_received" | "task_completed" | "new_quote";
 
 interface Notification {
   id: string;
