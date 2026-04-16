@@ -220,10 +220,36 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
   addField("Titre :", task?.title || "—");
 
   if (cfg.show_intervention_type) {
-    addField("Type :", task?.intervention_type ? INTERVENTION_TYPE_LABELS[task.intervention_type] || task.intervention_type : "—");
+    const typeLabel = task?.intervention_type ? INTERVENTION_TYPE_LABELS[task.intervention_type] || task.intervention_type : "—";
+    addField("Type :", typeLabel);
+
+    // Entretien type details (sub-options)
+    if (sheet.entretien_type) {
+      addField("Type d'entretien :", sheet.entretien_type);
+    }
+    if (sheet.entretien_subtype && typeof sheet.entretien_subtype === "object") {
+      const sub = sheet.entretien_subtype as Record<string, any>;
+      const subFields: string[] = [];
+      if (sub.combustible) subFields.push(`Combustible: ${sub.combustible}`);
+      if (sub.montage) subFields.push(`Montage: ${sub.montage}`);
+      if (sub.tirage) subFields.push(`Tirage: ${sub.tirage}`);
+      if (sub.ventilation) subFields.push(`Ventilation: ${sub.ventilation}`);
+      if (sub.regulation) subFields.push(`Régulation: ${sub.regulation}`);
+      if (subFields.length > 0) {
+        for (const sf of subFields) {
+          addField("  ", sf);
+        }
+      }
+    }
   }
 
   addField("Statut :", TASK_STATUS_LABELS[sheet.final_status] || sheet.final_status);
+  if (sheet.work_status_detail && sheet.work_status_detail !== sheet.final_status) {
+    addField("Détail statut :", sheet.work_status_detail);
+  }
+  if (sheet.status_comment) {
+    addField("Commentaire statut :", sheet.status_comment);
+  }
   addField("Date :", format(new Date(sheet.created_at), "d MMMM yyyy", { locale: fr }));
 
   if (sheet.is_draft) {
@@ -439,21 +465,31 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
   }
 
   // ═══════════════════════════ SIGNATURE ═══════════════════════════
-  if (cfg.show_signature && sheet.signature_data) {
+  if (cfg.show_signature) {
     addSection("Signature client");
-    try {
-      checkPage(40);
-      doc.addImage(sheet.signature_data, "PNG", margin + 2, y, 60, 30);
-      y += 33;
-      if (sheet.signed_at) {
-        doc.setFontSize(8);
-        doc.setTextColor(120);
-        doc.text(`Signé le ${format(new Date(sheet.signed_at), "d MMMM yyyy à HH:mm", { locale: fr })}`, margin + 2, y);
-        doc.setTextColor(0);
-        y += 5;
+    if (sheet.client_absent || !sheet.client_present) {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(10);
+      doc.setTextColor(120);
+      checkPage(8);
+      doc.text("Client absent — Pas de signature", margin + 2, y);
+      doc.setTextColor(0);
+      y += 8;
+    } else if (sheet.signature_data) {
+      try {
+        checkPage(40);
+        doc.addImage(sheet.signature_data, "PNG", margin + 2, y, 60, 30);
+        y += 33;
+        if (sheet.signed_at) {
+          doc.setFontSize(8);
+          doc.setTextColor(120);
+          doc.text(`Signé le ${format(new Date(sheet.signed_at), "d MMMM yyyy à HH:mm", { locale: fr })}`, margin + 2, y);
+          doc.setTextColor(0);
+          y += 5;
+        }
+      } catch {
+        // skip
       }
-    } catch {
-      // skip
     }
   }
 
