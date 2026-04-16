@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, ArrowLeft, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { useState } from "react";
 import { toast } from "sonner";
 import EditUserDialog from "@/components/admin/EditUserDialog";
@@ -108,9 +109,7 @@ export default function SuperAdminUsers() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {filterCompany !== "all" && (
-            <Button variant="ghost" size="icon" onClick={() => navigate("/super-admin/companies")} title="Retour aux entreprises">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
+            <BackButton to="/super-admin/companies" variant="ghost" size="icon" />
           )}
           <div>
             <h1 className="text-2xl font-bold">
