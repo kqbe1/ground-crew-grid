@@ -4,11 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "admin" | "bureau" | "ouvrier" | "super_admin";
 
+interface ProfileData {
+  full_name: string;
+  worker_level: string | null;
+  company_id: string | null;
+  can_create_devis: boolean;
+}
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   role: AppRole | null;
-  profile: { full_name: string; worker_level: string | null; company_id: string | null } | null;
+  profile: ProfileData | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
