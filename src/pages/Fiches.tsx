@@ -9,6 +9,7 @@ import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS,
 import { FileSignature, Camera, Mail, Search } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
 
 export default function Fiches() {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ export default function Fiches() {
           <h1 className="text-xl md:text-2xl font-bold">Fiches d'intervention</h1>
           <p className="text-muted-foreground">{filtered.length} fiche(s)</p>
         </div>
+        <CreateTaskDialog defaultDate={new Date()} onCreated={() => fetchSheets()} />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
