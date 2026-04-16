@@ -16,7 +16,7 @@ export async function downloadFichesZip(fiches: UnifiedFiche[]) {
     .limit(1)
     .maybeSingle();
 
-  const config = pdfSettings ?? {};
+  const config: any = pdfSettings ?? {};
 
   // Fetch logo if available
   let logoDataUrl: string | null = null;
