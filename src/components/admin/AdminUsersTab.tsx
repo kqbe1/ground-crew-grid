@@ -139,16 +139,29 @@ export default function AdminUsersTab() {
                 </Select>
 
                 {u.role === "ouvrier" && (
-                  <Select value={u.worker_level || ""} onValueChange={(v) => updateWorkerLevel(u.id, v)}>
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Niveau..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="T0">T0 - Apprenti</SelectItem>
-                      <SelectItem value="T1">T1 - Ouvrier</SelectItem>
-                      <SelectItem value="T2">T2 - Chef</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <>
+                    <Select value={u.worker_level || ""} onValueChange={(v) => updateWorkerLevel(u.id, v)}>
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Niveau..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="T0">T0 - Apprenti</SelectItem>
+                        <SelectItem value="T1">T1 - Ouvrier</SelectItem>
+                        <SelectItem value="T2">T2 - Chef</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="flex items-center gap-1.5" title="Autoriser les demandes de devis">
+                      <Switch
+                        checked={u.can_create_devis ?? false}
+                        onCheckedChange={async (v) => {
+                          await supabase.from("profiles").update({ can_create_devis: v } as any).eq("id", u.id);
+                          setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, can_create_devis: v } : x));
+                          toast.success(v ? "Devis activé" : "Devis désactivé");
+                        }}
+                      />
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">Devis</span>
+                    </div>
+                  </>
                 )}
 
                 {canChangeRole(u) && (

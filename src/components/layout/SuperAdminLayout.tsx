@@ -10,10 +10,13 @@ import {
   ChevronRight,
   Settings,
   ScrollText,
+  MoreHorizontal,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const navItems = [
   { to: "/super-admin", icon: LayoutDashboard, label: "Dashboard" },
@@ -26,6 +29,8 @@ const navItems = [
 export default function SuperAdminLayout() {
   const { session, loading, role, profile, signOut } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const isMobile = useIsMobile();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   if (loading) {
     return (
@@ -38,6 +43,74 @@ export default function SuperAdminLayout() {
   if (!session) return <Navigate to="/auth" replace />;
   if (role !== "super_admin") return <Navigate to="/" replace />;
 
+  if (isMobile) {
+    const primaryItems = navItems.slice(0, 3);
+    const secondaryItems = navItems.slice(3);
+
+    return (
+      <div className="flex flex-col h-screen overflow-hidden">
+        <main className="flex-1 overflow-y-auto pb-16">
+          <Outlet />
+        </main>
+        <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border flex justify-around py-2 z-50">
+          {primaryItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/super-admin"}
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center gap-0.5 px-3 py-1 text-xs font-medium transition-colors",
+                  isActive ? "text-amber-600" : "text-muted-foreground"
+                )
+              }
+            >
+              <item.icon className="w-5 h-5" />
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+          <button
+            onClick={() => setMoreOpen(true)}
+            className="flex flex-col items-center gap-0.5 px-3 py-1 text-xs font-medium text-muted-foreground"
+          >
+            <MoreHorizontal className="w-5 h-5" />
+            <span>Plus</span>
+          </button>
+        </nav>
+        <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+          <SheetContent side="bottom" className="pb-8">
+            <SheetHeader><SheetTitle>Menu</SheetTitle></SheetHeader>
+            <div className="grid grid-cols-3 gap-3 pt-4">
+              {secondaryItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setMoreOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex flex-col items-center gap-1.5 p-3 rounded-lg text-sm font-medium transition-colors",
+                      isActive ? "bg-amber-600/10 text-amber-600" : "text-muted-foreground hover:bg-accent"
+                    )
+                  }
+                >
+                  <item.icon className="w-6 h-6" />
+                  <span className="text-xs">{item.label}</span>
+                </NavLink>
+              ))}
+              <button
+                onClick={() => { setMoreOpen(false); signOut(); }}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10"
+              >
+                <LogOut className="w-6 h-6" />
+                <span className="text-xs">Déconnexion</span>
+              </button>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       <aside
@@ -46,21 +119,17 @@ export default function SuperAdminLayout() {
           collapsed ? "w-16" : "w-64"
         )}
       >
-        {/* Header */}
         <div className={cn("flex items-center gap-3 px-4 h-16 border-b border-sidebar-border", collapsed && "justify-center")}>
           <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-600 flex items-center justify-center">
             <ShieldCheck className="w-4 h-4 text-white" />
           </div>
-          {!collapsed && (
-            <h1 className="text-sm font-bold truncate">PME Terrain</h1>
-          )}
+          {!collapsed && <h1 className="text-sm font-bold truncate">PME Terrain</h1>}
         </div>
 
         {!collapsed && (
           <div className="px-4 py-2 border-b border-sidebar-border">
             <Badge className="text-[10px] gap-1 bg-amber-600 text-white">
-              <ShieldCheck className="w-3 h-3" />
-              Super Admin
+              <ShieldCheck className="w-3 h-3" /> Super Admin
             </Badge>
           </div>
         )}
@@ -70,7 +139,6 @@ export default function SuperAdminLayout() {
           </div>
         )}
 
-        {/* Nav */}
         <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
           {navItems.map((item) => (
             <NavLink
@@ -80,9 +148,7 @@ export default function SuperAdminLayout() {
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-amber-600 text-white"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  isActive ? "bg-amber-600 text-white" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )
               }
             >
@@ -92,19 +158,12 @@ export default function SuperAdminLayout() {
           ))}
         </nav>
 
-        {/* Footer */}
         <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full transition-colors"
-          >
+          <button onClick={() => setCollapsed(!collapsed)} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full transition-colors">
             {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
             {!collapsed && <span>Réduire</span>}
           </button>
-          <button
-            onClick={signOut}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/60 hover:bg-destructive/20 hover:text-destructive w-full transition-colors"
-          >
+          <button onClick={signOut} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/60 hover:bg-destructive/20 hover:text-destructive w-full transition-colors">
             <LogOut className="w-5 h-5" />
             {!collapsed && <span>Déconnexion</span>}
           </button>
