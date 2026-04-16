@@ -123,6 +123,7 @@ export default function Dashboard() {
         termine: "hsl(142, 55%, 42%)",
         a_replanifier: "hsl(38, 92%, 50%)",
         piece_a_commander: "hsl(280, 60%, 55%)",
+        sav: "hsl(15, 80%, 50%)",
       };
       setTaskStatusDistribution(
         Object.entries(statusCounts).map(([key, value]) => ({
@@ -173,6 +174,7 @@ export default function Dashboard() {
   const statusColor: Record<string, string> = {
     a_replanifier: "bg-[hsl(var(--color-replanifier))] text-white",
     piece_a_commander: "bg-[hsl(var(--color-piece))] text-white",
+    sav: "bg-[hsl(var(--color-sav))] text-white",
   };
 
   return (

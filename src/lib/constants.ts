@@ -29,6 +29,7 @@ export const TASK_STATUS_LABELS: Record<string, string> = {
   termine: "Terminé",
   a_replanifier: "À replanifier",
   piece_a_commander: "Pièce à commander",
+  sav: "SAV",
 };
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
