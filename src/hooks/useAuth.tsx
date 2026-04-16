@@ -146,12 +146,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    let initialSessionHandled = false;
+    let initialDone = false;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Skip the initial INITIAL_SESSION event — handled by getSession below
-      if (event === "INITIAL_SESSION") return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "INITIAL_SESSION") {
+        // Handle initial session directly — no separate getSession needed
+        initialDone = true;
+        await syncAuthState(session);
+        return;
+      }
 
+      // For subsequent events, sync auth state
       void syncAuthState(session);
 
       if (session?.user && event === "SIGNED_IN") {
@@ -163,13 +168,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (initialSessionHandled) return;
-      initialSessionHandled = true;
-      await syncAuthState(session);
-    });
+    // Fallback: if INITIAL_SESSION never fires (older clients), use getSession
+    const fallbackTimer = setTimeout(async () => {
+      if (!initialDone) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!initialDone) {
+          initialDone = true;
+          await syncAuthState(session);
+        }
+      }
+    }, 1000);
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(fallbackTimer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
