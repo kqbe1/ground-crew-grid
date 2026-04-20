@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -43,6 +43,10 @@ const extractSessionCompanyId = (session: Session | null): string | null => {
   return typeof rawCompanyId === "string" && rawCompanyId.length > 0 ? rawCompanyId : null;
 };
 
+const PROFILE_FETCH_RETRIES = 3;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -50,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [company, setCompany] = useState<CompanyData | null>(null);
   const [loading, setLoading] = useState(true);
+  const syncRequestRef = useRef(0);
 
   const resetAuthState = () => {
     setRole(null);
@@ -77,11 +82,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserData = async (session: Session) => {
     applySessionFallback(session);
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("full_name, worker_level, role, company_id, is_active, can_create_devis")
-      .eq("id", session.user.id)
-      .maybeSingle();
+    let data: {
+      full_name: string;
+      worker_level: string | null;
+      role: AppRole | null;
+      company_id: string | null;
+      is_active: boolean;
+      can_create_devis: boolean;
+    } | null = null;
+    let error: Error | null = null;
+
+    for (let attempt = 0; attempt < PROFILE_FETCH_RETRIES; attempt += 1) {
+      const response = await supabase
+        .from("profiles")
+        .select("full_name, worker_level, role, company_id, is_active, can_create_devis")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      data = response.data as typeof data;
+      error = response.error as Error | null;
+
+      if (error || data) break;
+
+      await wait(250 * (attempt + 1));
+    }
 
     if (error) {
       return;
@@ -131,56 +155,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const syncAuthState = async (session: Session | null) => {
+    const requestId = ++syncRequestRef.current;
+
     setSession(session);
     setUser(session?.user ?? null);
 
     if (!session?.user) {
       setRole(null);
       setProfile(null);
+      setCompany(null);
       setLoading(false);
       return;
     }
 
+    setLoading(true);
     await fetchUserData(session);
+
+    if (syncRequestRef.current !== requestId) return;
+
     setLoading(false);
   };
 
   useEffect(() => {
+    let isActive = true;
     let initialDone = false;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const runSync = (nextSession: Session | null) => {
+      if (!isActive) return;
+      void syncAuthState(nextSession);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event === "INITIAL_SESSION") {
-        // Handle initial session directly — no separate getSession needed
         initialDone = true;
-        await syncAuthState(session);
-        return;
       }
 
-      // For subsequent events, sync auth state
-      void syncAuthState(session);
+      runSync(nextSession);
 
-      if (session?.user && event === "SIGNED_IN") {
-        supabase.from("activity_logs").insert({
+      if (nextSession?.user && event === "SIGNED_IN") {
+        void supabase.from("activity_logs").insert({
           action: "login",
-          actor_id: session.user.id,
-          metadata: { email: session.user.email },
-        }).then(() => {});
+          actor_id: nextSession.user.id,
+          metadata: { email: nextSession.user.email },
+        });
       }
     });
 
-    // Fallback: if INITIAL_SESSION never fires (older clients), use getSession
-    const fallbackTimer = setTimeout(async () => {
-      if (!initialDone) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!initialDone) {
-          initialDone = true;
-          await syncAuthState(session);
-        }
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!initialDone && isActive) {
+        initialDone = true;
+        runSync(session);
       }
-    }, 1000);
+    });
 
     return () => {
-      clearTimeout(fallbackTimer);
+      isActive = false;
       subscription.unsubscribe();
     };
   }, []);
