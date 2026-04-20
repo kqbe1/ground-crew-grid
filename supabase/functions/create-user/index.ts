@@ -158,7 +158,10 @@ Deno.serve(async (req) => {
     });
 
     if (createError) {
-      return new Response(JSON.stringify({ error: createError.message }), {
+      const msg = createError.message?.toLowerCase().includes("already")
+        ? "Cet email est déjà utilisé par un autre utilisateur"
+        : createError.message;
+      return new Response(JSON.stringify({ error: msg }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
