@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
     const token = authHeader.replace("Bearer ", "");
     const internalKey = req.headers.get("x-internal-key") || "";
@@ -129,7 +130,7 @@ Deno.serve(async (req) => {
     if (company.max_users) {
       const { count } = await adminClient
         .from("profiles")
-        .select("id", { count: "exact", head: true })
+        .select("id", { count: "exact" })
         .eq("company_id", targetCompanyId)
         .eq("is_active", true);
 
@@ -159,10 +160,34 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Explicitly set role and company_id on the profile created by handle_new_user
+    // Wait for the profile trigger to materialize the row, then patch role/company.
+    let profileExists = false;
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const { data: createdProfile } = await adminClient
+        .from("profiles")
+        .select("id")
+        .eq("id", newUser.user.id)
+        .maybeSingle();
+
+      if (createdProfile?.id) {
+        profileExists = true;
+        break;
+      }
+
+      await wait(250 * (attempt + 1));
+    }
+
+    if (!profileExists) {
+      await adminClient.auth.admin.deleteUser(newUser.user.id);
+      return new Response(JSON.stringify({ error: "Le profil utilisateur n'a pas pu être initialisé" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { error: profileError } = await adminClient
       .from("profiles")
-      .update({ role, company_id: targetCompanyId })
+      .update({ role, company_id: targetCompanyId, email, full_name })
       .eq("id", newUser.user.id);
 
     if (profileError) {
@@ -175,10 +200,10 @@ Deno.serve(async (req) => {
     }
 
     // Insert into user_roles table
-    await adminClient.from("user_roles").insert({
+    await adminClient.from("user_roles").upsert({
       user_id: newUser.user.id,
       role,
-    });
+    }, { onConflict: "user_id,role" });
 
     return new Response(JSON.stringify({ user: { id: newUser.user.id, email } }), {
       status: 200,
