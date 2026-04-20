@@ -140,8 +140,11 @@ Deno.serve(async (req) => {
     const { email, password, full_name } = body;
 
     // Update auth user (email/password) via admin API
-    const authUpdates: Record<string, string> = {};
-    if (email) authUpdates.email = email;
+    const authUpdates: Record<string, string | boolean> = {};
+    if (email) {
+      authUpdates.email = email;
+      authUpdates.email_confirm = true;
+    }
     if (password) authUpdates.password = password;
 
     if (Object.keys(authUpdates).length > 0) {
