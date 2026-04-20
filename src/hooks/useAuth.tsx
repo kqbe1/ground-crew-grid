@@ -81,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserData = async (session: Session) => {
     applySessionFallback(session);
+    setCompany(null);
 
     let data: {
       full_name: string;
