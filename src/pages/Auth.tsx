@@ -47,7 +47,7 @@ export default function Auth() {
     if (error) {
       toast({ title: "Erreur d'inscription", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Inscription réussie", description: "Vérifiez votre email pour confirmer votre compte." });
+      toast({ title: "Inscription réussie", description: "Votre compte a bien été créé. Vous pouvez vous connecter directement." });
     }
     setIsSubmitting(false);
   };
