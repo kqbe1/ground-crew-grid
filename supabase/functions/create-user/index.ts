@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
         user: { id: existingAuthUser.id, email: normalizedEmail },
         repaired_existing_user: true,
       }), {
-        status: 400,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
