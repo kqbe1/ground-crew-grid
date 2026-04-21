@@ -120,6 +120,10 @@ Deno.serve(async (req) => {
         });
       }
 
+      await adminClient.from("user_roles").delete().eq("user_id", user_id);
+      await adminClient.from("push_tokens").delete().eq("user_id", user_id);
+      await adminClient.from("profiles").delete().eq("id", user_id);
+
       // Log activity
       await adminClient.from("activity_logs").insert({
         action: "delete_user",

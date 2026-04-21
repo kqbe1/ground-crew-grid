@@ -6,6 +6,46 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const normalizeEmail = (value: string) => value.trim().toLowerCase();
+
+const findAuthUserByEmail = async (
+  adminClient: ReturnType<typeof createClient>,
+  email: string,
+) => {
+  const targetEmail = normalizeEmail(email);
+  let page = 1;
+
+  while (true) {
+    const { data, error } = await adminClient.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw error;
+
+    const match = data.users.find((user) => normalizeEmail(user.email ?? "") === targetEmail);
+    if (match) return match;
+    if (data.users.length < 1000) return null;
+
+    page += 1;
+  }
+};
+
+const syncSingleRole = async (
+  adminClient: ReturnType<typeof createClient>,
+  userId: string,
+  role: string,
+) => {
+  const { error: deleteRolesError } = await adminClient
+    .from("user_roles")
+    .delete()
+    .eq("user_id", userId);
+
+  if (deleteRolesError) throw deleteRolesError;
+
+  const { error: insertRoleError } = await adminClient
+    .from("user_roles")
+    .upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
+
+  if (insertRoleError) throw insertRoleError;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -64,6 +104,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { email, password, full_name, role, company_id } = body;
+    const normalizedEmail = typeof email === "string" ? normalizeEmail(email) : "";
 
     if (!email || !password || !full_name || !role) {
       return new Response(JSON.stringify({ error: "Champs requis manquants" }), {
@@ -145,7 +186,7 @@ Deno.serve(async (req) => {
     // Create user with service role (bypasses email confirmation)
     // NOTE: Do NOT pass role or company_id in metadata — handle_new_user ignores them
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-      email,
+      email: normalizedEmail,
       password,
       email_confirm: true,
       app_metadata: {
@@ -158,11 +199,102 @@ Deno.serve(async (req) => {
     });
 
     if (createError) {
-      const msg = createError.message?.toLowerCase().includes("already")
-        ? "Cet email est déjà utilisé par un autre utilisateur"
-        : createError.message;
-      return new Response(JSON.stringify({ error: msg }), {
-        status: 400,
+      const alreadyExists = createError.message?.toLowerCase().includes("already");
+
+      if (!alreadyExists) {
+        return new Response(JSON.stringify({ error: createError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const existingAuthUser = await findAuthUserByEmail(adminClient, normalizedEmail);
+      const { data: existingProfile, error: existingProfileError } = await adminClient
+        .from("profiles")
+        .select("id, company_id")
+        .ilike("email", normalizedEmail)
+        .maybeSingle();
+
+      if (existingProfileError) {
+        return new Response(JSON.stringify({ error: "Impossible de vérifier le profil existant" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!existingAuthUser) {
+        return new Response(JSON.stringify({ error: "Cet email est déjà utilisé par un autre utilisateur" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (existingProfile?.company_id && existingProfile.company_id !== targetCompanyId) {
+        return new Response(JSON.stringify({ error: "Cet email est déjà utilisé par un autre utilisateur" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!existingProfile) {
+        const { error: insertProfileError } = await adminClient
+          .from("profiles")
+          .insert({
+            id: existingAuthUser.id,
+            email: normalizedEmail,
+            full_name,
+            role,
+            company_id: targetCompanyId,
+            is_active: true,
+          });
+
+        if (insertProfileError) {
+          return new Response(JSON.stringify({ error: "Impossible de réinitialiser le profil existant" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } else {
+        const { error: repairProfileError } = await adminClient
+          .from("profiles")
+          .update({
+            email: normalizedEmail,
+            full_name,
+            role,
+            company_id: targetCompanyId,
+            is_active: true,
+          })
+          .eq("id", existingProfile.id);
+
+        if (repairProfileError) {
+          return new Response(JSON.stringify({ error: "Impossible de réinitialiser le profil existant" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      const { error: repairAuthError } = await adminClient.auth.admin.updateUserById(existingAuthUser.id, {
+        email: normalizedEmail,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name },
+      });
+
+      if (repairAuthError) {
+        return new Response(JSON.stringify({ error: "Impossible de réinitialiser l'accès du compte existant" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await syncSingleRole(adminClient, existingAuthUser.id, role);
+
+      return new Response(JSON.stringify({
+        user: { id: existingAuthUser.id, email: normalizedEmail },
+        repaired_existing_user: true,
+      }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -194,7 +326,7 @@ Deno.serve(async (req) => {
 
     const { error: profileError } = await adminClient
       .from("profiles")
-      .update({ role, company_id: targetCompanyId, email, full_name })
+      .update({ role, company_id: targetCompanyId, email: normalizedEmail, full_name, is_active: true })
       .eq("id", newUser.user.id);
 
     if (profileError) {
@@ -206,13 +338,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Insert into user_roles table
-    await adminClient.from("user_roles").upsert({
-      user_id: newUser.user.id,
-      role,
-    }, { onConflict: "user_id,role" });
+    await syncSingleRole(adminClient, newUser.user.id, role);
 
-    return new Response(JSON.stringify({ user: { id: newUser.user.id, email } }), {
+    return new Response(JSON.stringify({ user: { id: newUser.user.id, email: normalizedEmail } }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
