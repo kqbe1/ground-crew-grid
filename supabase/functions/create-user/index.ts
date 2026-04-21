@@ -274,6 +274,20 @@ Deno.serve(async (req) => {
         }
       }
 
+      const { error: repairAuthError } = await adminClient.auth.admin.updateUserById(existingAuthUser.id, {
+        email: normalizedEmail,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name },
+      });
+
+      if (repairAuthError) {
+        return new Response(JSON.stringify({ error: "Impossible de réinitialiser l'accès du compte existant" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       await syncSingleRole(adminClient, existingAuthUser.id, role);
 
       return new Response(JSON.stringify({
