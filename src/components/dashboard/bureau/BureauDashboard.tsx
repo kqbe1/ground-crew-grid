@@ -347,8 +347,16 @@ function CommandeList({ search, techFilter, workers }: { search: string; techFil
           {filtered.map((o) => (
             <TableRow
               key={o.id}
-              className="cursor-pointer hover:bg-muted/50"
+              className="cursor-pointer hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset transition-colors"
               onClick={() => navigate(`/commandes/${o.id}`)}
+              tabIndex={0}
+              role="button"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate(`/commandes/${o.id}`);
+                }
+              }}
             >
               <TableCell>
                 <Badge className="text-[10px] bg-purple-500 text-white">CMD</Badge>
