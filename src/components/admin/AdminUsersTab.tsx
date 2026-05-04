@@ -14,9 +14,9 @@ import CreateUserDialog from "@/components/admin/CreateUserDialog";
 import EditUserDialog from "@/components/admin/EditUserDialog";
 
 const roleColors: Record<string, string> = {
-  super_admin: "bg-amber-600 text-white",
+  super_admin: "badge-role-super_admin",
   admin: "bg-destructive text-destructive-foreground",
-  bureau: "bg-blue-600 text-white",
+  bureau: "badge-role-bureau",
   ouvrier: "bg-primary text-primary-foreground",
 };
 
@@ -118,7 +118,7 @@ export default function AdminUsersTab() {
                 <div className="flex-1 min-w-0">
                   <div className="font-medium flex items-center gap-2">
                     {u.full_name}
-                    {u.role === "super_admin" && <ShieldAlert className="w-4 h-4 text-amber-600" />}
+                    {u.role === "super_admin" && <ShieldAlert className="w-4 h-4 text-[hsl(var(--color-role-super-admin))]" />}
                     {isSelf && <span className="text-xs text-muted-foreground">(vous)</span>}
                   </div>
                   <div className="text-sm text-muted-foreground">{u.email}</div>
