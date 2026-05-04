@@ -144,6 +144,18 @@
   .badge-rdv { background-color: hsl(var(--color-rdv)); color: white; }
   .badge-autre { background-color: hsl(var(--color-autre)); color: white; }
 
+  /* Solid background-only utilities (no text override) for dots/bars */
+  .bg-type-gaz { background-color: hsl(var(--color-gaz)); }
+  .bg-type-mazout { background-color: hsl(var(--color-mazout)); }
+  .bg-type-pellets { background-color: hsl(var(--color-pellets)); }
+  .bg-type-clim { background-color: hsl(var(--color-clim)); }
+  .bg-type-vmc { background-color: hsl(var(--color-vmc)); }
+
+  /* Soft alerts */
+  .alert-warning { background-color: hsl(var(--color-replanifier) / 0.1); color: hsl(var(--color-replanifier)); border-color: hsl(var(--color-replanifier) / 0.3); }
+  .alert-info { background-color: hsl(var(--color-planifie) / 0.1); color: hsl(var(--color-planifie)); border-color: hsl(var(--color-planifie) / 0.3); }
+  .alert-success { background-color: hsl(var(--color-termine) / 0.1); color: hsl(var(--color-termine)); border-color: hsl(var(--color-termine) / 0.3); }
+
   /* Task status badges (soft tinted) */
   .badge-status-planifie { background-color: hsl(var(--color-planifie) / 0.12); color: hsl(var(--color-planifie)); }
   .badge-status-termine { background-color: hsl(var(--color-termine) / 0.12); color: hsl(var(--color-termine)); }
