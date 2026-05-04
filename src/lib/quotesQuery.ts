@@ -28,11 +28,11 @@ export const QUOTE_STATUS_LABELS: Record<QuoteStatus, string> = {
 };
 
 export const QUOTE_STATUS_COLORS: Record<QuoteStatus, string> = {
-  en_attente: "bg-amber-500",
-  dossier_en_cours: "bg-blue-500",
-  en_commande: "bg-purple-500",
-  sav: "bg-orange-500",
-  cloture: "bg-emerald-500",
+  en_attente: "bg-[hsl(var(--color-replanifier))]",
+  dossier_en_cours: "bg-[hsl(var(--color-planifie))]",
+  en_commande: "bg-[hsl(var(--color-piece))]",
+  sav: "bg-[hsl(var(--color-sav))]",
+  cloture: "bg-[hsl(var(--color-termine))]",
 };
 
 export function quoteStatusLabel(status: string): string {
