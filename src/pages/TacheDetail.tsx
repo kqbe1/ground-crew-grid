@@ -46,6 +46,7 @@ export default function TacheDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { role } = useAuth();
+  const workerLabels = useWorkerLabels();
   const canEdit = role === "admin" || role === "bureau" || role === "super_admin";
 
   const [task, setTask] = useState<any>(null);
