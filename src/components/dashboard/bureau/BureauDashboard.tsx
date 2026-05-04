@@ -65,6 +65,7 @@ export default function BureauDashboard() {
         created_by,
         profiles:created_by(full_name, worker_level)
       `)
+      .neq("status", "cloture")
       .order("created_at", { ascending: false });
 
     // Fetch parts orders counts
