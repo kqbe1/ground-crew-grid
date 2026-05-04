@@ -13,13 +13,8 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const supabasePrivate = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { db: { schema: "private" as never } },
-    );
 
-    const { data: violations, error } = await supabasePrivate.rpc(
+    const { data: violations, error } = await supabase.rpc(
       "list_security_definer_violations",
     );
     if (error) throw new Error(error.message);
