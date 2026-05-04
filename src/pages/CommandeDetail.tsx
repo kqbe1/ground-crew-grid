@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
-import { Package, ArrowRight, AlertTriangle, User, FileText, Loader2, Trash2 } from "lucide-react";
+import { Package, AlertTriangle, User, FileText, Trash2, Check } from "lucide-react";
 import LayoutDetail from "@/components/layout/LayoutDetail";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -20,13 +20,6 @@ const statusColors: Record<string, string> = {
   commandee: "bg-order-commandee text-white",
   recue: "bg-order-recue text-white",
   cloturee: "bg-order-cloturee text-white",
-};
-
-const WORKFLOW: Record<string, { next: string | null; label: string; color: string }> = {
-  demandee: { next: "commandee", label: "→ Commandée", color: "bg-order-commandee hover:bg-order-commandee/90 text-white" },
-  commandee: { next: "recue", label: "→ Reçue", color: "bg-order-recue hover:bg-order-recue/90 text-white" },
-  recue: { next: "cloturee", label: "→ Clôturer", color: "bg-order-cloturee hover:bg-order-cloturee/90 text-white" },
-  cloturee: { next: null, label: "", color: "" },
 };
 
 export default function CommandeDetail() {
@@ -49,20 +42,18 @@ export default function CommandeDetail() {
 
   useEffect(() => { fetchOrder(); }, [fetchOrder]);
 
-  const advanceStatus = async () => {
-    if (!order) return;
-    const workflow = WORKFLOW[order.status];
-    if (!workflow?.next) return;
-    const updates: any = { status: workflow.next };
-    if (workflow.next === "commandee") updates.ordered_at = new Date().toISOString();
-    if (workflow.next === "recue") updates.received_at = new Date().toISOString();
-    if (workflow.next === "cloturee") updates.closed_at = new Date().toISOString();
+  const setStatus = async (next: string) => {
+    if (!order || order.status === next) return;
+    const updates: any = { status: next };
+    if (next === "commandee" && !order.ordered_at) updates.ordered_at = new Date().toISOString();
+    if (next === "recue" && !order.received_at) updates.received_at = new Date().toISOString();
+    if (next === "cloturee" && !order.closed_at) updates.closed_at = new Date().toISOString();
 
     const { error } = await supabase.from("parts_orders").update(updates).eq("id", order.id);
     if (error) { toast.error(error.message); return; }
-    toast.success(`Statut → ${ORDER_STATUS_LABELS[workflow.next]}`);
+    toast.success(`Statut → ${ORDER_STATUS_LABELS[next]}`);
 
-    if (workflow.next === "recue" && order.client_id) {
+    if (next === "recue" && order.client_id) {
       setShowFollowUp(true);
     }
     fetchOrder();
@@ -80,7 +71,6 @@ export default function CommandeDetail() {
 
   const steps = ["demandee", "commandee", "recue", "cloturee"];
   const currentIdx = steps.indexOf(order.status);
-  const workflow = WORKFLOW[order.status];
 
   return (
     <LayoutDetail
@@ -90,11 +80,6 @@ export default function CommandeDetail() {
       hideSeparator
       toolbar={
         <>
-          {workflow?.next && (
-            <Button className={cn(workflow.color)} onClick={advanceStatus}>
-              <ArrowRight className="w-4 h-4 mr-2" /> {workflow.label}
-            </Button>
-          )}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button size="sm" variant="destructive"><Trash2 className="w-4 h-4 mr-1" /> Supprimer</Button>
@@ -113,20 +98,54 @@ export default function CommandeDetail() {
         </>
       }
     >
-      {/* Status stepper */}
-      <div>
-        <div className="flex items-center justify-between py-3">
-          {steps.map((step, i) => (
-            <div key={step} className="flex items-center">
-              <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold", i <= currentIdx ? statusColors[step] : "bg-muted text-muted-foreground")}>
-                {i + 1}
+      {/* Status stepper compact */}
+      <div className="rounded-lg border bg-card p-4">
+        <div className="relative flex items-center justify-between">
+          {/* connecting line behind circles */}
+          <div className="absolute left-4 right-4 top-1/2 -translate-y-1/2 h-0.5 bg-muted" />
+          <div
+            className="absolute left-4 top-1/2 -translate-y-1/2 h-0.5 bg-primary transition-all"
+            style={{ width: `calc((100% - 2rem) * ${currentIdx / (steps.length - 1)})` }}
+          />
+          {steps.map((step, i) => {
+            const done = i < currentIdx;
+            const active = i === currentIdx;
+            return (
+              <div key={step} className="relative z-10 flex flex-col items-center gap-1.5">
+                <div
+                  className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-background shadow-sm",
+                    done || active ? statusColors[step] : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {done ? <Check className="w-4 h-4" /> : i + 1}
+                </div>
+                <span className={cn("text-[11px] font-medium", active ? "text-foreground" : "text-muted-foreground")}>
+                  {ORDER_STATUS_LABELS[step]}
+                </span>
               </div>
-              {i < steps.length - 1 && <ArrowRight className={cn("w-4 h-4 mx-1", i < currentIdx ? "text-primary" : "text-muted-foreground")} />}
-            </div>
-          ))}
+            );
+          })}
         </div>
-        <div className="flex justify-between text-xs text-muted-foreground px-1">
-          {steps.map((s) => <span key={s}>{ORDER_STATUS_LABELS[s]}</span>)}
+
+        {/* Status action buttons */}
+        <div className="mt-4 pt-4 border-t flex flex-wrap gap-2">
+          <span className="text-xs text-muted-foreground self-center mr-1">Changer le statut :</span>
+          {steps.map((step) => {
+            const isCurrent = step === order.status;
+            return (
+              <Button
+                key={step}
+                size="sm"
+                variant={isCurrent ? "default" : "outline"}
+                disabled={isCurrent}
+                onClick={() => setStatus(step)}
+                className={cn(isCurrent && statusColors[step])}
+              >
+                {ORDER_STATUS_LABELS[step]}
+              </Button>
+            );
+          })}
         </div>
       </div>
 
