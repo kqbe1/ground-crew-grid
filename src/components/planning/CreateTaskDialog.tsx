@@ -24,11 +24,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 interface CreateTaskDialogProps {
   defaultDate: Date;
   defaultHour?: number;
+  defaultMinute?: number;
   defaultWorkerId?: string;
+  defaultDuration?: number;
   onCreated: () => void;
 }
 
-export default function CreateTaskDialog({ defaultDate, defaultHour, defaultWorkerId, onCreated }: CreateTaskDialogProps) {
+export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinute, defaultWorkerId, defaultDuration, onCreated }: CreateTaskDialogProps) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -37,8 +39,12 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultWork
   const [interventionType, setInterventionType] = useState<string>("autre");
   const [assignedTo, setAssignedTo] = useState<string>(defaultWorkerId ?? "");
   const [scheduledDate, setScheduledDate] = useState(format(defaultDate, "yyyy-MM-dd"));
-  const [startTime, setStartTime] = useState(defaultHour ? `${String(defaultHour).padStart(2, "0")}:00` : "08:00");
-  const [durationMinutes, setDurationMinutes] = useState(60);
+  const [startTime, setStartTime] = useState(
+    defaultHour !== undefined
+      ? `${String(defaultHour).padStart(2, "0")}:${String(defaultMinute ?? 0).padStart(2, "0")}`
+      : "08:00"
+  );
+  const [durationMinutes, setDurationMinutes] = useState(defaultDuration ?? 60);
   const [clientId, setClientId] = useState<string>("");
   const [description, setDescription] = useState("");
   const [memoSecretariat, setMemoSecretariat] = useState("");
@@ -86,11 +92,14 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultWork
   useEffect(() => {
     if (open) {
       setScheduledDate(format(defaultDate, "yyyy-MM-dd"));
-      if (defaultHour) setStartTime(`${String(defaultHour).padStart(2, "0")}:00`);
+      if (defaultHour !== undefined) {
+        setStartTime(`${String(defaultHour).padStart(2, "0")}:${String(defaultMinute ?? 0).padStart(2, "0")}`);
+      }
       if (defaultWorkerId) setAssignedTo(defaultWorkerId);
+      if (defaultDuration) setDurationMinutes(defaultDuration);
       setTemplateId("");
     }
-  }, [open, defaultDate, defaultHour, defaultWorkerId]);
+  }, [open, defaultDate, defaultHour, defaultMinute, defaultWorkerId, defaultDuration]);
 
   // Apply template when selected
   const handleTemplateChange = (id: string) => {
