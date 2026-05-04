@@ -101,12 +101,8 @@ export default function Taches() {
 
   return (
     <div className="p-4 md:p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl md:text-2xl font-bold">Tâches</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">{filtered.length} tâche{filtered.length !== 1 ? "s" : ""}</span>
-          <CreateTaskDialog defaultDate={new Date()} onCreated={() => refetch()} />
-        </div>
+      <div className="flex items-center justify-end">
+        <CreateTaskDialog defaultDate={new Date()} onCreated={() => refetch()} />
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
