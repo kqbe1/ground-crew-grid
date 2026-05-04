@@ -10,6 +10,7 @@ import { FileSignature, Camera, Mail, Search } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
+import { useWorkerLabels } from "@/hooks/useWorkerLabels";
 
 export default function Fiches() {
   const navigate = useNavigate();
@@ -17,6 +18,21 @@ export default function Fiches() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [workerFilter, setWorkerFilter] = useState("all");
+  const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
+  const workerLabels = useWorkerLabels();
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, display_order")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true })
+        .order("full_name", { ascending: true });
+      setWorkers(data ?? []);
+    })();
+  }, []);
 
   const fetchSheets = async () => {
     const { data } = await supabase
@@ -30,6 +46,7 @@ export default function Fiches() {
 
   const filtered = sheets.filter((s) => {
     if (statusFilter !== "all" && s.final_status !== statusFilter) return false;
+    if (workerFilter !== "all" && s.worker_id !== workerFilter) return false;
     if (typeFilter !== "all") {
       if (typeFilter === "entretien") {
         if (!ENTRETIEN_SUBTYPES.includes(s.work_tasks?.intervention_type)) return false;
@@ -84,6 +101,17 @@ export default function Fiches() {
               {FILTER_TYPE_GROUPS.map((g) => <SelectItem key={g.key} value={g.key}>{g.label}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Select value={workerFilter} onValueChange={setWorkerFilter}>
+            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Ouvrier" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les ouvriers</SelectItem>
+              {workers.map((w) => (
+                <SelectItem key={w.id} value={w.id}>
+                  {workerLabels[w.id] ? `${workerLabels[w.id]} · ` : ""}{w.full_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -105,7 +133,16 @@ export default function Fiches() {
                       {sheet.work_tasks?.title}
                       {intType && <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${INTERVENTION_TYPE_COLORS[intType]}`}>{INTERVENTION_TYPE_LABELS[intType]}</span>}
                     </div>
-                    <div className="text-xs text-muted-foreground">{sheet.work_tasks?.clients?.name} · {sheet.profiles?.full_name}</div>
+                    <div className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                      <span>{sheet.work_tasks?.clients?.name}</span>
+                      <span>·</span>
+                      {sheet.worker_id && workerLabels[sheet.worker_id] && (
+                        <span className="rounded bg-muted px-1 py-[1px] text-[10px] font-bold text-foreground">
+                          {workerLabels[sheet.worker_id]}
+                        </span>
+                      )}
+                      <span>{sheet.profiles?.full_name}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap">
