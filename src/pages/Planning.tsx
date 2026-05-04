@@ -187,11 +187,6 @@ function PlanningInner() {
 
   return (
     <div className="p-6 space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">Planning</h1>
-        <p className="text-muted-foreground text-sm">Gérez le planning de vos équipes</p>
-      </div>
-
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex rounded-lg border border-border overflow-hidden">
           {(["day", "week", "month"] as ViewMode[]).map((mode) => (
