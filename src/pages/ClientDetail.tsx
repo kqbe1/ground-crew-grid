@@ -14,6 +14,7 @@ import { fr } from "date-fns/locale";
 import type { Tables } from "@/integrations/supabase/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CreateEditClientDialog from "@/components/clients/CreateEditClientDialog";
+import { Separator } from "@/components/ui/separator";
 
 type Client = Tables<"clients">;
 type ClientSite = Tables<"client_sites">;
