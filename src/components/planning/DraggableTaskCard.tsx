@@ -1,30 +1,29 @@
 import { useRef, useCallback } from "react";
-import { MessageSquare, CheckCircle2, Package, Phone, Copy, AlertTriangle } from "lucide-react";
+import { Copy, AlertTriangle } from "lucide-react";
 import { INTERVENTION_TYPE_COLORS, INTERVENTION_TYPE_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from "@/components/ui/context-menu";
 import { useTaskClipboard } from "@/components/planning/TaskClipboardContext";
 
-const CELL_HEIGHT = 64; // h-16 = 64px per hour
 const MIN_DURATION = 15;
 const STEP = 15;
 
 interface DraggableTaskCardProps {
   task: any;
+  hourWidth: number;
   onDragStart: (e: React.DragEvent, taskId: string) => void;
   onClick: (task: any) => void;
   onResized: () => void;
   hasOverlap?: boolean;
 }
 
-export default function DraggableTaskCard({ task, onDragStart, onClick, onResized, hasOverlap }: DraggableTaskCardProps) {
+export default function DraggableTaskCard({ task, hourWidth, onDragStart, onClick, onResized, hasOverlap }: DraggableTaskCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const resizingRef = useRef(false);
   const { copyTask } = useTaskClipboard();
-  const startYRef = useRef(0);
+  const startXRef = useRef(0);
   const startDurationRef = useRef(0);
 
   const startH = parseInt(task.start_time.split(":")[0]);
@@ -32,59 +31,50 @@ export default function DraggableTaskCard({ task, onDragStart, onClick, onResize
   const endMinutes = startH * 60 + startM + task.duration_minutes;
   const endHour = Math.floor(endMinutes / 60);
   const endMin = endMinutes % 60;
-  const timeRange = `${task.start_time?.slice(0, 5)} – ${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
+  const timeRange = `${task.start_time?.slice(0, 5)}–${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
 
-  const heightPx = Math.max((task.duration_minutes / 60) * CELL_HEIGHT, 40);
+  const widthPx = Math.max((task.duration_minutes / 60) * hourWidth, hourWidth / 4);
 
   const handleResizeStart = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     resizingRef.current = true;
-    startYRef.current = e.clientY;
+    startXRef.current = e.clientX;
     startDurationRef.current = task.duration_minutes;
-
     const card = cardRef.current;
     if (!card) return;
 
     const handleMove = (ev: PointerEvent) => {
       if (!resizingRef.current || !card) return;
-      const deltaY = ev.clientY - startYRef.current;
-      const deltaMinutes = Math.round((deltaY / CELL_HEIGHT) * 60 / STEP) * STEP;
+      const deltaX = ev.clientX - startXRef.current;
+      const deltaMinutes = Math.round((deltaX / hourWidth) * 60 / STEP) * STEP;
       const newDuration = Math.max(MIN_DURATION, startDurationRef.current + deltaMinutes);
-      const newHeight = Math.max((newDuration / 60) * CELL_HEIGHT, 60);
-      card.style.height = `${newHeight}px`;
+      const newWidth = Math.max((newDuration / 60) * hourWidth, hourWidth / 4);
+      card.style.width = `${newWidth}px`;
       card.dataset.pendingDuration = String(newDuration);
     };
-
     const handleUp = async () => {
       resizingRef.current = false;
       document.removeEventListener("pointermove", handleMove);
       document.removeEventListener("pointerup", handleUp);
-
-      const pendingDuration = card?.dataset.pendingDuration;
-      if (!pendingDuration || Number(pendingDuration) === task.duration_minutes) return;
-
-      const { error } = await supabase
-        .from("work_tasks")
-        .update({ duration_minutes: Number(pendingDuration) })
-        .eq("id", task.id);
-
+      const pd = card?.dataset.pendingDuration;
+      if (!pd || Number(pd) === task.duration_minutes) return;
+      const { error } = await supabase.from("work_tasks").update({ duration_minutes: Number(pd) }).eq("id", task.id);
       if (error) {
-        toast.error("Erreur lors du redimensionnement");
-        if (card) card.style.height = `${heightPx}px`;
+        toast.error("Erreur redimensionnement");
+        if (card) card.style.width = `${widthPx}px`;
       } else {
-        toast.success(`Durée: ${pendingDuration} min`);
+        toast.success(`Durée: ${pd} min`);
         onResized();
       }
     };
-
     document.addEventListener("pointermove", handleMove);
     document.addEventListener("pointerup", handleUp);
-  }, [task.id, task.duration_minutes, heightPx, onResized]);
+  }, [task.id, task.duration_minutes, widthPx, hourWidth, onResized]);
 
   const handleCopy = useCallback(() => {
     copyTask(task);
-    toast.success("Tâche copiée — clic droit sur une cellule pour coller");
+    toast.success("Tâche copiée");
   }, [copyTask, task]);
 
   return (
@@ -103,37 +93,33 @@ export default function DraggableTaskCard({ task, onDragStart, onClick, onResize
             e.stopPropagation();
             onClick(task);
           }}
+          onPointerDown={(e) => e.stopPropagation()}
           className={cn(
-            "absolute inset-x-1 rounded-lg px-2 py-1 text-[11px] cursor-grab active:cursor-grabbing z-[1] select-none border shadow-sm flex flex-col gap-0 overflow-hidden leading-tight",
+            "absolute top-1 bottom-1 rounded-lg px-2 py-1 text-[11px] cursor-grab active:cursor-grabbing z-[2] select-none border shadow-sm flex flex-col gap-0 overflow-hidden leading-tight",
             INTERVENTION_TYPE_COLORS[task.intervention_type] || "badge-autre",
             hasOverlap ? "border-destructive border-2 ring-2 ring-destructive/30" : "border-white/20"
           )}
-          style={{ height: `${heightPx}px` }}
+          style={{ width: `${widthPx}px` }}
         >
           <div className="font-bold truncate text-[11px] leading-tight flex items-center gap-1">
-            {hasOverlap && <AlertTriangle className="w-3 h-3 text-white shrink-0" />}
+            {hasOverlap && <AlertTriangle className="w-3 h-3 shrink-0" />}
             {task.title}
           </div>
           {task.clients?.name && (
             <div className="truncate opacity-90 text-[10px]">{task.clients.name}</div>
           )}
-          <div className="truncate opacity-80 text-[10px]">
-            {INTERVENTION_TYPE_LABELS[task.intervention_type]?.split(" ").pop()}
-          </div>
-
-          {/* Resize handle */}
+          <div className="truncate opacity-80 text-[10px]">{timeRange}</div>
           <div
             onPointerDown={handleResizeStart}
-            className="absolute bottom-0 inset-x-0 h-3 cursor-s-resize flex items-center justify-center touch-none"
+            className="absolute right-0 inset-y-0 w-3 cursor-e-resize flex items-center justify-center touch-none"
           >
-            <div className="w-8 h-1 rounded-full bg-white/40" />
+            <div className="h-8 w-1 rounded-full bg-white/40" />
           </div>
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem onClick={handleCopy} className="gap-2">
-          <Copy className="w-4 h-4" />
-          Copier cette tâche
+          <Copy className="w-4 h-4" /> Copier cette tâche
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
