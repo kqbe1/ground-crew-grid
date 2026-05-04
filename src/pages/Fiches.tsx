@@ -77,11 +77,7 @@ export default function Fiches() {
 
   return (
     <div className="p-4 md:p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold">Fiches d'intervention</h1>
-          <p className="text-muted-foreground">{filtered.length} fiche(s)</p>
-        </div>
+      <div className="flex justify-end">
         <CreateTaskDialog defaultDate={new Date()} onCreated={() => fetchSheets()} />
       </div>
 
