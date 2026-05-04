@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { findOverlaps } from "@/lib/overlapUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
 
 interface CreateTaskDialogProps {
   defaultDate: Date;
@@ -45,6 +46,14 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
       : "08:00"
   );
   const [durationMinutes, setDurationMinutes] = useState(defaultDuration ?? 60);
+  const [endTime, setEndTime] = useState(
+    computeEndTime(
+      defaultHour !== undefined
+        ? `${String(defaultHour).padStart(2, "0")}:${String(defaultMinute ?? 0).padStart(2, "0")}`
+        : "08:00",
+      defaultDuration ?? 60
+    )
+  );
   const [clientId, setClientId] = useState<string>("");
   const [description, setDescription] = useState("");
   const [memoSecretariat, setMemoSecretariat] = useState("");
@@ -92,11 +101,18 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
   useEffect(() => {
     if (open) {
       setScheduledDate(format(defaultDate, "yyyy-MM-dd"));
-      if (defaultHour !== undefined) {
-        setStartTime(`${String(defaultHour).padStart(2, "0")}:${String(defaultMinute ?? 0).padStart(2, "0")}`);
-      }
+      const newStart =
+        defaultHour !== undefined
+          ? `${String(defaultHour).padStart(2, "0")}:${String(defaultMinute ?? 0).padStart(2, "0")}`
+          : startTime;
+      if (defaultHour !== undefined) setStartTime(newStart);
       if (defaultWorkerId) setAssignedTo(defaultWorkerId);
-      if (defaultDuration) setDurationMinutes(defaultDuration);
+      if (defaultDuration) {
+        setDurationMinutes(defaultDuration);
+        setEndTime(computeEndTime(newStart, defaultDuration));
+      } else {
+        setEndTime(computeEndTime(newStart, durationMinutes));
+      }
       setTemplateId("");
     }
   }, [open, defaultDate, defaultHour, defaultMinute, defaultWorkerId, defaultDuration]);
@@ -113,6 +129,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
     setTitle(tpl.name);
     setDescription(tpl.description || "");
     setDurationMinutes(tpl.default_duration_minutes);
+    setEndTime(computeEndTime(startTime, tpl.default_duration_minutes));
     // Map intervention type to simplified type
     const type = tpl.intervention_type;
     if (type in SIMPLIFIED_TYPES) {
@@ -229,11 +246,27 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
             </div>
             <div>
               <Label>Heure de début</Label>
-              <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+              <Input
+                type="time"
+                value={startTime}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setStartTime(v);
+                  setDurationMinutes(computeDurationMinutes(v, endTime));
+                }}
+              />
             </div>
             <div>
-              <Label>Durée (min)</Label>
-              <Input type="number" min={15} step={15} value={durationMinutes} onChange={(e) => setDurationMinutes(Number(e.target.value))} />
+              <Label>Heure de fin</Label>
+              <Input
+                type="time"
+                value={endTime}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setEndTime(v);
+                  setDurationMinutes(computeDurationMinutes(startTime, v));
+                }}
+              />
             </div>
           </div>
 
