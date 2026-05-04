@@ -825,6 +825,7 @@ export type Database = {
           can_create_devis: boolean
           company_id: string | null
           created_at: string
+          display_order: number
           email: string | null
           full_name: string
           id: string
@@ -839,6 +840,7 @@ export type Database = {
           can_create_devis?: boolean
           company_id?: string | null
           created_at?: string
+          display_order?: number
           email?: string | null
           full_name: string
           id: string
@@ -853,6 +855,7 @@ export type Database = {
           can_create_devis?: boolean
           company_id?: string | null
           created_at?: string
+          display_order?: number
           email?: string | null
           full_name?: string
           id?: string
