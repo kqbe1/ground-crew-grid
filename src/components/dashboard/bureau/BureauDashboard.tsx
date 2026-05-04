@@ -376,8 +376,8 @@ function CommandeList({ search, techFilter, workers }: { search: string; techFil
   }, []);
 
   const STATUS_BADGE: Record<string, string> = {
-    demandee: "bg-amber-500 text-white",
-    commandee: "bg-purple-500 text-white",
+    demandee: "bg-[hsl(var(--color-demandee))] text-white",
+    commandee: "bg-[hsl(var(--color-commandee))] text-white",
   };
 
   // Apply search & tech filters
@@ -426,7 +426,7 @@ function CommandeList({ search, techFilter, workers }: { search: string; techFil
               }}
             >
               <TableCell>
-                <Badge className="text-[10px] bg-purple-500 text-white">CMD</Badge>
+                <Badge className="text-[10px] bg-[hsl(var(--color-commande))] text-white">CMD</Badge>
               </TableCell>
               <TableCell>
                 <div className="font-medium text-sm truncate max-w-[240px]">{o.part_name}</div>

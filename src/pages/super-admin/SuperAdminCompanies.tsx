@@ -152,7 +152,7 @@ export default function SuperAdminCompanies() {
                   <div className="space-y-2 flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{company.display_name || company.name}</span>
-                      <Badge className={company.is_active ? "bg-green-600 text-white" : "bg-muted text-muted-foreground"}>
+                      <Badge className={company.is_active ? "bg-[hsl(var(--color-termine))] text-white" : "bg-muted text-muted-foreground"}>
                         {company.is_active ? "Active" : "Inactive"}
                       </Badge>
                       <Badge variant="outline" className="capitalize">{company.plan || "standard"}</Badge>
@@ -161,11 +161,11 @@ export default function SuperAdminCompanies() {
                     <div className="flex items-center gap-3 max-w-xs">
                       <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all ${isAtLimit ? "bg-destructive" : isNearLimit ? "bg-amber-500" : "bg-primary"}`}
+                          className={`h-full rounded-full transition-all ${isAtLimit ? "bg-destructive" : isNearLimit ? "bg-[hsl(var(--color-replanifier))]" : "bg-primary"}`}
                           style={{ width: `${usagePercent}%` }}
                         />
                       </div>
-                      <span className={`text-xs font-medium whitespace-nowrap ${isAtLimit ? "text-destructive" : isNearLimit ? "text-amber-600" : "text-muted-foreground"}`}>
+                      <span className={`text-xs font-medium whitespace-nowrap ${isAtLimit ? "text-destructive" : isNearLimit ? "text-[hsl(var(--color-replanifier))]" : "text-muted-foreground"}`}>
                         {userCount} / {maxUsers}
                       </span>
                     </div>

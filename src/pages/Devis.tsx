@@ -139,7 +139,7 @@ export default function Devis() {
                 <>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Badge className="bg-rose-500 text-white text-[10px]">+FD</Badge>
+                      <Badge className="bg-[hsl(var(--color-devis))] text-white text-[10px]">+FD</Badge>
                       <span className="font-medium text-sm">{quote.client_name}</span>
                     </div>
                     <QuoteStatusBadge status={quote.status} />
@@ -156,8 +156,8 @@ export default function Devis() {
                 </>
               ) : (
                 <>
-                  <div className="p-2 rounded-lg bg-rose-500/10"><FileText className="w-4 h-4 text-rose-500" /></div>
-                  <Badge className="bg-rose-500 text-white text-[10px]">+FD</Badge>
+                  <div className="p-2 rounded-lg bg-[hsl(var(--color-devis))]/10"><FileText className="w-4 h-4 text-[hsl(var(--color-devis))]" /></div>
+                  <Badge className="bg-[hsl(var(--color-devis))] text-white text-[10px]">+FD</Badge>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium">{quote.client_name}</div>
                     <div className="text-sm text-muted-foreground">{INSTALLATION_TYPE_LABELS[quote.installation_type]} · {quote.profiles?.full_name}</div>

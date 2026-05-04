@@ -61,7 +61,7 @@ export default function SuperAdminLayout() {
               className={({ isActive }) =>
                 cn(
                   "flex flex-col items-center gap-0.5 px-3 py-1 text-xs font-medium transition-colors",
-                  isActive ? "text-amber-600" : "text-muted-foreground"
+                  isActive ? "text-[hsl(var(--color-role-super-admin))]" : "text-muted-foreground"
                 )
               }
             >
@@ -89,7 +89,7 @@ export default function SuperAdminLayout() {
                   className={({ isActive }) =>
                     cn(
                       "flex flex-col items-center gap-1.5 p-3 rounded-lg text-sm font-medium transition-colors",
-                      isActive ? "bg-amber-600/10 text-amber-600" : "text-muted-foreground hover:bg-accent"
+                      isActive ? "bg-[hsl(var(--color-role-super-admin))]/10 text-[hsl(var(--color-role-super-admin))]" : "text-muted-foreground hover:bg-accent"
                     )
                   }
                 >
@@ -120,7 +120,7 @@ export default function SuperAdminLayout() {
         )}
       >
         <div className={cn("flex items-center gap-3 px-4 h-16 border-b border-sidebar-border", collapsed && "justify-center")}>
-          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-600 flex items-center justify-center">
+          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[hsl(var(--color-role-super-admin))] flex items-center justify-center">
             <ShieldCheck className="w-4 h-4 text-white" />
           </div>
           {!collapsed && <h1 className="text-sm font-bold truncate">PME Terrain</h1>}
@@ -128,14 +128,14 @@ export default function SuperAdminLayout() {
 
         {!collapsed && (
           <div className="px-4 py-2 border-b border-sidebar-border">
-            <Badge className="text-[10px] gap-1 bg-amber-600 text-white">
+            <Badge className="text-[10px] gap-1 bg-[hsl(var(--color-role-super-admin))] text-white">
               <ShieldCheck className="w-3 h-3" /> Super Admin
             </Badge>
           </div>
         )}
         {collapsed && (
           <div className="flex justify-center py-2 border-b border-sidebar-border" title="Super Admin">
-            <ShieldCheck className="w-4 h-4 text-amber-500" />
+            <ShieldCheck className="w-4 h-4 text-[hsl(var(--color-role-super-admin))]" />
           </div>
         )}
 
@@ -148,7 +148,7 @@ export default function SuperAdminLayout() {
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                  isActive ? "bg-amber-600 text-white" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  isActive ? "bg-[hsl(var(--color-role-super-admin))] text-white" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )
               }
             >

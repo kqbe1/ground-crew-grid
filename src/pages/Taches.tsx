@@ -24,13 +24,7 @@ const statusLabels: Record<string, string> = {
   sav: "SAV",
 };
 
-const statusColors: Record<string, string> = {
-  planifie: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-  termine: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-  a_replanifier: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
-  piece_a_commander: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
-  sav: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-};
+import { TASK_STATUS_COLORS as statusColors } from "@/lib/constants";
 
 const typeLabels: Record<string, string> = {
   entretien_gaz: "Entretien Gaz",

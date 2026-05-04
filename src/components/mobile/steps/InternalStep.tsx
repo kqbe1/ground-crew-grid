@@ -98,9 +98,9 @@ export default function InternalStep({
         rows={3}
       />
 
-      <div className="flex gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
-        <Info className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-        <p className="text-xs text-blue-700">
+      <div className="flex gap-2 p-3 rounded-lg alert-info border">
+        <Info className="w-4 h-4 mt-0.5 shrink-0" />
+        <p className="text-xs">
           Ajoutez ici les photos des notes d'envoi, factures ou bons de commande liés à cette intervention. Visible uniquement par le secrétariat.
         </p>
       </div>

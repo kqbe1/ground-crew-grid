@@ -38,10 +38,9 @@ const navItems = [
 ];
 
 const roleConfig: Record<string, { label: string; color: string; icon: typeof Shield }> = {
-  super_admin: { label: "Super Admin", color: "bg-amber-600 text-white", icon: ShieldCheck },
-  admin: { label: "Admin", color: "bg-destructive text-destructive-foreground", icon: Shield },
-  bureau: { label: "Bureau", color: "bg-blue-600 text-white", icon: Building2 },
-  
+  super_admin: { label: "Super Admin", color: "badge-role-super_admin", icon: ShieldCheck },
+  admin: { label: "Admin", color: "badge-role-admin", icon: Shield },
+  bureau: { label: "Bureau", color: "badge-role-bureau", icon: Building2 },
 };
 
 export default function AppSidebar() {
@@ -101,10 +100,10 @@ export default function AppSidebar() {
       )}
       {currentRoleConfig && collapsed && (
         <div className="flex justify-center py-2 border-b border-sidebar-border" title={currentRoleConfig.label}>
-          <currentRoleConfig.icon className={cn("w-4 h-4", 
-            role === "super_admin" ? "text-amber-500" : 
-            role === "admin" ? "text-destructive" : 
-            role === "bureau" ? "text-blue-500" : "text-secondary"
+          <currentRoleConfig.icon className={cn("w-4 h-4",
+            role === "super_admin" ? "text-[hsl(var(--color-role-super-admin))]" :
+            role === "admin" ? "text-destructive" :
+            role === "bureau" ? "text-[hsl(var(--color-role-bureau))]" : "text-secondary"
           )} />
         </div>
       )}
@@ -114,7 +113,7 @@ export default function AppSidebar() {
         <div className="px-2 pt-4 pb-1">
           <NavLink
             to="/super-admin"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-amber-600/10 text-amber-600 hover:bg-amber-600/20 transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-[hsl(var(--color-role-super-admin))]/10 text-[hsl(var(--color-role-super-admin))] hover:bg-[hsl(var(--color-role-super-admin))]/20 transition-colors"
           >
             <ShieldCheck className="w-5 h-5 flex-shrink-0" />
             {!collapsed && <span>Console SuperAdmin</span>}

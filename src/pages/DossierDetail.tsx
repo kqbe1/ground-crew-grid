@@ -169,7 +169,7 @@ export default function DossierDetail() {
         </Card>
         <Card>
           <CardContent className="py-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/10"><Wrench className="w-5 h-5 text-blue-500" /></div>
+            <div className="p-2 rounded-lg bg-[hsl(var(--color-fiche))]/10"><Wrench className="w-5 h-5 text-[hsl(var(--color-fiche))]" /></div>
             <div>
               <p className="text-2xl font-bold">{entretiens.length}</p>
               <p className="text-xs text-muted-foreground">Entretien(s)</p>
@@ -178,7 +178,7 @@ export default function DossierDetail() {
         </Card>
         <Card>
           <CardContent className="py-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-500/10"><FileText className="w-5 h-5 text-amber-500" /></div>
+            <div className="p-2 rounded-lg bg-[hsl(var(--color-devis))]/10"><FileText className="w-5 h-5 text-[hsl(var(--color-devis))]" /></div>
             <div>
               <p className="text-2xl font-bold">{devis.length}</p>
               <p className="text-xs text-muted-foreground">Devis</p>
@@ -187,7 +187,7 @@ export default function DossierDetail() {
         </Card>
         <Card>
           <CardContent className="py-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-500/10"><Package className="w-5 h-5 text-green-500" /></div>
+            <div className="p-2 rounded-lg bg-[hsl(var(--color-commande))]/10"><Package className="w-5 h-5 text-[hsl(var(--color-commande))]" /></div>
             <div>
               <p className="text-2xl font-bold">{commandes.length}</p>
               <p className="text-xs text-muted-foreground">Commande(s)</p>

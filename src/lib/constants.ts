@@ -32,6 +32,28 @@ export const TASK_STATUS_LABELS: Record<string, string> = {
   sav: "SAV",
 };
 
+export const TASK_STATUS_COLORS: Record<string, string> = {
+  planifie: "badge-status-planifie",
+  termine: "badge-status-termine",
+  a_replanifier: "badge-status-a_replanifier",
+  piece_a_commander: "badge-status-piece_a_commander",
+  sav: "badge-status-sav",
+};
+
+export const ROLE_BADGE_LABELS: Record<string, string> = {
+  super_admin: "Super Admin",
+  admin: "Admin",
+  bureau: "Bureau",
+  ouvrier: "Ouvrier",
+};
+
+export const ROLE_BADGE_COLORS: Record<string, string> = {
+  super_admin: "badge-role-super_admin",
+  admin: "badge-role-admin",
+  bureau: "badge-role-bureau",
+  ouvrier: "badge-role-ouvrier",
+};
+
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   demandee: "Demandée",
   commandee: "Commandée",

@@ -53,7 +53,7 @@ export default function SuperAdminDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100 text-blue-700">
+              <div className="p-2 rounded-lg bg-[hsl(var(--color-planifie))]/10 text-[hsl(var(--color-planifie))]">
                 <Building2 className="w-5 h-5" />
               </div>
               <div>
@@ -66,7 +66,7 @@ export default function SuperAdminDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100 text-green-700">
+              <div className="p-2 rounded-lg bg-[hsl(var(--color-termine))]/10 text-[hsl(var(--color-termine))]">
                 <Users className="w-5 h-5" />
               </div>
               <div>
@@ -79,7 +79,7 @@ export default function SuperAdminDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-100 text-purple-700">
+              <div className="p-2 rounded-lg bg-[hsl(var(--color-piece))]/10 text-[hsl(var(--color-piece))]">
                 <ListTodo className="w-5 h-5" />
               </div>
               <div>
@@ -92,7 +92,7 @@ export default function SuperAdminDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-100 text-amber-700">
+              <div className="p-2 rounded-lg bg-[hsl(var(--color-replanifier))]/10 text-[hsl(var(--color-replanifier))]">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
@@ -134,7 +134,7 @@ export default function SuperAdminDashboard() {
                         {companyUsers.length} / {company.max_users || "∞"}
                       </td>
                       <td className="py-3">
-                        <Badge className={company.is_active ? "bg-green-600 text-white" : "bg-muted text-muted-foreground"}>
+                        <Badge className={company.is_active ? "bg-[hsl(var(--color-termine))] text-white" : "bg-muted text-muted-foreground"}>
                           {company.is_active ? "Active" : "Inactive"}
                         </Badge>
                       </td>

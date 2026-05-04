@@ -33,10 +33,10 @@ const INTERVENTION_TYPE_LABELS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  planifie: { label: "Planifié", color: "bg-blue-100 text-blue-800" },
-  termine: { label: "Terminé", color: "bg-green-100 text-green-800" },
-  a_replanifier: { label: "À replanifier", color: "bg-orange-100 text-orange-800" },
-  piece_a_commander: { label: "Pièce à commander", color: "bg-red-100 text-red-800" },
+  planifie: { label: "Planifié", color: "badge-status-planifie" },
+  termine: { label: "Terminé", color: "badge-status-termine" },
+  a_replanifier: { label: "À replanifier", color: "badge-status-a_replanifier" },
+  piece_a_commander: { label: "Pièce à commander", color: "badge-status-piece_a_commander" },
 };
 
 const ENERGY_LABELS: Record<string, string> = {

@@ -261,7 +261,7 @@ export default function MobileFicheEntretienForm() {
           nextDisabled={!validateStep()} isSubmitting={submitting} />
       </div>
       {!isOnline && (
-        <div className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700 w-fit">
+        <div className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-full alert-warning w-fit">
           <WifiOff className="w-3 h-3" /> Hors ligne
         </div>
       )}

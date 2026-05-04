@@ -12,12 +12,12 @@ interface FilterCardDef {
 }
 
 const CARDS: FilterCardDef[] = [
-  { key: "en_attente", label: "En attente", icon: Clock, color: "text-amber-500" },
-  { key: "dossier_en_cours", label: "Dossier en cours", icon: FolderOpen, color: "text-blue-500" },
-  { key: "commande", label: "Commande", icon: Package, color: "text-purple-500" },
-  { key: "sav", label: "SAV", icon: Wrench, color: "text-orange-500" },
-  { key: "cloturees", label: "Clôturées", icon: CheckCircle, color: "text-emerald-500" },
-  { key: "devis", label: "Devis", icon: FileText, color: "text-rose-500" },
+  { key: "en_attente", label: "En attente", icon: Clock, color: "text-[hsl(var(--color-replanifier))]" },
+  { key: "dossier_en_cours", label: "Dossier en cours", icon: FolderOpen, color: "text-[hsl(var(--color-planifie))]" },
+  { key: "commande", label: "Commande", icon: Package, color: "text-[hsl(var(--color-piece))]" },
+  { key: "sav", label: "SAV", icon: Wrench, color: "text-[hsl(var(--color-sav))]" },
+  { key: "cloturees", label: "Clôturées", icon: CheckCircle, color: "text-[hsl(var(--color-termine))]" },
+  { key: "devis", label: "Devis", icon: FileText, color: "text-[hsl(var(--color-rdv))]" },
 ];
 
 interface Props {

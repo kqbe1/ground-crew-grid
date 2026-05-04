@@ -34,14 +34,14 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 const ACTION_COLORS: Record<string, string> = {
-  login: "bg-blue-100 text-blue-700",
-  create_user: "bg-green-100 text-green-700",
-  create_company: "bg-green-100 text-green-700",
-  update_user: "bg-amber-100 text-amber-700",
-  update_user_credentials: "bg-orange-100 text-orange-700",
-  update_company: "bg-amber-100 text-amber-700",
-  update_role: "bg-purple-100 text-purple-700",
-  delete_user: "bg-red-100 text-red-700",
+  login: "badge-status-planifie",
+  create_user: "badge-status-termine",
+  create_company: "badge-status-termine",
+  update_user: "badge-status-a_replanifier",
+  update_user_credentials: "badge-status-a_replanifier",
+  update_company: "badge-status-a_replanifier",
+  update_role: "badge-status-piece_a_commander",
+  delete_user: "bg-destructive/10 text-destructive",
 };
 
 export default function SuperAdminLogs() {
@@ -114,7 +114,7 @@ export default function SuperAdminLogs() {
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-amber-100 text-amber-700">
+        <div className="p-2 rounded-lg bg-[hsl(var(--color-role-super-admin))]/10 text-[hsl(var(--color-role-super-admin))]">
           <ScrollText className="w-5 h-5" />
         </div>
         <div>

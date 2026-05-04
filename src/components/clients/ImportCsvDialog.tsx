@@ -291,7 +291,7 @@ export default function ImportCsvDialog({ open, onOpenChange, onImported }: Impo
                 <div className="max-h-32 overflow-y-auto text-sm space-y-0.5 bg-muted rounded-lg p-2">
                   {result.duplicates.map((d, i) => (
                     <div key={i} className="flex items-center gap-1.5">
-                      <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                      <AlertTriangle className="w-3 h-3 text-[hsl(var(--color-replanifier))] shrink-0" />
                       <span className="truncate">{d}</span>
                     </div>
                   ))}

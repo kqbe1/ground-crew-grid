@@ -316,9 +316,9 @@ export default function MobileDevisForm() {
                   <span className="text-xs text-muted-foreground">Isolation</span>
                   <div className="flex gap-2">
                     {[
-                      { key: "good", label: "Bonne", color: "bg-emerald-500" },
-                      { key: "average", label: "Moyenne", color: "bg-amber-500" },
-                      { key: "bad", label: "Mauvaise", color: "bg-red-500" },
+                      { key: "good", label: "Bonne", color: "bg-[hsl(var(--color-termine))]" },
+                      { key: "average", label: "Moyenne", color: "bg-[hsl(var(--color-replanifier))]" },
+                      { key: "bad", label: "Mauvaise", color: "bg-destructive" },
                     ].map((opt) => (
                       <button
                         key={opt.key}
@@ -497,7 +497,7 @@ export default function MobileDevisForm() {
               <p className="font-medium">Les informations sont-elles suffisantes ?</p>
               <div className="flex flex-col gap-3">
                 <Button
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                  className="bg-[hsl(var(--color-termine))] hover:bg-[hsl(var(--color-termine))]/90 text-white"
                   onClick={handleSubmit}
                   disabled={submitting}
                 >
