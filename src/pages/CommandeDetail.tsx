@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import { Package, ArrowRight, AlertTriangle, User, FileText, Loader2, Trash2 } from "lucide-react";
-import BackButton from "@/components/ui/back-button";
+import LayoutDetail from "@/components/layout/LayoutDetail";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -83,39 +83,13 @@ export default function CommandeDetail() {
   const workflow = WORKFLOW[order.status];
 
   return (
-    <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-3">
-            <BackButton size="icon" variant="ghost" />
-            <Package className="w-5 h-5" />
-            <div>
-              <h1 className="text-xl font-bold">{order.part_name}</h1>
-              <p className="text-sm text-muted-foreground">
-                {order.clients?.name} · {format(new Date(order.created_at), "d MMMM yyyy", { locale: fr })}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Status stepper */}
-        <div className="flex items-center justify-between py-3">
-          {steps.map((step, i) => (
-            <div key={step} className="flex items-center">
-              <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold", i <= currentIdx ? statusColors[step] : "bg-muted text-muted-foreground")}>
-                {i + 1}
-              </div>
-              {i < steps.length - 1 && <ArrowRight className={cn("w-4 h-4 mx-1", i < currentIdx ? "text-primary" : "text-muted-foreground")} />}
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-between text-xs text-muted-foreground px-1">
-          {steps.map((s) => <span key={s}>{ORDER_STATUS_LABELS[s]}</span>)}
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex flex-wrap gap-2">
+    <LayoutDetail
+      icon={<Package className="w-5 h-5" />}
+      title={order.part_name}
+      subtitle={`${order.clients?.name ?? "—"} · ${format(new Date(order.created_at), "d MMMM yyyy", { locale: fr })}`}
+      hideSeparator
+      toolbar={
+        <>
           {workflow?.next && (
             <Button className={cn(workflow.color)} onClick={advanceStatus}>
               <ArrowRight className="w-4 h-4 mr-2" /> {workflow.label}
@@ -136,6 +110,23 @@ export default function CommandeDetail() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+        </>
+      }
+    >
+      {/* Status stepper */}
+      <div>
+        <div className="flex items-center justify-between py-3">
+          {steps.map((step, i) => (
+            <div key={step} className="flex items-center">
+              <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold", i <= currentIdx ? statusColors[step] : "bg-muted text-muted-foreground")}>
+                {i + 1}
+              </div>
+              {i < steps.length - 1 && <ArrowRight className={cn("w-4 h-4 mx-1", i < currentIdx ? "text-primary" : "text-muted-foreground")} />}
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between text-xs text-muted-foreground px-1">
+          {steps.map((s) => <span key={s}>{ORDER_STATUS_LABELS[s]}</span>)}
         </div>
       </div>
 
@@ -215,6 +206,6 @@ export default function CommandeDetail() {
         order={order}
         onCreated={() => { setShowFollowUp(false); fetchOrder(); }}
       />
-    </div>
+    </LayoutDetail>
   );
 }
