@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS, INSTALLATION_TYPE_LABELS } from "@/lib/constants";
-import { Download, MessageSquare, Send, Loader2, Trash2 } from "lucide-react";
+import { Download, MessageSquare, Send, Loader2, Trash2, CheckCircle2 } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
@@ -15,7 +15,7 @@ import { fr } from "date-fns/locale";
 import { downloadDevisPdf } from "@/lib/generateDevisPdf";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-const statuses = ["en_attente", "dossier_en_cours", "en_commande", "sav", "cloture"] as const;
+const statuses = ["en_attente", "dossier_en_cours", "en_commande", "sav"] as const;
 
 export default function DevisDetail() {
   const { id } = useParams();
@@ -132,6 +132,31 @@ export default function DevisDetail() {
               {QUOTE_STATUS_LABELS[s]}
             </Button>
           ))}
+          {quote.status === "cloture" ? (
+            <Button size="sm" className={`${QUOTE_STATUS_COLORS.cloture} text-white`} disabled>
+              <CheckCircle2 className="w-4 h-4 mr-1" /> Clôturé
+            </Button>
+          ) : (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" className={`${QUOTE_STATUS_COLORS.cloture} text-white hover:opacity-90`}>
+                  <CheckCircle2 className="w-4 h-4 mr-1" /> Clôturer le devis
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clôturer ce devis ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Le devis sera retiré du dashboard et restera consultable dans l'onglet Devis.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => updateStatus("cloture")}>Clôturer</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button size="sm" variant="destructive"><Trash2 className="w-4 h-4 mr-1" /> Supprimer</Button>
