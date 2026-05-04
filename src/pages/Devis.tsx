@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeSearch } from "@/lib/searchUtils";
 import { QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS, INSTALLATION_TYPE_LABELS } from "@/lib/constants";
 import { FileText, Search, Trash2 } from "lucide-react";
 import { format } from "date-fns";
@@ -38,8 +39,8 @@ export default function Devis() {
     if (statusFilter !== "all" && q.status !== statusFilter) return false;
     if (workerFilter !== "all" && q.created_by !== workerFilter) return false;
     if (search) {
-      const s = search.toLowerCase();
-      if (!q.client_name?.toLowerCase().includes(s) && !q.client_city?.toLowerCase().includes(s) && !q.profiles?.full_name?.toLowerCase().includes(s)) return false;
+      const s = normalizeSearch(search);
+      if (!normalizeSearch(q.client_name).includes(s) && !normalizeSearch(q.client_city).includes(s) && !normalizeSearch(q.profiles?.full_name).includes(s)) return false;
     }
     return true;
   });
