@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,10 @@ import { useWorkerLabels } from "@/hooks/useWorkerLabels";
 
 export default function Fiches() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [sheets, setSheets] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [workerFilter, setWorkerFilter] = useState("all");
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
