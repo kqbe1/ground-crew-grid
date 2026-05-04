@@ -7,11 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/searchUtils";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, FILTER_TYPE_GROUPS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
-import { FileSignature, Camera, Mail, Search } from "lucide-react";
+import { FileSignature, Camera, Mail, Search, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
 import { useWorkerLabels } from "@/hooks/useWorkerLabels";
+import LayoutPage from "@/components/layout/LayoutPage";
 
 export default function Fiches() {
   const navigate = useNavigate();
@@ -76,12 +77,13 @@ export default function Fiches() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="flex justify-end">
-        <CreateTaskDialog defaultDate={new Date()} onCreated={() => fetchSheets()} />
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-3">
+    <LayoutPage
+      icon={ClipboardList}
+      title="Fiches d'intervention"
+      subtitle={`${filtered.length} fiche${filtered.length > 1 ? "s" : ""}`}
+      actions={<CreateTaskDialog defaultDate={new Date()} onCreated={() => fetchSheets()} />}
+      toolbar={
+        <div className="flex flex-col sm:flex-row gap-3 w-full">
         <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Rechercher..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
