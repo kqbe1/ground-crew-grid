@@ -4,6 +4,7 @@ import { downloadFichesZip } from "@/lib/downloadFichesZip";
 import { RefreshCw, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TASK_STATUS_LABELS, QUOTE_STATUS_LABELS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
@@ -283,7 +284,7 @@ export default function BureauDashboard() {
 
       {/* Content */}
       {activeFilter === "commande" ? (
-        <CommandeList />
+        <CommandeList search={searchClient} techFilter={techFilter} workers={workers} />
       ) : activeFilter === "dossier_en_cours" ? (
         <BureauDossierAccordion fiches={filteredFiches} onDelete={handleDelete} />
       ) : (
@@ -293,8 +294,8 @@ export default function BureauDashboard() {
   );
 }
 
-// Simple commande list when "Commande" card is active
-function CommandeList() {
+// Commande list aligned with BureauFicheTable styling
+function CommandeList({ search, techFilter, workers }: { search: string; techFilter: string; workers: Worker[] }) {
   const [orders, setOrders] = useState<any[]>([]);
   const navigate = useNavigate();
 
@@ -312,39 +313,62 @@ function CommandeList() {
     commandee: "bg-purple-500 text-white",
   };
 
+  // Apply search & tech filters
+  const filtered = orders.filter((o) => {
+    if (search.trim()) {
+      const q = normalizeSearch(search);
+      const hay = `${o.clients?.name ?? ""} ${o.part_name ?? ""} ${o.supplier ?? ""} ${o.profiles?.full_name ?? ""}`;
+      if (!normalizeSearch(hay).includes(q)) return false;
+    }
+    if (techFilter !== "all") {
+      const w = workers.find((x) => x.id === techFilter);
+      if (!w || o.profiles?.full_name !== w.full_name) return false;
+    }
+    return true;
+  });
+
   return (
     <div className="rounded-md border">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b bg-muted/50">
-            <th className="text-left px-4 py-2 font-medium">Pièce</th>
-            <th className="text-left px-4 py-2 font-medium">Client</th>
-            <th className="text-left px-4 py-2 font-medium">Demandé par</th>
-            <th className="text-left px-4 py-2 font-medium">Statut</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.length === 0 && (
-            <tr><td colSpan={4} className="text-center text-muted-foreground py-8">Aucune commande en cours</td></tr>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[80px]">Type</TableHead>
+            <TableHead>Pièce</TableHead>
+            <TableHead>Client</TableHead>
+            <TableHead className="hidden md:table-cell">Demandé par</TableHead>
+            <TableHead className="w-[80px]">Qté</TableHead>
+            <TableHead>Statut</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filtered.length === 0 && (
+            <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucune commande</TableCell></TableRow>
           )}
-          {orders.map((o) => (
-            <tr
+          {filtered.map((o) => (
+            <TableRow
               key={o.id}
-              className="border-b last:border-0 hover:bg-muted/50 cursor-pointer"
+              className="cursor-pointer hover:bg-muted/50"
               onClick={() => navigate(`/commandes/${o.id}`)}
             >
-              <td className="px-4 py-2 font-medium">{o.part_name}</td>
-              <td className="px-4 py-2 text-muted-foreground">{o.clients?.name ?? "—"}</td>
-              <td className="px-4 py-2 text-muted-foreground">{o.profiles?.full_name ?? "—"}</td>
-              <td className="px-4 py-2">
+              <TableCell>
+                <Badge className="text-[10px] bg-purple-500 text-white">CMD</Badge>
+              </TableCell>
+              <TableCell>
+                <div className="font-medium text-sm truncate max-w-[240px]">{o.part_name}</div>
+                {o.supplier && <div className="text-xs text-muted-foreground truncate max-w-[240px]">{o.supplier}</div>}
+              </TableCell>
+              <TableCell className="text-sm">{o.clients?.name ?? "—"}</TableCell>
+              <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{o.profiles?.full_name ?? "—"}</TableCell>
+              <TableCell className="text-sm">{o.quantity}</TableCell>
+              <TableCell>
                 <Badge className={`text-[10px] ${STATUS_BADGE[o.status] || ""}`}>
                   {o.status === "demandee" ? "Demandée" : "Commandée"}
                 </Badge>
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }
