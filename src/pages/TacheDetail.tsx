@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkerLabels } from "@/hooks/useWorkerLabels";
+import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -62,6 +63,7 @@ export default function TacheDetail() {
   const [scheduledDate, setScheduledDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(60);
+  const [endTime, setEndTime] = useState("");
   const [clientId, setClientId] = useState("");
   const [description, setDescription] = useState("");
   const [memoSecretariat, setMemoSecretariat] = useState("");
@@ -83,8 +85,11 @@ export default function TacheDetail() {
       setAssignedTo(data.assigned_to ?? "");
       setSecondAssignedTo(data.second_assigned_to ?? "");
       setScheduledDate(data.scheduled_date ?? "");
-      setStartTime(data.start_time?.slice(0, 5) ?? "08:00");
-      setDurationMinutes(data.duration_minutes ?? 60);
+      const st = data.start_time?.slice(0, 5) ?? "08:00";
+      const dur = data.duration_minutes ?? 60;
+      setStartTime(st);
+      setDurationMinutes(dur);
+      setEndTime(computeEndTime(st, dur));
       setClientId(data.client_id ?? "");
       setDescription(data.description ?? "");
       setMemoSecretariat(data.memo_secretariat ?? "");
@@ -231,15 +236,15 @@ export default function TacheDetail() {
               <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
                 <Clock className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <div className="text-xs text-muted-foreground">Heure</div>
+                  <div className="text-xs text-muted-foreground">Heure de début</div>
                   <div className="font-medium">{task.start_time?.slice(0, 5)}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
                 <Clock className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <div className="text-xs text-muted-foreground">Durée</div>
-                  <div className="font-medium">{task.duration_minutes} min</div>
+                  <div className="text-xs text-muted-foreground">Heure de fin</div>
+                  <div className="font-medium">{computeEndTime(task.start_time?.slice(0, 5) ?? "", task.duration_minutes ?? 0)}</div>
                 </div>
               </div>
             </div>
@@ -376,12 +381,28 @@ export default function TacheDetail() {
               <Input type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
             </div>
             <div>
-              <Label>Heure</Label>
-              <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+              <Label>Heure de début</Label>
+              <Input
+                type="time"
+                value={startTime}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setStartTime(v);
+                  setDurationMinutes(computeDurationMinutes(v, endTime));
+                }}
+              />
             </div>
             <div>
-              <Label>Durée (min)</Label>
-              <Input type="number" min={15} step={15} value={durationMinutes} onChange={(e) => setDurationMinutes(Number(e.target.value))} />
+              <Label>Heure de fin</Label>
+              <Input
+                type="time"
+                value={endTime}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setEndTime(v);
+                  setDurationMinutes(computeDurationMinutes(startTime, v));
+                }}
+              />
             </div>
           </div>
 

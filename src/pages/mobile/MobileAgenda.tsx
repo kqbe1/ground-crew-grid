@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
+import { computeEndTime } from "@/lib/timeRange";
 import { ChevronLeft, ChevronRight, Phone, MapPin, MessageSquare, Package } from "lucide-react";
 import {
   format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
@@ -238,7 +239,7 @@ function WeekView({ tasks, currentDate, navigate, onSelectDay }: { tasks: Task[]
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-primary">{task.start_time?.slice(0, 5)}</span>
-                        <span className="text-xs text-muted-foreground">{task.duration_minutes}min</span>
+                        <span className="text-xs text-muted-foreground">→ {computeEndTime(task.start_time?.slice(0, 5) ?? "", task.duration_minutes ?? 0)}</span>
                       </div>
                       <div className="font-medium text-sm truncate">{task.title}</div>
                       <div className="text-xs text-muted-foreground truncate">{task.clients?.name}</div>
@@ -352,7 +353,7 @@ function TaskCard({ task, navigate }: { task: Task; navigate: (path: string) => 
         <div className="flex items-start justify-between">
           <div>
             <div className="text-sm font-bold text-primary">
-              {task.start_time?.slice(0, 5)} · {task.duration_minutes} min
+              {task.start_time?.slice(0, 5)} → {computeEndTime(task.start_time?.slice(0, 5) ?? "", task.duration_minutes ?? 0)}
             </div>
             <div className="font-semibold">{task.title}</div>
           </div>
