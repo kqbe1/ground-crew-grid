@@ -55,10 +55,12 @@ export default function Fiches() {
     }
     if (search) {
       const q = normalizeSearch(search);
+      const label = workerLabels[s.worker_id]; // ex "T1"
       const match =
         normalizeSearch(s.work_tasks?.title).includes(q) ||
         normalizeSearch(s.work_tasks?.clients?.name).includes(q) ||
-        normalizeSearch(s.profiles?.full_name).includes(q);
+        normalizeSearch(s.profiles?.full_name).includes(q) ||
+        (label ? normalizeSearch(label) === q || normalizeSearch(label).includes(q) : false);
       if (!match) return false;
     }
     return true;
