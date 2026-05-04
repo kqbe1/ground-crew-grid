@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/searchUtils";
 import { QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS, INSTALLATION_TYPE_LABELS } from "@/lib/constants";
+import { fetchQuotes, QUOTE_STATUSES } from "@/lib/quotesQuery";
 import { FileText, Search, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -23,9 +24,13 @@ export default function Devis() {
   const [workerFilter, setWorkerFilter] = useState("all");
   const isMobile = useIsMobile();
 
-  const fetchQuotes = async () => {
-    const { data } = await supabase.from("quotes").select("*, profiles!quotes_created_by_fkey(full_name)").order("created_at", { ascending: false });
-    setQuotes(data ?? []);
+  const loadQuotes = async () => {
+    try {
+      const data = await fetchQuotes();
+      setQuotes(data);
+    } catch {
+      setQuotes([]);
+    }
   };
 
   const fetchWorkers = async () => {
@@ -33,7 +38,7 @@ export default function Devis() {
     setWorkers(data ?? []);
   };
 
-  useEffect(() => { fetchQuotes(); fetchWorkers(); }, []);
+  useEffect(() => { loadQuotes(); fetchWorkers(); }, []);
 
   const filtered = quotes.filter((q) => {
     if (statusFilter !== "all" && q.status !== statusFilter) return false;
@@ -51,7 +56,7 @@ export default function Devis() {
     const { error } = await supabase.from("quotes").delete().eq("id", id);
     if (error) { toast.error("Erreur"); return; }
     toast.success("Devis supprimé");
-    fetchQuotes();
+    loadQuotes();
   };
 
   return (
