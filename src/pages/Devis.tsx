@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { INSTALLATION_TYPE_LABELS } from "@/lib/constants";
-import { fetchQuotes, filterQuotes, QUOTE_STATUS_LABELS, invalidateQuotesCache } from "@/lib/quotesQuery";
+import { fetchQuotes, filterQuotes, QUOTE_STATUS_LABELS, invalidateQuotesCache, quotesToCsv } from "@/lib/quotesQuery";
 import QuoteStatusBadge from "@/components/devis/QuoteStatusBadge";
-import { FileText, Search, Trash2 } from "lucide-react";
+import { FileText, Search, Trash2, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
@@ -22,6 +22,9 @@ export default function Devis() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [workerFilter, setWorkerFilter] = useState("all");
+  const [installationFilter, setInstallationFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 25;
   const isMobile = useIsMobile();
 
   const loadQuotes = async (force = false) => {
@@ -52,11 +55,35 @@ export default function Devis() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const filtered = filterQuotes(quotes, {
-    status: statusFilter,
-    createdBy: workerFilter,
-    search,
-  });
+  const filtered = useMemo(
+    () => filterQuotes(quotes, {
+      status: statusFilter,
+      createdBy: workerFilter,
+      installationType: installationFilter,
+      search,
+    }),
+    [quotes, statusFilter, workerFilter, installationFilter, search],
+  );
+
+  // Reset page si les filtres changent
+  useEffect(() => { setPage(1); }, [statusFilter, workerFilter, installationFilter, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const handleExportCsv = () => {
+    if (filtered.length === 0) { toast.info("Aucun devis à exporter"); return; }
+    const csv = quotesToCsv(filtered);
+    const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `devis-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${filtered.length} devis exportés`);
+  };
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -82,6 +109,13 @@ export default function Devis() {
             {Object.entries(QUOTE_STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={installationFilter} onValueChange={setInstallationFilter}>
+          <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Installation" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes installations</SelectItem>
+            {Object.entries(INSTALLATION_TYPE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <Select value={workerFilter} onValueChange={setWorkerFilter}>
           <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Technicien" /></SelectTrigger>
           <SelectContent>
@@ -89,10 +123,13 @@ export default function Devis() {
             {workers.map((w) => <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Button variant="outline" onClick={handleExportCsv} disabled={filtered.length === 0}>
+          <Download className="w-4 h-4 mr-1" /> Export CSV
+        </Button>
       </div>
 
       <div className="space-y-2">
-        {filtered.map((quote) => (
+        {paginated.map((quote) => (
           <Card key={quote.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/devis/${quote.id}`)}>
             <CardContent className={cn("py-3", isMobile ? "space-y-2" : "flex items-center gap-3")}>
               {isMobile ? (
@@ -133,6 +170,23 @@ export default function Devis() {
         ))}
         {filtered.length === 0 && <div className="py-12 text-center text-muted-foreground">Aucun devis</div>}
       </div>
+
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between pt-2">
+          <div className="text-sm text-muted-foreground">
+            {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} sur {filtered.length}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage((p) => p - 1)}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm">Page {currentPage} / {totalPages}</span>
+            <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setPage((p) => p + 1)}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
