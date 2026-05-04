@@ -123,6 +123,6 @@ export default function Clients() {
         onSaved={fetchClients}
       />
       <ImportCsvDialog open={importOpen} onOpenChange={setImportOpen} onImported={fetchClients} />
-    </div>
+    </LayoutPage>
   );
 }
