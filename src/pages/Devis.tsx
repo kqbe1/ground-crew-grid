@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { normalizeSearch } from "@/lib/searchUtils";
 import { QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS, INSTALLATION_TYPE_LABELS } from "@/lib/constants";
-import { fetchQuotes } from "@/lib/quotesQuery";
+import { fetchQuotes, filterQuotes } from "@/lib/quotesQuery";
 import { FileText, Search, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -49,14 +48,10 @@ export default function Devis() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const filtered = quotes.filter((q) => {
-    if (statusFilter !== "all" && q.status !== statusFilter) return false;
-    if (workerFilter !== "all" && q.created_by !== workerFilter) return false;
-    if (search) {
-      const s = normalizeSearch(search);
-      if (!normalizeSearch(q.client_name).includes(s) && !normalizeSearch(q.client_city).includes(s) && !normalizeSearch(q.profiles?.full_name).includes(s)) return false;
-    }
-    return true;
+  const filtered = filterQuotes(quotes, {
+    status: statusFilter,
+    createdBy: workerFilter,
+    search,
   });
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
