@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, FolderOpen, Package, Wrench, CheckCircle, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 import type { BureauFilterType } from "./types";
 
 interface FilterCardDef {
@@ -26,6 +27,21 @@ interface Props {
 }
 
 export default function BureauFilterCards({ active, counts, onSelect }: Props) {
+  const navigate = useNavigate();
+  const ROUTES: Record<BureauFilterType, string | null> = {
+    received: null,
+    en_attente: "/fiches?status=a_replanifier",
+    dossier_en_cours: "/dossiers",
+    commande: "/commandes",
+    sav: "/fiches?status=sav",
+    cloturees: "/fiches?status=termine",
+    devis: "/devis",
+  };
+  const handleClick = (key: BureauFilterType) => {
+    const route = ROUTES[key];
+    if (route) navigate(route);
+    else onSelect(key);
+  };
   return (
     <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
       {CARDS.map((c) => (
@@ -35,7 +51,7 @@ export default function BureauFilterCards({ active, counts, onSelect }: Props) {
             "cursor-pointer transition-all hover:shadow-md select-none",
             active === c.key && "ring-2 ring-primary shadow-md"
           )}
-          onClick={() => onSelect(c.key)}
+          onClick={() => handleClick(c.key)}
         >
           <CardContent className="p-3 flex flex-col items-center gap-1 text-center">
             <c.icon className={cn("w-5 h-5", c.color)} />
