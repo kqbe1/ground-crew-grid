@@ -40,6 +40,15 @@ export default function Devis() {
 
   useEffect(() => { loadQuotes(); fetchWorkers(); }, []);
 
+  // Realtime: rafraîchit la liste dès qu'un devis change (statut, ajout, suppression…)
+  useEffect(() => {
+    const channel = supabase
+      .channel("devis-list")
+      .on("postgres_changes", { event: "*", schema: "public", table: "quotes" }, () => loadQuotes())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
   const filtered = quotes.filter((q) => {
     if (statusFilter !== "all" && q.status !== statusFilter) return false;
     if (workerFilter !== "all" && q.created_by !== workerFilter) return false;
