@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
-import { Users, FileText, Plus, Pencil, Trash2, Printer, BarChart3 } from "lucide-react";
+import { Users, FileText, Plus, Pencil, Trash2, Printer, BarChart3, Settings } from "lucide-react";
 import { toast } from "sonner";
 import CreateEditTemplateDialog from "@/components/admin/CreateEditTemplateDialog";
 import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import { useAuth } from "@/hooks/useAuth";
 import PdfSettingsTab from "@/components/admin/PdfSettingsTab";
 import AdminStatsTab from "@/components/admin/AdminStatsTab";
+import LayoutPage from "@/components/layout/LayoutPage";
 
 export default function Admin() {
   const { role } = useAuth();
@@ -39,7 +40,7 @@ export default function Admin() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <LayoutPage icon={Settings} title="Administration">
       <Tabs defaultValue="stats">
         <TabsList>
           <TabsTrigger value="stats" className="gap-1.5"><BarChart3 className="w-4 h-4" /> Statistiques</TabsTrigger>
@@ -109,6 +110,6 @@ export default function Admin() {
         template={editTemplate}
         onSaved={fetchTemplates}
       />
-    </div>
+    </LayoutPage>
   );
 }
