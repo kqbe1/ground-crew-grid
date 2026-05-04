@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ClientCombobox from "@/components/forms/ClientCombobox";
 
 interface Props {
   open: boolean;
@@ -31,7 +32,7 @@ export default function CreateOrderDialog({ open, onOpenChange, onSaved }: Props
 
   useEffect(() => {
     if (!open) return;
-    supabase.from("clients").select("id, name").order("name").then(({ data }) => setClients(data ?? []));
+    supabase.from("clients").select("id, name, address_intervention").order("name").then(({ data }) => setClients(data ?? []));
     supabase.from("work_tasks").select("id, title").order("scheduled_date", { ascending: false }).limit(50).then(({ data }) => setTasks(data ?? []));
   }, [open]);
 
@@ -109,12 +110,7 @@ export default function CreateOrderDialog({ open, onOpenChange, onSaved }: Props
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Client</Label>
-              <Select value={form.client_id} onValueChange={(v) => set("client_id", v)}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
-                <SelectContent>
-                  {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <ClientCombobox clients={clients} value={form.client_id} onChange={(v) => set("client_id", v)} placeholder="Rechercher un client..." />
             </div>
             <div className="space-y-2">
               <Label>Travail lié</Label>
