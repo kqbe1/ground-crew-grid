@@ -183,13 +183,7 @@ export default function Entretiens() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Entretiens</h1>
-          <p className="text-muted-foreground">
-            {schedules.filter((s) => s.status === "actif").length} actif(s) · {annualTotal} prévu(s) en {currentYear}
-          </p>
-        </div>
+      <div className="flex justify-end">
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="w-4 h-4 mr-2" /> Nouvel entretien
         </Button>
