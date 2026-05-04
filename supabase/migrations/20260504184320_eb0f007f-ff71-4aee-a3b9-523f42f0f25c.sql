@@ -1,0 +1,1 @@
+UPDATE public.quotes SET status = 'en_attente' WHERE status IN ('dossier_en_cours','en_commande','sav');
