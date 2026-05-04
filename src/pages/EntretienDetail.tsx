@@ -3,12 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS } from "@/lib/constants";
 import { format, differenceInDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Wrench, MapPin, Calendar, AlertTriangle, Pencil, User, Loader2 } from "lucide-react";
-import BackButton from "@/components/ui/back-button";
+import LayoutDetail from "@/components/layout/LayoutDetail";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import CreateEditEntretienDialog from "@/components/entretiens/CreateEditEntretienDialog";
@@ -46,24 +45,17 @@ export default function EntretienDetail() {
   };
 
   return (
-    <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-3">
-          <BackButton size="icon" variant="ghost" />
-          <Wrench className="w-5 h-5" />
-          <div>
-            <h1 className="text-xl font-bold">{INTERVENTION_TYPE_LABELS[schedule.intervention_type] || schedule.intervention_type}</h1>
-            <p className="text-sm text-muted-foreground">{schedule.clients?.name}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="w-4 h-4 mr-1" /> Modifier
-          </Button>
-        </div>
-      </div>
-
+    <LayoutDetail
+      icon={<Wrench className="w-5 h-5" />}
+      title={INTERVENTION_TYPE_LABELS[schedule.intervention_type] || schedule.intervention_type}
+      subtitle={schedule.clients?.name}
+      hideSeparator
+      actions={
+        <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+          <Pencil className="w-4 h-4 mr-1" /> Modifier
+        </Button>
+      }
+    >
       {/* Due date card */}
       <Card className={cn("border", urgencyStyles[urgencyLevel])}>
         <CardContent className="p-3 flex items-center justify-between">
