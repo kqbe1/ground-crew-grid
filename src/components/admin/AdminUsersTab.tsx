@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeSearch } from "@/lib/searchUtils";
 import { useAuth } from "@/hooks/useAuth";
 import { Plus, Search, ShieldAlert, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -80,8 +81,8 @@ export default function AdminUsersTab() {
 
   const filtered = users.filter((u) => {
     if (!search) return true;
-    const q = search.toLowerCase();
-    return u.full_name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q);
+    const q = normalizeSearch(search);
+    return normalizeSearch(u.full_name).includes(q) || normalizeSearch(u.email).includes(q);
   });
 
   const activeCount = users.filter((u) => u.is_active).length;

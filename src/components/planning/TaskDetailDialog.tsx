@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { TASK_STATUS_LABELS } from "@/lib/constants";
 import { useWorkerLabels } from "@/hooks/useWorkerLabels";
 import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
+import ClientCombobox from "@/components/forms/ClientCombobox";
 
 const SIMPLIFIED_INTERVENTION_LABELS: Record<string, string> = {
   depannage: "Dépannage",
@@ -68,7 +69,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
   const [memoSecretariat, setMemoSecretariat] = useState("");
 
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  const [clients, setClients] = useState<{ id: string; name: string; address_intervention?: string | null }[]>([]);
 
   useEffect(() => {
     if (!task) return;
@@ -94,7 +95,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
     const fetchData = async () => {
       const [w, c] = await Promise.all([
         supabase.from("profiles").select("id, full_name").eq("is_active", true),
-        supabase.from("clients").select("id, name").order("name"),
+        supabase.from("clients").select("id, name, address_intervention").order("name"),
       ]);
       setWorkers(w.data ?? []);
       setClients(c.data ?? []);
@@ -338,14 +339,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
 
             <div>
               <Label>Client</Label>
-              <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
-                <SelectContent>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ClientCombobox clients={clients} value={clientId} onChange={setClientId} placeholder="Rechercher un client..." />
             </div>
 
             <div>

@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeSearch } from "@/lib/searchUtils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -79,9 +80,9 @@ export default function Taches() {
     }
     // Search
     if (!search.trim()) return result;
-    const terms = search.toLowerCase().split(/\s+/).filter(Boolean);
+    const terms = normalizeSearch(search).split(/\s+/).filter(Boolean);
     return result.filter((t) => {
-      const haystack = [
+      const haystack = normalizeSearch([
         t.title,
         t.description,
         t.clients?.name,
@@ -93,8 +94,7 @@ export default function Taches() {
         t.scheduled_date,
       ]
         .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+        .join(" "));
       return terms.every((term) => haystack.includes(term));
     });
   }, [tasks, search, typeFilter, statusFilter]);

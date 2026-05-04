@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeSearch } from "@/lib/searchUtils";
 import { Plus, Search, Phone, Mail, MapPin, Upload, Download } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import CreateEditClientDialog from "@/components/clients/CreateEditClientDialog";
@@ -23,13 +24,21 @@ export default function Clients() {
   const [editClient, setEditClient] = useState<Client | null>(null);
 
   const fetchClients = useCallback(async () => {
-    const query = supabase.from("clients").select("*").order("name");
-    if (search) query.ilike("name", `%${search}%`);
-    const { data } = await query;
+    const { data } = await supabase.from("clients").select("*").order("name");
     setClients(data ?? []);
-  }, [search]);
+  }, []);
 
   useEffect(() => { fetchClients(); }, [fetchClients]);
+
+  const filteredClients = useMemo(() => {
+    if (!search.trim()) return clients;
+    const q = normalizeSearch(search);
+    return clients.filter((c) =>
+      [c.name, c.email, c.phone, c.address_intervention]
+        .map(normalizeSearch)
+        .some((s) => s.includes(q))
+    );
+  }, [clients, search]);
 
   const exportCsv = () => {
     const headers = ["Nom","Email","Téléphone","Tél. secondaire","Adresse intervention","Coordonnées facturation","Contact syndic","Contact locataire","Clés/codes syndic","Notes internes","Région","Anniversaire"];
@@ -74,7 +83,7 @@ export default function Clients() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clients.map((client) => (
+              {filteredClients.map((client) => (
                 <TableRow key={client.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/clients/${client.id}`)}>
                   <TableCell className="font-medium">{client.name}</TableCell>
                   <TableCell>{client.phone && <span className="flex items-center gap-1.5 text-muted-foreground"><Phone className="w-3.5 h-3.5" /> {client.phone}</span>}</TableCell>
@@ -83,13 +92,13 @@ export default function Clients() {
                   <TableCell className="text-muted-foreground capitalize">{client.region ?? "—"}</TableCell>
                 </TableRow>
               ))}
-              {clients.length === 0 && <TableRow><TableCell colSpan={5} className="py-12 text-center text-muted-foreground">Aucun client trouvé</TableCell></TableRow>}
+              {filteredClients.length === 0 && <TableRow><TableCell colSpan={5} className="py-12 text-center text-muted-foreground">Aucun client trouvé</TableCell></TableRow>}
             </TableBody>
           </Table>
         </div>
       ) : (
         <div className="space-y-2">
-          {clients.map((client) => (
+          {filteredClients.map((client) => (
             <Card key={client.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/clients/${client.id}`)}>
               <CardContent className="py-3 space-y-1">
                 <p className="font-medium">{client.name}</p>
