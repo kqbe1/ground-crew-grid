@@ -156,7 +156,13 @@ export default function TacheDetail() {
             <div className="min-w-0">
               <h1 className="text-xl font-bold truncate">{task.title}</h1>
               <p className="text-sm text-muted-foreground">
-                {task.clients?.name || "—"} · {task.profiles?.full_name || "Non assigné"} · {format(new Date(task.scheduled_date), "d MMMM yyyy", { locale: fr })}
+                {task.clients?.name || "—"} ·{" "}
+                {workerLabels[task.assigned_to] && (
+                  <span className="mr-1 rounded bg-muted px-1 py-[1px] text-[10px] font-bold text-foreground align-middle">
+                    {workerLabels[task.assigned_to]}
+                  </span>
+                )}
+                {task.profiles?.full_name || "Non assigné"} · {format(new Date(task.scheduled_date), "d MMMM yyyy", { locale: fr })}
               </p>
             </div>
             {task.intervention_type && (
@@ -244,7 +250,14 @@ export default function TacheDetail() {
             <h2 className="font-semibold text-sm">Ouvrier</h2>
             <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
               <User className="w-4 h-4 text-muted-foreground" />
-              <div className="font-medium">{task.profiles?.full_name || "Non assigné"}</div>
+              <div className="font-medium flex items-center gap-2">
+                {workerLabels[task.assigned_to] && (
+                  <span className="rounded bg-background px-1.5 py-0.5 text-xs font-bold border border-border">
+                    {workerLabels[task.assigned_to]}
+                  </span>
+                )}
+                {task.profiles?.full_name || "Non assigné"}
+              </div>
             </div>
           </section>
 
