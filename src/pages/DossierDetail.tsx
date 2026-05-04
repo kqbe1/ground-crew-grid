@@ -103,7 +103,10 @@ export default function DossierDetail() {
   if (!client) {
     return (
       <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
-        <BackButton to="/dossiers" />
+        <div className="flex items-center gap-3">
+          <BackButton to="/dossiers" size="icon" variant="ghost" />
+          <h1 className="text-xl font-bold">Dossier</h1>
+        </div>
         <p className="text-muted-foreground text-center py-12">Client introuvable</p>
       </div>
     );
@@ -133,12 +136,13 @@ export default function DossierDetail() {
 
   return (
     <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
-      <BackButton to="/dossiers" />
-
       {/* Client header */}
       <div className="flex flex-col lg:flex-row lg:items-start gap-6">
         <div className="flex-1 space-y-2">
-          <h1 className="text-2xl lg:text-3xl font-bold">{client.name}</h1>
+          <div className="flex items-center gap-3">
+            <BackButton to="/dossiers" size="icon" variant="ghost" />
+            <h1 className="text-2xl lg:text-3xl font-bold">{client.name}</h1>
+          </div>
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             {client.phone && <span className="flex items-center gap-1.5"><Phone className="w-4 h-4" /> {client.phone}</span>}
             {client.email && <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" /> {client.email}</span>}

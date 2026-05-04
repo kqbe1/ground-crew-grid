@@ -97,15 +97,16 @@ export default function MobileFicheForm() {
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <BackButton variant="ghost" />
+        <div className="flex items-center gap-2">
+          <BackButton variant="ghost" size="icon" />
+          <h1 className="text-xl font-bold">Fiche d'intervention</h1>
+        </div>
         {!isOnline && (
           <div className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-[hsl(var(--color-replanifier))]/10 text-[hsl(var(--color-replanifier))]">
             <WifiOff className="w-3 h-3" /> Hors ligne
           </div>
         )}
       </div>
-
-      <h1 className="text-xl font-bold">Fiche d'intervention</h1>
 
       <Card>
         <CardContent className="py-4 space-y-4">

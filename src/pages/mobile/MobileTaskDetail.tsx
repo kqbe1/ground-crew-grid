@@ -64,13 +64,14 @@ export default function MobileTaskDetail() {
 
   return (
     <div className="p-4 space-y-4">
-      <BackButton variant="ghost" />
-
-      <div>
-        <h1 className="text-xl font-bold">{task.title}</h1>
-        <div className="flex gap-2 mt-1">
-          <Badge>{INTERVENTION_TYPE_LABELS[task.intervention_type]}</Badge>
-          <Badge variant="outline">{TASK_STATUS_LABELS[task.status]}</Badge>
+      <div className="flex items-start gap-2">
+        <BackButton variant="ghost" size="icon" />
+        <div>
+          <h1 className="text-xl font-bold">{task.title}</h1>
+          <div className="flex gap-2 mt-1">
+            <Badge>{INTERVENTION_TYPE_LABELS[task.intervention_type]}</Badge>
+            <Badge variant="outline">{TASK_STATUS_LABELS[task.status]}</Badge>
+          </div>
         </div>
       </div>
 
