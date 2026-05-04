@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS, INSTALLATION_TYPE_LABELS } from "@/lib/constants";
+import { invalidateQuotesCache } from "@/lib/quotesQuery";
 import { Download, MessageSquare, Send, Loader2, Trash2, CheckCircle2 } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
@@ -60,6 +61,7 @@ export default function DevisDetail() {
   const updateStatus = async (status: string) => {
     const { error } = await supabase.from("quotes").update({ status } as any).eq("id", id);
     if (error) { toast.error(error.message); return; }
+    invalidateQuotesCache();
     toast.success(`Statut → ${QUOTE_STATUS_LABELS[status]}`);
     fetchQuote();
   };
@@ -67,6 +69,7 @@ export default function DevisDetail() {
   const handleDelete = async () => {
     const { error } = await supabase.from("quotes").delete().eq("id", id!);
     if (error) { toast.error(error.message); return; }
+    invalidateQuotesCache();
     toast.success("Devis supprimé");
     navigate(-1);
   };
@@ -76,6 +79,7 @@ export default function DevisDetail() {
     const comments = [...(quote.internal_comments || []), { text: newComment.trim(), date: new Date().toISOString() }];
     const { error } = await supabase.from("quotes").update({ internal_comments: comments } as any).eq("id", id!);
     if (error) { toast.error(error.message); return; }
+    invalidateQuotesCache();
     toast.success("Commentaire ajouté");
     setNewComment("");
     fetchQuote();
