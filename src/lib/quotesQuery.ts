@@ -50,22 +50,59 @@ export const QUOTE_LIST_SELECT =
 export interface FetchQuotesOptions {
   /** Si true, exclut les devis clôturés (vue "à traiter"). */
   activeOnly?: boolean;
+  /** Force le rechargement et ignore le cache. */
+  force?: boolean;
 }
 
-/** Récupère la liste de devis avec une logique partagée entre Dashboard et page Devis. */
-export async function fetchQuotes({ activeOnly = false }: FetchQuotesOptions = {}) {
-  let query = supabase
+// --- Cache léger + déduplication des requêtes ---
+// On charge toujours TOUS les devis en une seule requête réseau ; les vues
+// (page Devis / cartes dashboard) dérivent ensuite leur sous-ensemble côté
+// client. Cela évite des appels Supabase parallèles redondants quand les deux
+// vues se montent en même temps.
+const CACHE_TTL_MS = 15_000;
+let cache: { at: number; data: any[] } | null = null;
+let inflight: Promise<any[]> | null = null;
+
+async function loadAllQuotes(): Promise<any[]> {
+  const { data, error } = await supabase
     .from("quotes")
     .select(QUOTE_LIST_SELECT)
     .order("created_at", { ascending: false });
-
-  if (activeOnly) {
-    query = query.in("status", ACTIVE_QUOTE_STATUSES);
-  }
-
-  const { data, error } = await query;
   if (error) throw error;
   return data ?? [];
+}
+
+/** Invalide manuellement le cache (à appeler après une mutation locale). */
+export function invalidateQuotesCache() {
+  cache = null;
+}
+
+/** Récupère la liste de devis (cache + déduplication des appels concurrents). */
+export async function fetchQuotes({ activeOnly = false, force = false }: FetchQuotesOptions = {}) {
+  const fresh = cache && Date.now() - cache.at < CACHE_TTL_MS;
+  if (force) cache = null;
+
+  let all: any[];
+  if (!force && fresh && cache) {
+    all = cache.data;
+  } else if (inflight) {
+    // Une requête est déjà en vol → on s'y attache (dédup).
+    all = await inflight;
+  } else {
+    inflight = loadAllQuotes()
+      .then((data) => {
+        cache = { at: Date.now(), data };
+        return data;
+      })
+      .finally(() => {
+        inflight = null;
+      });
+    all = await inflight;
+  }
+
+  return activeOnly
+    ? all.filter((q) => q.status !== "cloture")
+    : all;
 }
 
 export interface QuoteFilterCriteria {
