@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeSearch } from "@/lib/searchUtils";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, FILTER_TYPE_GROUPS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
 import { FileSignature, Camera, Mail, Search } from "lucide-react";
 import { format } from "date-fns";
@@ -53,11 +54,11 @@ export default function Fiches() {
       } else if (s.work_tasks?.intervention_type !== typeFilter) return false;
     }
     if (search) {
-      const q = search.toLowerCase();
+      const q = normalizeSearch(search);
       const match =
-        s.work_tasks?.title?.toLowerCase().includes(q) ||
-        s.work_tasks?.clients?.name?.toLowerCase().includes(q) ||
-        s.profiles?.full_name?.toLowerCase().includes(q);
+        normalizeSearch(s.work_tasks?.title).includes(q) ||
+        normalizeSearch(s.work_tasks?.clients?.name).includes(q) ||
+        normalizeSearch(s.profiles?.full_name).includes(q);
       if (!match) return false;
     }
     return true;
