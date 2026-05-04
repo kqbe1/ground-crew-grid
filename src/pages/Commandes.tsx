@@ -47,11 +47,7 @@ export default function Commandes() {
 
   return (
     <div className="p-4 md:p-6 space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold">Commandes & Pièces</h1>
-          <p className="text-muted-foreground">{orders.length} commande(s)</p>
-        </div>
+      <div className="flex justify-end">
         <Button size="sm" onClick={() => setCreateOpen(true)}>
           <Plus className="w-4 h-4 mr-1" /> Nouvelle
         </Button>
