@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { TASK_STATUS_LABELS } from "@/lib/constants";
 import { useWorkerLabels } from "@/hooks/useWorkerLabels";
+import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
 
 const SIMPLIFIED_INTERVENTION_LABELS: Record<string, string> = {
   depannage: "Dépannage",
@@ -61,6 +62,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
   const [scheduledDate, setScheduledDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(60);
+  const [endTime, setEndTime] = useState("");
   const [clientId, setClientId] = useState("");
   const [description, setDescription] = useState("");
   const [memoSecretariat, setMemoSecretariat] = useState("");
@@ -76,8 +78,11 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
     setAssignedTo(task.assigned_to ?? "");
     setSecondAssignedTo(task.second_assigned_to ?? "");
     setScheduledDate(task.scheduled_date ?? "");
-    setStartTime(task.start_time?.slice(0, 5) ?? "08:00");
-    setDurationMinutes(task.duration_minutes ?? 60);
+    const st = task.start_time?.slice(0, 5) ?? "08:00";
+    const dur = task.duration_minutes ?? 60;
+    setStartTime(st);
+    setDurationMinutes(dur);
+    setEndTime(computeEndTime(st, dur));
     setClientId(task.client_id ?? "");
     setDescription(task.description ?? "");
     setMemoSecretariat(task.memo_secretariat ?? "");
@@ -190,8 +195,8 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
                 <p>{task.start_time?.slice(0, 5)}</p>
               </div>
               <div>
-                <span className="text-sm text-muted-foreground">Durée</span>
-                <p>{task.duration_minutes} min</p>
+                <span className="text-sm text-muted-foreground">Heure de fin</span>
+                <p>{computeEndTime(task.start_time?.slice(0, 5) ?? "", task.duration_minutes ?? 0)}</p>
               </div>
             </div>
             <div>
@@ -306,12 +311,28 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
                 <Input type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
               </div>
               <div>
-                <Label>Heure</Label>
-                <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                <Label>Heure de début</Label>
+                <Input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setStartTime(v);
+                    setDurationMinutes(computeDurationMinutes(v, endTime));
+                  }}
+                />
               </div>
               <div>
-                <Label>Durée (min)</Label>
-                <Input type="number" min={15} step={15} value={durationMinutes} onChange={(e) => setDurationMinutes(Number(e.target.value))} />
+                <Label>Heure de fin</Label>
+                <Input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setEndTime(v);
+                    setDurationMinutes(computeDurationMinutes(startTime, v));
+                  }}
+                />
               </div>
             </div>
 
