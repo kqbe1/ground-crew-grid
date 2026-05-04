@@ -7,13 +7,12 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Phone, Mail, MapPin, Calendar, Building2, Wrench, Plus, Trash2, Pencil, AlertTriangle, Loader2 } from "lucide-react";
-import BackButton from "@/components/ui/back-button";
+import LayoutDetail from "@/components/layout/LayoutDetail";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { Tables } from "@/integrations/supabase/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import CreateEditClientDialog from "@/components/clients/CreateEditClientDialog";
 
 type Client = Tables<"clients">;
@@ -122,17 +121,11 @@ export default function ClientDetail() {
   if (!client) return <div className="p-6 text-center text-muted-foreground">Client introuvable</div>;
 
   return (
-    <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-3 min-w-0">
-          <BackButton size="icon" variant="ghost" />
-          <div>
-            <h1 className="text-xl font-bold">{client.name}</h1>
-            <p className="text-sm text-muted-foreground">{client.address_intervention || client.region || ""}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
+    <LayoutDetail
+      title={client.name}
+      subtitle={client.address_intervention || client.region || ""}
+      actions={
+        <>
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
             <Pencil className="w-4 h-4 mr-1" /> Modifier
           </Button>
@@ -142,11 +135,9 @@ export default function ClientDetail() {
           <Button variant="outline" size="sm" onClick={() => navigate(`/entretiens`)}>
             <Wrench className="w-4 h-4 mr-1" /> Entretien
           </Button>
-        </div>
-      </div>
-
-      <Separator />
-
+        </>
+      }
+    >
       {/* Infos */}
       <section className="space-y-2">
         <h2 className="font-semibold text-sm">Informations</h2>
@@ -291,6 +282,6 @@ export default function ClientDetail() {
         client={client}
         onSaved={() => { fetchClient(); setEditOpen(false); }}
       />
-    </div>
+    </LayoutDetail>
   );
 }
