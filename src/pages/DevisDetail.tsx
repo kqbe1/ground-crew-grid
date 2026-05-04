@@ -113,6 +113,7 @@ export default function DevisDetail() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3 min-w-0">
+            <BackButton size="icon" variant="ghost" />
             <Badge className="bg-rose-500 text-white">+FD</Badge>
             <div>
               <h1 className="text-xl font-bold">{quote.client_name}</h1>
@@ -125,7 +126,6 @@ export default function DevisDetail() {
             <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={downloading}>
               <Download className="w-4 h-4 mr-1" /> Télécharger
             </Button>
-            <BackButton />
           </div>
         </div>
 
