@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS, TASK_STATUS_LABELS } from "@/lib/constants";
+import { computeEndTime } from "@/lib/timeRange";
 import { Phone, MapPin, ClipboardList, MessageSquare, KeyRound, UserRound, Building2, StickyNote, Package } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 import { toast } from "sonner";
