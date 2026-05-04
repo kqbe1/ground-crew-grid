@@ -1265,6 +1265,14 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      list_security_definer_violations: {
+        Args: never
+        Returns: {
+          arguments: string
+          callable_by: string
+          function_name: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "ouvrier" | "super_admin" | "bureau"
