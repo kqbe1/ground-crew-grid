@@ -83,7 +83,7 @@ export default function Clients() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clients.map((client) => (
+              {filteredClients.map((client) => (
                 <TableRow key={client.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/clients/${client.id}`)}>
                   <TableCell className="font-medium">{client.name}</TableCell>
                   <TableCell>{client.phone && <span className="flex items-center gap-1.5 text-muted-foreground"><Phone className="w-3.5 h-3.5" /> {client.phone}</span>}</TableCell>
@@ -92,13 +92,13 @@ export default function Clients() {
                   <TableCell className="text-muted-foreground capitalize">{client.region ?? "—"}</TableCell>
                 </TableRow>
               ))}
-              {clients.length === 0 && <TableRow><TableCell colSpan={5} className="py-12 text-center text-muted-foreground">Aucun client trouvé</TableCell></TableRow>}
+              {filteredClients.length === 0 && <TableRow><TableCell colSpan={5} className="py-12 text-center text-muted-foreground">Aucun client trouvé</TableCell></TableRow>}
             </TableBody>
           </Table>
         </div>
       ) : (
         <div className="space-y-2">
-          {clients.map((client) => (
+          {filteredClients.map((client) => (
             <Card key={client.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/clients/${client.id}`)}>
               <CardContent className="py-3 space-y-1">
                 <p className="font-medium">{client.name}</p>
