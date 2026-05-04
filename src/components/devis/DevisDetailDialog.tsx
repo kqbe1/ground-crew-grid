@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS, INSTALLATION_TYPE_LABELS } from "@/lib/constants";
+import { invalidateQuotesCache } from "@/lib/quotesQuery";
 import { ArrowLeft, Download, MessageSquare, Send, CheckCircle2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
@@ -53,6 +54,7 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
   const updateStatus = async (status: string) => {
     const { error } = await supabase.from("quotes").update({ status } as any).eq("id", quote.id);
     if (error) { toast.error(error.message); return; }
+    invalidateQuotesCache();
     toast.success(`Statut → ${QUOTE_STATUS_LABELS[status]}`);
     onUpdated();
   };
@@ -65,6 +67,7 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
     }];
     const { error } = await supabase.from("quotes").update({ internal_comments: comments } as any).eq("id", quote.id);
     if (error) { toast.error(error.message); return; }
+    invalidateQuotesCache();
     toast.success("Commentaire ajouté");
     setNewComment("");
     onUpdated();
