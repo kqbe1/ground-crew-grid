@@ -9,7 +9,6 @@ import DraggableTaskCard from "@/components/planning/DraggableTaskCard";
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem } from "@/components/ui/context-menu";
 import { useTaskClipboard } from "@/components/planning/TaskClipboardContext";
 import { findOverlaps, getOverlappingTaskIds } from "@/lib/overlapUtils";
-import { useDragScroll } from "@/hooks/useDragScroll";
 
 const HOURS = Array.from({ length: 11 }, (_, i) => i + 7);
 const HOUR_WIDTH = 120;
@@ -38,7 +37,6 @@ export default function PlanningHorizontalGrid({
   const [dragOverCell, setDragOverCell] = useState<string | null>(null);
   const [selection, setSelection] = useState<{ workerId: string; startMin: number; endMin: number } | null>(null);
   const selectingRef = useRef<{ workerId: string; startMin: number; rowEl: HTMLElement } | null>(null);
-  const dragScrollRef = useDragScroll();
   const { copiedTask } = useTaskClipboard();
   const dateStr = format(date, "yyyy-MM-dd");
   const dayTasks = useMemo(() => tasks.filter((t) => t.scheduled_date === dateStr), [tasks, dateStr]);
@@ -119,7 +117,7 @@ export default function PlanningHorizontalGrid({
   const totalWidth = WORKER_COL_WIDTH + 11 * HOUR_WIDTH;
 
   return (
-    <div ref={dragScrollRef} className="border border-border rounded-xl overflow-auto bg-card shadow-sm cursor-grab">
+    <div className="border border-border rounded-xl overflow-auto bg-card shadow-sm">
       <div style={{ minWidth: totalWidth }}>
         {/* Header: hours */}
         <div className="sticky top-0 z-20 flex bg-muted/50 border-b border-border">
