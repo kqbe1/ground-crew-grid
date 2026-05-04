@@ -115,8 +115,8 @@ export default function SuperAdminLayout() {
     <div className="flex h-screen overflow-hidden">
       <aside
         className={cn(
-          "flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300",
-          collapsed ? "w-16" : "w-64"
+          "flex h-screen shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300",
+          collapsed ? "w-16 min-w-16" : "w-64 min-w-64"
         )}
       >
         <div className={cn("flex items-center gap-3 px-4 h-16 border-b border-sidebar-border", collapsed && "justify-center")}>
