@@ -50,6 +50,7 @@ export default function EntretienDetail() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
+          <BackButton size="icon" variant="ghost" />
           <Wrench className="w-5 h-5" />
           <div>
             <h1 className="text-xl font-bold">{INTERVENTION_TYPE_LABELS[schedule.intervention_type] || schedule.intervention_type}</h1>
@@ -60,7 +61,6 @@ export default function EntretienDetail() {
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
             <Pencil className="w-4 h-4 mr-1" /> Modifier
           </Button>
-          <BackButton />
         </div>
       </div>
 

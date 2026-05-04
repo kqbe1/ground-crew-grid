@@ -159,6 +159,7 @@ export default function TacheDetail() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3 min-w-0">
+            <BackButton size="icon" variant="ghost" />
             <div className="min-w-0">
               <h1 className="text-xl font-bold truncate">{task.title}</h1>
               <p className="text-sm text-muted-foreground">
@@ -183,7 +184,6 @@ export default function TacheDetail() {
                 <Pencil className="w-4 h-4 mr-1" /> Modifier
               </Button>
             )}
-            <BackButton />
           </div>
         </div>
 
