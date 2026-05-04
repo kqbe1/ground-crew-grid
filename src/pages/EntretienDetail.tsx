@@ -33,8 +33,8 @@ export default function EntretienDetail() {
 
   useEffect(() => { fetchSchedule(); }, [fetchSchedule]);
 
-  if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-  if (!schedule) return <div className="p-6 text-center text-muted-foreground">Entretien introuvable</div>;
+  if (loading) return <LayoutDetail loading resourceLabel="Entretien">{null}</LayoutDetail>;
+  if (!schedule) return <LayoutDetail notFound resourceLabel="Entretien">{null}</LayoutDetail>;
 
   const daysUntilDue = schedule.next_due_date ? differenceInDays(new Date(schedule.next_due_date), new Date()) : null;
   const urgencyLevel = daysUntilDue === null ? "none" : daysUntilDue < 0 ? "overdue" : daysUntilDue <= 30 ? "soon" : "ok";

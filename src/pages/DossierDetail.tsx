@@ -92,25 +92,8 @@ export default function DossierDetail() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin h-6 w-6 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  if (!client) {
-    return (
-      <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
-        <div className="flex items-center gap-3">
-          <BackButton to="/dossiers" size="icon" variant="ghost" />
-          <h1 className="text-xl font-bold">Dossier</h1>
-        </div>
-        <p className="text-muted-foreground text-center py-12">Client introuvable</p>
-      </div>
-    );
-  }
+  if (loading) return <LayoutDetail loading resourceLabel="Dossier">{null}</LayoutDetail>;
+  if (!client) return <LayoutDetail notFound resourceLabel="Dossier">{null}</LayoutDetail>;
 
   const interventionTypeLabels: Record<string, string> = {
     entretien_gaz: "Entretien Gaz",

@@ -75,8 +75,8 @@ export default function CommandeDetail() {
     navigate(-1);
   };
 
-  if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-  if (!order) return <div className="p-6 text-center text-muted-foreground">Commande introuvable</div>;
+  if (loading) return <LayoutDetail loading resourceLabel="Commande">{null}</LayoutDetail>;
+  if (!order) return <LayoutDetail notFound resourceLabel="Commande">{null}</LayoutDetail>;
 
   const steps = ["demandee", "commandee", "recue", "cloturee"];
   const currentIdx = steps.indexOf(order.status);
