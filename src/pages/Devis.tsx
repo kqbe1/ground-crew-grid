@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { INSTALLATION_TYPE_LABELS } from "@/lib/constants";
 import { fetchQuotes, filterQuotes, QUOTE_STATUS_LABELS, invalidateQuotesCache, quotesToCsv } from "@/lib/quotesQuery";
 import QuoteStatusBadge from "@/components/devis/QuoteStatusBadge";
+import { useRealtimeQuotes } from "@/hooks/useRealtimeQuotes";
 import { FileText, Search, Trash2, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -43,17 +44,11 @@ export default function Devis() {
 
   useEffect(() => { loadQuotes(); fetchWorkers(); }, []);
 
-  // Realtime: rafraîchit la liste dès qu'un devis change (statut, ajout, suppression…)
-  useEffect(() => {
-    const channel = supabase
-      .channel("devis-list")
-      .on("postgres_changes", { event: "*", schema: "public", table: "quotes" }, () => {
-        invalidateQuotesCache();
-        loadQuotes(true);
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+  // Realtime robuste : reconnexion auto + rattrapage cache à chaque resync
+  useRealtimeQuotes({
+    channelName: "devis-list",
+    onChange: () => loadQuotes(true),
+  });
 
   const filtered = useMemo(
     () => filterQuotes(quotes, {

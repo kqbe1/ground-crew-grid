@@ -149,19 +149,72 @@ export default function BureauDashboard() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Realtime: refresh when quotes/sheets/tasks/orders change
+  // Realtime robuste : reconnexion auto + invalidation cache à chaque resync
   useEffect(() => {
-    const channel = supabase
-      .channel("bureau-dashboard")
-      .on("postgres_changes", { event: "*", schema: "public", table: "quotes" }, () => {
+    let cancelled = false;
+    let retry = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let wasDisconnected = false;
+
+    const cleanup = () => {
+      if (timer) { clearTimeout(timer); timer = null; }
+      if (channel) { supabase.removeChannel(channel); channel = null; }
+    };
+
+    const scheduleReconnect = () => {
+      if (cancelled) return;
+      wasDisconnected = true;
+      const delay = Math.min(30_000, 1_000 * 2 ** retry);
+      retry += 1;
+      timer = setTimeout(connect, delay);
+    };
+
+    const connect = () => {
+      if (cancelled) return;
+      cleanup();
+      channel = supabase
+        .channel("bureau-dashboard")
+        .on("postgres_changes", { event: "*", schema: "public", table: "quotes" }, () => {
+          invalidateQuotesCache();
+          fetchData();
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "intervention_sheets" }, () => fetchData())
+        .on("postgres_changes", { event: "*", schema: "public", table: "work_tasks" }, () => fetchData())
+        .on("postgres_changes", { event: "*", schema: "public", table: "parts_orders" }, () => fetchData())
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            retry = 0;
+            if (wasDisconnected) {
+              wasDisconnected = false;
+              invalidateQuotesCache();
+              fetchData();
+            }
+          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            scheduleReconnect();
+          }
+        });
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
         invalidateQuotesCache();
         fetchData();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "intervention_sheets" }, () => fetchData())
-      .on("postgres_changes", { event: "*", schema: "public", table: "work_tasks" }, () => fetchData())
-      .on("postgres_changes", { event: "*", schema: "public", table: "parts_orders" }, () => fetchData())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+        if (!channel) connect();
+      }
+    };
+    const handleOnline = () => { retry = 0; connect(); };
+
+    connect();
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("online", handleOnline);
+      cleanup();
+    };
   }, [fetchData]);
 
   // Apply filters
