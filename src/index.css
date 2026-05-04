@@ -65,6 +65,12 @@
     --color-urgent: 38 92% 50%;
     --color-critique: 0 72% 51%;
 
+    /* Role colors (badges) */
+    --color-role-super-admin: 38 92% 50%;
+    --color-role-admin: 0 72% 51%;
+    --color-role-bureau: 220 72% 50%;
+    --color-role-ouvrier: 142 55% 42%;
+
     --sidebar-background: 220 30% 12%;
     --sidebar-foreground: 220 14% 92%;
     --sidebar-primary: 220 72% 60%;
@@ -137,4 +143,17 @@
   .badge-remplacement { background-color: hsl(var(--color-remplacement)); color: white; }
   .badge-rdv { background-color: hsl(var(--color-rdv)); color: white; }
   .badge-autre { background-color: hsl(var(--color-autre)); color: white; }
+
+  /* Task status badges (soft tinted) */
+  .badge-status-planifie { background-color: hsl(var(--color-planifie) / 0.12); color: hsl(var(--color-planifie)); }
+  .badge-status-termine { background-color: hsl(var(--color-termine) / 0.12); color: hsl(var(--color-termine)); }
+  .badge-status-a_replanifier { background-color: hsl(var(--color-replanifier) / 0.15); color: hsl(var(--color-replanifier)); }
+  .badge-status-piece_a_commander { background-color: hsl(var(--color-piece) / 0.15); color: hsl(var(--color-piece)); }
+  .badge-status-sav { background-color: hsl(var(--color-sav) / 0.15); color: hsl(var(--color-sav)); }
+
+  /* Role badges (solid) */
+  .badge-role-super_admin { background-color: hsl(var(--color-role-super-admin)); color: white; }
+  .badge-role-admin { background-color: hsl(var(--color-role-admin)); color: white; }
+  .badge-role-bureau { background-color: hsl(var(--color-role-bureau)); color: white; }
+  .badge-role-ouvrier { background-color: hsl(var(--color-role-ouvrier)); color: white; }
 }
