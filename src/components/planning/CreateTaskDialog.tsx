@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { findOverlaps } from "@/lib/overlapUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
+import ClientCombobox from "@/components/forms/ClientCombobox";
 
 interface CreateTaskDialogProps {
   defaultDate: Date;
@@ -60,7 +61,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
   const [templateId, setTemplateId] = useState<string>("");
 
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  const [clients, setClients] = useState<{ id: string; name: string; address_intervention?: string | null }[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [existingTasks, setExistingTasks] = useState<any[]>([]);
 
@@ -69,7 +70,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
     const fetchData = async () => {
       const [w, c, t] = await Promise.all([
         supabase.from("profiles").select("id, full_name").eq("is_active", true),
-        supabase.from("clients").select("id, name").order("name"),
+        supabase.from("clients").select("id, name, address_intervention").order("name"),
         supabase.from("task_templates").select("*").order("name"),
       ]);
       setWorkers(w.data ?? []);
@@ -272,14 +273,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
 
           <div>
             <Label>Client</Label>
-            <Select value={clientId} onValueChange={setClientId}>
-              <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
-              <SelectContent>
-                {clients.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ClientCombobox clients={clients} value={clientId} onChange={setClientId} placeholder="Rechercher un client..." />
           </div>
 
           <div>
