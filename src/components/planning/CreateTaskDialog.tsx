@@ -15,7 +15,7 @@ const SIMPLIFIED_TYPES: Record<string, string> = {
   rdv_divers: "RDV Divers",
   autre: "Autre",
 };
-import { Plus, AlertTriangle, FileText } from "lucide-react";
+import { Plus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { findOverlaps } from "@/lib/overlapUtils";
@@ -58,24 +58,20 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
   const [clientId, setClientId] = useState<string>("");
   const [description, setDescription] = useState("");
   const [memoSecretariat, setMemoSecretariat] = useState("");
-  const [templateId, setTemplateId] = useState<string>("");
 
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string; address_intervention?: string | null }[]>([]);
-  const [templates, setTemplates] = useState<any[]>([]);
   const [existingTasks, setExistingTasks] = useState<any[]>([]);
 
   useEffect(() => {
     if (!open) return;
     const fetchData = async () => {
-      const [w, c, t] = await Promise.all([
+      const [w, c] = await Promise.all([
         supabase.from("profiles").select("id, full_name").eq("is_active", true),
         supabase.from("clients").select("id, name, address_intervention").order("name"),
-        supabase.from("task_templates").select("*").order("name"),
       ]);
       setWorkers(w.data ?? []);
       setClients(c.data ?? []);
-      setTemplates(t.data ?? []);
     };
     fetchData();
   }, [open]);
@@ -114,33 +110,8 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
       } else {
         setEndTime(computeEndTime(newStart, durationMinutes));
       }
-      setTemplateId("");
     }
   }, [open, defaultDate, defaultHour, defaultMinute, defaultWorkerId, defaultDuration]);
-
-  // Apply template when selected
-  const handleTemplateChange = (id: string) => {
-    setTemplateId(id);
-    if (id === "none") {
-      setTemplateId("");
-      return;
-    }
-    const tpl = templates.find((t) => t.id === id);
-    if (!tpl) return;
-    setTitle(tpl.name);
-    setDescription(tpl.description || "");
-    setDurationMinutes(tpl.default_duration_minutes);
-    setEndTime(computeEndTime(startTime, tpl.default_duration_minutes));
-    // Map intervention type to simplified type
-    const type = tpl.intervention_type;
-    if (type in SIMPLIFIED_TYPES) {
-      setInterventionType(type);
-    } else if (type.startsWith("entretien_")) {
-      setInterventionType("entretien_gaz");
-    } else {
-      setInterventionType("autre");
-    }
-  };
 
   const handleSubmit = async () => {
     if (!title.trim() || !user) {
@@ -158,7 +129,6 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
       client_id: clientId || null,
       description: description || null,
       memo_secretariat: memoSecretariat || null,
-      template_id: templateId || null,
       created_by: user.id,
       status: "planifie" as any,
     } as any);
@@ -171,7 +141,6 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
     setTitle("");
     setDescription("");
     setMemoSecretariat("");
-    setTemplateId("");
     setOpen(false);
     onCreated();
   };
@@ -188,28 +157,6 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
           <DialogTitle>Créer une tâche</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          {/* Template selector */}
-          {templates.length > 0 && (
-            <div>
-              <Label className="flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5" /> Template
-              </Label>
-              <Select value={templateId || "none"} onValueChange={handleTemplateChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un template..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Aucun template</SelectItem>
-                  {templates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name} ({t.default_duration_minutes} min)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
           <div>
             <Label>Titre *</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Entretien chaudière gaz" />
