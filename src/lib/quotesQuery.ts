@@ -136,3 +136,30 @@ export function filterQuotes<T extends Record<string, any>>(
     return true;
   });
 }
+
+/** Sérialise une liste de devis filtrée vers un CSV (mêmes colonnes que la liste UI). */
+export function quotesToCsv(quotes: any[]): string {
+  const headers = [
+    "Date",
+    "Client",
+    "Ville",
+    "Adresse",
+    "Installation",
+    "Statut",
+    "Créé par",
+  ];
+  const escape = (v: any) => {
+    const s = v == null ? "" : String(v);
+    return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const rows = quotes.map((q) => [
+    q.created_at ? new Date(q.created_at).toISOString() : "",
+    q.client_name ?? "",
+    q.client_city ?? "",
+    q.client_address ?? "",
+    q.installation_type ?? "",
+    quoteStatusLabel(q.status),
+    q.profiles?.full_name ?? "",
+  ]);
+  return [headers, ...rows].map((r) => r.map(escape).join(";")).join("\n");
+}
