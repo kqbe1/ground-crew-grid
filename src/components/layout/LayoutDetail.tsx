@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 interface LayoutDetailProps {
   /** Élément principal du titre (texte ou JSX) */
-  title: ReactNode;
+  title?: ReactNode;
   /** Sous-titre affiché sous le titre (client, date, etc.) */
   subtitle?: ReactNode;
   /** Icône ou badge à afficher entre le bouton retour et le titre */
@@ -96,7 +96,9 @@ export default function LayoutDetail({
   };
 
   const stateContent = renderState();
+  const isStateView = loading || error || notFound;
   const showHeader = !loading; // header visible sauf en loading complet
+  const headerTitle = isStateView ? (resourceLabel) : title;
 
   return (
     <div className={`p-4 md:p-8 lg:px-12 lg:py-10 space-y-8 ${className}`}>
@@ -105,14 +107,14 @@ export default function LayoutDetail({
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <BackButton size="icon" variant="ghost" />
-            {icon}
+            {!isStateView && icon}
             <div className="min-w-0">
-              <h1 className="text-xl font-bold truncate">{title}</h1>
-              {subtitle && (
+              <h1 className="text-xl font-bold truncate">{headerTitle}</h1>
+              {!isStateView && subtitle && (
                 <p className="text-sm text-muted-foreground">{subtitle}</p>
               )}
             </div>
-            {titleAdornment}
+            {!isStateView && titleAdornment}
           </div>
           {actions && !error && !notFound && <div className="flex items-center gap-2">{actions}</div>}
         </div>
