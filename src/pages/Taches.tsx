@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, ListTodo } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { FILTER_TYPE_GROUPS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
 import { useWorkerLabels } from "@/hooks/useWorkerLabels";
+import LayoutPage from "@/components/layout/LayoutPage";
 
 const statusLabels: Record<string, string> = {
   planifie: "Planifié",
@@ -100,12 +101,13 @@ export default function Taches() {
   }, [tasks, search, typeFilter, statusFilter]);
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="flex items-center justify-end">
-        <CreateTaskDialog defaultDate={new Date()} onCreated={() => refetch()} />
-      </div>
-
-      <div className="flex items-center gap-3 flex-wrap">
+    <LayoutPage
+      icon={ListTodo}
+      title="Tâches"
+      subtitle={`${filtered.length} tâche${filtered.length > 1 ? "s" : ""}`}
+      actions={<CreateTaskDialog defaultDate={new Date()} onCreated={() => refetch()} />}
+      toolbar={
+        <div className="flex items-center gap-3 flex-wrap w-full">
         <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -137,8 +139,9 @@ export default function Taches() {
             ))}
           </SelectContent>
         </Select>
-      </div>
-
+        </div>
+      }
+    >
       {isMobile ? (
         <div className="space-y-2">
           {filtered.length === 0 ? (
@@ -223,6 +226,6 @@ export default function Taches() {
         </div>
       )}
 
-    </div>
+    </LayoutPage>
   );
 }
