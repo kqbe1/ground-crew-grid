@@ -11,21 +11,21 @@ import type { UnifiedFiche, SortColumn, SortDir } from "./types";
 import { TASK_STATUS_LABELS, QUOTE_STATUS_LABELS } from "@/lib/constants";
 
 const TYPE_BADGE: Record<string, { label: string; className: string }> = {
-  FI: { label: "+FI", className: "bg-blue-500 text-white" },
-  FE: { label: "+FE", className: "bg-emerald-500 text-white" },
-  FD: { label: "+FD", className: "bg-rose-500 text-white" },
+  FI: { label: "+FI", className: "bg-[hsl(var(--color-fiche))] text-white" },
+  FE: { label: "+FE", className: "bg-[hsl(var(--color-fiche-entretien))] text-white" },
+  FD: { label: "+FD", className: "bg-[hsl(var(--color-devis))] text-white" },
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  planifie: "bg-blue-500 text-white",
-  termine: "bg-emerald-500 text-white",
-  a_replanifier: "bg-amber-500 text-white",
-  piece_a_commander: "bg-purple-500 text-white",
-  sav: "bg-orange-500 text-white",
-  en_attente: "bg-amber-500 text-white",
-  dossier_en_cours: "bg-blue-500 text-white",
-  en_commande: "bg-purple-500 text-white",
-  cloture: "bg-emerald-500 text-white",
+  planifie: "bg-[hsl(var(--color-planifie))] text-white",
+  termine: "bg-[hsl(var(--color-termine))] text-white",
+  a_replanifier: "bg-[hsl(var(--color-replanifier))] text-white",
+  piece_a_commander: "bg-[hsl(var(--color-piece))] text-white",
+  sav: "bg-[hsl(var(--color-sav))] text-white",
+  en_attente: "bg-[hsl(var(--color-replanifier))] text-white",
+  dossier_en_cours: "bg-[hsl(var(--color-planifie))] text-white",
+  en_commande: "bg-[hsl(var(--color-piece))] text-white",
+  cloture: "bg-[hsl(var(--color-termine))] text-white",
 };
 
 const PAGE_SIZE = 20;

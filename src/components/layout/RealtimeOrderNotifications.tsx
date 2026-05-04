@@ -182,7 +182,7 @@ export default function RealtimeOrderNotifications() {
     new_order: "bg-[hsl(var(--color-demandee))]/10",
     order_received: "bg-[hsl(var(--color-recue))]/10",
     task_completed: "bg-[hsl(var(--color-termine))]/10",
-    new_quote: "bg-rose-500/10",
+    new_quote: "bg-[hsl(var(--color-devis))]/10",
   };
 
   return (
