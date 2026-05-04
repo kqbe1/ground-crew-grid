@@ -1226,7 +1226,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_create_devis_db: { Args: never; Returns: boolean }
       get_my_clients_safe: {
         Args: never
         Returns: {
@@ -1265,47 +1264,6 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
-      }
-      get_my_company_id: { Args: never; Returns: string }
-      get_my_profile_protected: {
-        Args: never
-        Returns: {
-          company_id: string
-          is_active: boolean
-          role: Database["public"]["Enums"]["app_role"]
-        }[]
-      }
-      get_my_role: {
-        Args: never
-        Returns: Database["public"]["Enums"]["app_role"]
-      }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      is_admin: { Args: never; Returns: boolean }
-      is_admin_or_bureau: { Args: never; Returns: boolean }
-      is_admin_or_secretariat: { Args: never; Returns: boolean }
-      is_bureau: { Args: never; Returns: boolean }
-      is_ouvrier: { Args: never; Returns: boolean }
-      is_super_admin: { Args: never; Returns: boolean }
-      log_activity: {
-        Args: {
-          p_action: string
-          p_actor_id?: string
-          p_company_id?: string
-          p_metadata?: Json
-          p_target_id?: string
-          p_target_type?: string
-        }
-        Returns: undefined
-      }
-      storage_file_belongs_to_my_company: {
-        Args: { file_name: string }
-        Returns: boolean
       }
     }
     Enums: {
