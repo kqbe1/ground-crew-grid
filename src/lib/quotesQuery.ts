@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeSearch } from "@/lib/searchUtils";
 
 // Source unique de vérité pour les statuts de devis
 export const QUOTE_STATUSES = [
@@ -39,4 +40,36 @@ export async function fetchQuotes({ activeOnly = false }: FetchQuotesOptions = {
   const { data, error } = await query;
   if (error) throw error;
   return data ?? [];
+}
+
+export interface QuoteFilterCriteria {
+  /** "all" ou un statut précis */
+  status?: string;
+  /** "all" ou un type d'installation */
+  installationType?: string;
+  /** "all" ou un user_id (created_by) */
+  createdBy?: string;
+  /** texte libre — matche client_name / client_city / nom du créateur */
+  search?: string;
+}
+
+/** Filtre côté client commun à la page Devis et au dashboard. */
+export function filterQuotes<T extends Record<string, any>>(
+  quotes: T[],
+  { status = "all", installationType = "all", createdBy = "all", search = "" }: QuoteFilterCriteria = {},
+): T[] {
+  const s = search.trim() ? normalizeSearch(search) : "";
+  return quotes.filter((q) => {
+    if (status !== "all" && q.status !== status) return false;
+    if (installationType !== "all" && q.installation_type !== installationType) return false;
+    if (createdBy !== "all" && q.created_by !== createdBy) return false;
+    if (s) {
+      const hay = [q.client_name, q.client_city, q.profiles?.full_name]
+        .filter(Boolean)
+        .map((v: string) => normalizeSearch(v))
+        .join(" ");
+      if (!hay.includes(s)) return false;
+    }
+    return true;
+  });
 }
