@@ -15,8 +15,8 @@ const ROW_HEIGHT = 80;
 const WORKER_COL_WIDTH = 200;
 const MIN_HOUR_WIDTH = 80;
 
-function getInitials(name: string) {
-  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+function workerLabel(index: number) {
+  return `T${index + 1}`;
 }
 
 interface Props {
@@ -153,7 +153,7 @@ export default function PlanningHorizontalGrid({
         </div>
 
         {/* Rows */}
-        {workers.map((w) => {
+        {workers.map((w, idx) => {
           const workerTasks = dayTasks.filter((t) => t.assigned_to === w.id);
           const isSelectingRow = selection?.workerId === w.id;
           return (
@@ -189,7 +189,7 @@ export default function PlanningHorizontalGrid({
                 <GripVertical className="w-4 h-4 text-muted-foreground shrink-0" />
                 <Avatar className="h-9 w-9 shrink-0">
                   <AvatarFallback className="text-xs font-semibold bg-muted text-muted-foreground">
-                    {getInitials(w.full_name)}
+                    {workerLabel(idx)}
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium truncate">{w.full_name}</span>
