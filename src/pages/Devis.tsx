@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/searchUtils";
 import { QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS, INSTALLATION_TYPE_LABELS } from "@/lib/constants";
-import { fetchQuotes, QUOTE_STATUSES } from "@/lib/quotesQuery";
+import { fetchQuotes } from "@/lib/quotesQuery";
 import { FileText, Search, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
