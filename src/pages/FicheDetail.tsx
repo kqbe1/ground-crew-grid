@@ -113,6 +113,7 @@ export default function FicheDetail() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3 min-w-0">
+            <BackButton size="icon" variant="ghost" />
             <Badge className={`${badgeColor} text-white`}>{badgeType}</Badge>
             <div className="min-w-0">
               <h1 className="text-xl font-bold truncate">{task?.title || "Fiche d'intervention"}</h1>
@@ -133,7 +134,6 @@ export default function FicheDetail() {
             }}>
               <Download className="w-4 h-4 mr-1" /> Télécharger
             </Button>
-            <BackButton />
           </div>
         </div>
 
