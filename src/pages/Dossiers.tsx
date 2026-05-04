@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, FolderOpen, ClipboardList, Wrench, FileText, Package, ChevronRight } from "lucide-react";
@@ -26,6 +27,8 @@ export default function Dossiers() {
   const isMobile = useIsMobile();
   const [dossiers, setDossiers] = useState<ClientDossier[]>([]);
   const [search, setSearch] = useState("");
+  const [contentFilter, setContentFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("name");
   const [loading, setLoading] = useState(true);
 
   const fetchDossiers = useCallback(async () => {
@@ -118,15 +121,53 @@ export default function Dossiers() {
 
   const totalDocs = (d: ClientDossier) => d.fiches_count + d.entretiens_count + d.devis_count + d.commandes_count;
 
+  const filtered = useMemo(() => {
+    let result = [...dossiers];
+    if (contentFilter !== "all") {
+      if (contentFilter === "with") result = result.filter((d) => totalDocs(d) > 0);
+      else if (contentFilter === "without") result = result.filter((d) => totalDocs(d) === 0);
+      else if (contentFilter === "fiches") result = result.filter((d) => d.fiches_count > 0);
+      else if (contentFilter === "entretiens") result = result.filter((d) => d.entretiens_count > 0);
+      else if (contentFilter === "devis") result = result.filter((d) => d.devis_count > 0);
+      else if (contentFilter === "commandes") result = result.filter((d) => d.commandes_count > 0);
+    }
+    if (sortBy === "name") result.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortBy === "total_desc") result.sort((a, b) => totalDocs(b) - totalDocs(a));
+    else if (sortBy === "total_asc") result.sort((a, b) => totalDocs(a) - totalDocs(b));
+    return result;
+  }, [dossiers, contentFilter, sortBy]);
+
   return (
     <LayoutPage
       icon={FolderOpen}
       title="Dossiers"
-      subtitle={`${dossiers.length} dossier${dossiers.length > 1 ? "s" : ""}`}
+      subtitle={`${filtered.length} dossier${filtered.length > 1 ? "s" : ""}`}
       toolbar={
-        <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Rechercher un client..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+        <div className="flex items-center gap-3 flex-wrap w-full">
+          <div className="relative flex-1 min-w-[180px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Rechercher un client..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          </div>
+          <Select value={contentFilter} onValueChange={setContentFilter}>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Contenu" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les dossiers</SelectItem>
+              <SelectItem value="with">Avec documents</SelectItem>
+              <SelectItem value="without">Sans documents</SelectItem>
+              <SelectItem value="fiches">Avec fiches</SelectItem>
+              <SelectItem value="entretiens">Avec entretiens</SelectItem>
+              <SelectItem value="devis">Avec devis</SelectItem>
+              <SelectItem value="commandes">Avec commandes</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Trier" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name">Nom (A-Z)</SelectItem>
+              <SelectItem value="total_desc">Plus de documents</SelectItem>
+              <SelectItem value="total_asc">Moins de documents</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       }
     >
@@ -158,7 +199,7 @@ export default function Dossiers() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {dossiers.map((d) => (
+              {filtered.map((d) => (
                 <TableRow key={d.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/dossiers/${d.id}`)}>
                   <TableCell>
                     <div>
@@ -188,7 +229,7 @@ export default function Dossiers() {
                   </TableCell>
                 </TableRow>
               ))}
-              {dossiers.length === 0 && (
+              {filtered.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
                     <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -201,7 +242,7 @@ export default function Dossiers() {
         </div>
       ) : (
         <div className="space-y-2">
-          {dossiers.map((d) => (
+          {filtered.map((d) => (
             <Card key={d.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/dossiers/${d.id}`)}>
               <CardContent className="py-3 space-y-2">
                 <div className="flex items-center justify-between">
@@ -218,7 +259,7 @@ export default function Dossiers() {
               </CardContent>
             </Card>
           ))}
-          {dossiers.length === 0 && (
+          {filtered.length === 0 && (
             <div className="py-12 text-center text-muted-foreground">
               <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
               Aucun dossier trouvé
