@@ -42,6 +42,12 @@ export default function PlanningHorizontalGrid({
   const dayTasks = useMemo(() => tasks.filter((t) => t.scheduled_date === dateStr), [tasks, dateStr]);
   const overlappingIds = useMemo(() => getOverlappingTaskIds(dayTasks), [dayTasks]);
 
+  const workerLabelMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    workers.forEach((w, i) => { m[w.id] = `T${i + 1}`; });
+    return m;
+  }, [workers]);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [hourWidth, setHourWidth] = useState<number>(120);
 
@@ -250,6 +256,7 @@ export default function PlanningHorizontalGrid({
                             onClick={onTaskClick}
                             onResized={onRefresh}
                             hasOverlap={overlappingIds.has(task.id)}
+                            workerLabel={workerLabelMap[task.assigned_to]}
                           />
                         </div>
                       );
