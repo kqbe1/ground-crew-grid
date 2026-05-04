@@ -53,11 +53,7 @@ export default function Clients() {
 
   return (
     <div className="p-4 md:p-6 space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold">Clients</h1>
-          <p className="text-muted-foreground">{clients.length} client(s)</p>
-        </div>
+      <div className="flex justify-end">
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={exportCsv}><Download className="w-4 h-4 mr-1" /> CSV</Button>
           <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={() => setImportOpen(true)}><Upload className="w-4 h-4 mr-1" /> Importer</Button>
