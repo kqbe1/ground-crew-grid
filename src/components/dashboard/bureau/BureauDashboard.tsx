@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TASK_STATUS_LABELS, QUOTE_STATUS_LABELS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
+import { normalizeSearch } from "@/lib/searchUtils";
 import BureauFilterCards from "./BureauFilterCards";
 import BureauReceivedBanner from "./BureauReceivedBanner";
 import BureauFilterBar from "./BureauFilterBar";
@@ -200,8 +201,8 @@ export default function BureauDashboard() {
 
     // Search
     if (searchClient.trim()) {
-      const q = searchClient.toLowerCase();
-      result = result.filter((f) => f.clientName.toLowerCase().includes(q));
+      const q = normalizeSearch(searchClient);
+      result = result.filter((f) => normalizeSearch(f.clientName).includes(q));
     }
 
     return result;
