@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TASK_STATUS_LABELS, QUOTE_STATUS_LABELS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
-import { fetchQuotes } from "@/lib/quotesQuery";
+import { fetchQuotes, invalidateQuotesCache } from "@/lib/quotesQuery";
 import { normalizeSearch } from "@/lib/searchUtils";
 import BureauFilterCards from "./BureauFilterCards";
 import BureauReceivedBanner from "./BureauReceivedBanner";
@@ -153,7 +153,10 @@ export default function BureauDashboard() {
   useEffect(() => {
     const channel = supabase
       .channel("bureau-dashboard")
-      .on("postgres_changes", { event: "*", schema: "public", table: "quotes" }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "quotes" }, () => {
+        invalidateQuotesCache();
+        fetchData();
+      })
       .on("postgres_changes", { event: "*", schema: "public", table: "intervention_sheets" }, () => fetchData())
       .on("postgres_changes", { event: "*", schema: "public", table: "work_tasks" }, () => fetchData())
       .on("postgres_changes", { event: "*", schema: "public", table: "parts_orders" }, () => fetchData())

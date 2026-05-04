@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { INSTALLATION_TYPE_LABELS } from "@/lib/constants";
-import { fetchQuotes, filterQuotes, QUOTE_STATUS_LABELS } from "@/lib/quotesQuery";
+import { fetchQuotes, filterQuotes, QUOTE_STATUS_LABELS, invalidateQuotesCache } from "@/lib/quotesQuery";
 import QuoteStatusBadge from "@/components/devis/QuoteStatusBadge";
 import { FileText, Search, Trash2 } from "lucide-react";
 import { format } from "date-fns";
@@ -24,9 +24,9 @@ export default function Devis() {
   const [workerFilter, setWorkerFilter] = useState("all");
   const isMobile = useIsMobile();
 
-  const loadQuotes = async () => {
+  const loadQuotes = async (force = false) => {
     try {
-      const data = await fetchQuotes();
+      const data = await fetchQuotes({ force });
       setQuotes(data);
     } catch {
       setQuotes([]);
@@ -44,7 +44,10 @@ export default function Devis() {
   useEffect(() => {
     const channel = supabase
       .channel("devis-list")
-      .on("postgres_changes", { event: "*", schema: "public", table: "quotes" }, () => loadQuotes())
+      .on("postgres_changes", { event: "*", schema: "public", table: "quotes" }, () => {
+        invalidateQuotesCache();
+        loadQuotes(true);
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
@@ -60,8 +63,9 @@ export default function Devis() {
     if (!confirm("Supprimer ce devis ?")) return;
     const { error } = await supabase.from("quotes").delete().eq("id", id);
     if (error) { toast.error("Erreur"); return; }
+    invalidateQuotesCache();
     toast.success("Devis supprimé");
-    loadQuotes();
+    loadQuotes(true);
   };
 
   return (
