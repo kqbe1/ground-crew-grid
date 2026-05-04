@@ -125,9 +125,12 @@ export default function ClientDetail() {
     <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h1 className="text-xl font-bold">{client.name}</h1>
-          <p className="text-sm text-muted-foreground">{client.address_intervention || client.region || ""}</p>
+        <div className="flex items-center gap-3 min-w-0">
+          <BackButton size="icon" variant="ghost" />
+          <div>
+            <h1 className="text-xl font-bold">{client.name}</h1>
+            <p className="text-sm text-muted-foreground">{client.address_intervention || client.region || ""}</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
@@ -139,7 +142,6 @@ export default function ClientDetail() {
           <Button variant="outline" size="sm" onClick={() => navigate(`/entretiens`)}>
             <Wrench className="w-4 h-4 mr-1" /> Entretien
           </Button>
-          <BackButton />
         </div>
       </div>
 
