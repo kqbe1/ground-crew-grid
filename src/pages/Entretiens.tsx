@@ -15,6 +15,7 @@ import { Wrench, Calendar, TrendingUp, Plus, AlertTriangle, Search, Filter } fro
 import { cn } from "@/lib/utils";
 import CreateEditEntretienDialog from "@/components/entretiens/CreateEditEntretienDialog";
 import type { Tables } from "@/integrations/supabase/types";
+import LayoutPage from "@/components/layout/LayoutPage";
 
 type Schedule = Tables<"maintenance_schedules">;
 
@@ -182,12 +183,16 @@ export default function Entretiens() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-end">
+    <LayoutPage
+      icon={Wrench}
+      title="Entretiens"
+      subtitle={`${schedules.length} entretien${schedules.length > 1 ? "s" : ""}`}
+      actions={
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="w-4 h-4 mr-2" /> Nouvel entretien
         </Button>
-      </div>
+      }
+    >
 
       {/* Stats cards by type */}
       <div className="flex flex-wrap gap-3">
