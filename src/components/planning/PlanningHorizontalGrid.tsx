@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,9 +11,9 @@ import { useTaskClipboard } from "@/components/planning/TaskClipboardContext";
 import { findOverlaps, getOverlappingTaskIds } from "@/lib/overlapUtils";
 
 const HOURS = Array.from({ length: 11 }, (_, i) => i + 7);
-const HOUR_WIDTH = 120;
 const ROW_HEIGHT = 80;
 const WORKER_COL_WIDTH = 200;
+const MIN_HOUR_WIDTH = 80;
 
 function getInitials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
@@ -42,8 +42,25 @@ export default function PlanningHorizontalGrid({
   const dayTasks = useMemo(() => tasks.filter((t) => t.scheduled_date === dateStr), [tasks, dateStr]);
   const overlappingIds = useMemo(() => getOverlappingTaskIds(dayTasks), [dayTasks]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hourWidth, setHourWidth] = useState<number>(120);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const compute = () => {
+      const available = el.clientWidth - WORKER_COL_WIDTH;
+      const w = Math.max(MIN_HOUR_WIDTH, Math.floor(available / HOURS.length));
+      setHourWidth(w);
+    };
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const xToMinutes = (x: number) => {
-    const m = Math.round((x / HOUR_WIDTH) * 60 / 15) * 15;
+    const m = Math.round((x / hourWidth) * 60 / 15) * 15;
     return Math.max(0, Math.min(11 * 60, m)) + 7 * 60;
   };
 
@@ -114,10 +131,10 @@ export default function PlanningHorizontalGrid({
     onWorkerReorder(draggedId, targetId);
   };
 
-  const totalWidth = WORKER_COL_WIDTH + 11 * HOUR_WIDTH;
+  const totalWidth = WORKER_COL_WIDTH + HOURS.length * hourWidth;
 
   return (
-    <div className="border border-border rounded-xl overflow-auto bg-card shadow-sm">
+    <div ref={containerRef} className="border border-border rounded-xl overflow-auto bg-card shadow-sm w-full">
       <div style={{ minWidth: totalWidth }}>
         {/* Header: hours */}
         <div className="sticky top-0 z-20 flex bg-muted/50 border-b border-border">
@@ -128,7 +145,7 @@ export default function PlanningHorizontalGrid({
             <div
               key={h}
               className="shrink-0 border-r border-border text-xs font-medium text-muted-foreground py-2 text-center"
-              style={{ width: HOUR_WIDTH }}
+              style={{ width: hourWidth }}
             >
               {String(h).padStart(2, "0")}:00
             </div>
@@ -183,7 +200,7 @@ export default function PlanningHorizontalGrid({
                 <ContextMenuTrigger asChild>
                   <div
                     className="relative flex-1"
-                    style={{ width: 11 * HOUR_WIDTH }}
+                    style={{ width: HOURS.length * hourWidth }}
                     onPointerDown={(e) => handleRowPointerDown(e, w.id)}
                     onPointerMove={handleRowPointerMove}
                     onPointerUp={handleRowPointerUp}
@@ -196,13 +213,13 @@ export default function PlanningHorizontalGrid({
                       <div
                         key={h}
                         className="absolute top-0 bottom-0 border-r border-border/60 pointer-events-none"
-                        style={{ left: i * HOUR_WIDTH, width: HOUR_WIDTH }}
+                        style={{ left: i * hourWidth, width: hourWidth }}
                       >
                         {[1, 2, 3].map((q) => (
                           <div
                             key={q}
                             className="absolute top-0 bottom-0 border-l border-dashed border-border/30"
-                            style={{ left: q * (HOUR_WIDTH / 4) }}
+                            style={{ left: q * (hourWidth / 4) }}
                           />
                         ))}
                       </div>
@@ -213,8 +230,8 @@ export default function PlanningHorizontalGrid({
                       <div
                         className="absolute top-1 bottom-1 bg-primary/20 border-2 border-primary rounded-md pointer-events-none z-[1]"
                         style={{
-                          left: ((selection.startMin - 7 * 60) / 60) * HOUR_WIDTH,
-                          width: ((selection.endMin - selection.startMin) / 60) * HOUR_WIDTH,
+                          left: ((selection.startMin - 7 * 60) / 60) * hourWidth,
+                          width: ((selection.endMin - selection.startMin) / 60) * hourWidth,
                         }}
                       />
                     )}
@@ -223,12 +240,12 @@ export default function PlanningHorizontalGrid({
                     {workerTasks.map((task) => {
                       const sH = parseInt(task.start_time.split(":")[0]);
                       const sM = parseInt(task.start_time.split(":")[1] || "0");
-                      const left = ((sH * 60 + sM) - 7 * 60) / 60 * HOUR_WIDTH;
+                      const left = ((sH * 60 + sM) - 7 * 60) / 60 * hourWidth;
                       return (
                         <div key={task.id} data-task-card style={{ position: "absolute", left, top: 0, bottom: 0 }}>
                           <DraggableTaskCard
                             task={task}
-                            hourWidth={HOUR_WIDTH}
+                            hourWidth={hourWidth}
                             onDragStart={handleTaskDragStart}
                             onClick={onTaskClick}
                             onResized={onRefresh}
