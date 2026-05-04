@@ -15,7 +15,7 @@ import { fr } from "date-fns/locale";
 import { downloadDevisPdf } from "@/lib/generateDevisPdf";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-const statuses = ["en_attente", "dossier_en_cours", "en_commande", "sav"] as const;
+const statuses = ["en_attente"] as const;
 
 export default function DevisDetail() {
   const { id } = useParams();

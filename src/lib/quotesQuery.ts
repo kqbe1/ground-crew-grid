@@ -4,9 +4,6 @@ import { normalizeSearch } from "@/lib/searchUtils";
 // Source unique de vérité pour les statuts de devis
 export const QUOTE_STATUSES = [
   "en_attente",
-  "dossier_en_cours",
-  "en_commande",
-  "sav",
   "cloture",
 ] as const;
 
@@ -21,17 +18,11 @@ export const ACTIVE_QUOTE_STATUSES: QuoteStatus[] = QUOTE_STATUSES.filter(
 // Utilisé partout (page Devis, dashboard, PDF, dialogs).
 export const QUOTE_STATUS_LABELS: Record<QuoteStatus, string> = {
   en_attente: "En attente",
-  dossier_en_cours: "Dossier en cours",
-  en_commande: "En commande",
-  sav: "SAV",
   cloture: "Clôturé",
 };
 
 export const QUOTE_STATUS_COLORS: Record<QuoteStatus, string> = {
   en_attente: "bg-[hsl(var(--color-replanifier))]",
-  dossier_en_cours: "bg-[hsl(var(--color-planifie))]",
-  en_commande: "bg-[hsl(var(--color-piece))]",
-  sav: "bg-[hsl(var(--color-sav))]",
   cloture: "bg-[hsl(var(--color-termine))]",
 };
 
