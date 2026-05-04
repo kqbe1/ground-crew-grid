@@ -17,9 +17,10 @@ interface DraggableTaskCardProps {
   onClick: (task: any) => void;
   onResized: () => void;
   hasOverlap?: boolean;
+  workerLabel?: string | null;
 }
 
-export default function DraggableTaskCard({ task, hourWidth, onDragStart, onClick, onResized, hasOverlap }: DraggableTaskCardProps) {
+export default function DraggableTaskCard({ task, hourWidth, onDragStart, onClick, onResized, hasOverlap, workerLabel }: DraggableTaskCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const resizingRef = useRef(false);
   const { copyTask } = useTaskClipboard();
@@ -103,6 +104,11 @@ export default function DraggableTaskCard({ task, hourWidth, onDragStart, onClic
         >
           <div className="font-bold truncate text-[11px] leading-tight flex items-center gap-1">
             {hasOverlap && <AlertTriangle className="w-3 h-3 shrink-0" />}
+            {workerLabel && (
+              <span className="shrink-0 rounded bg-black/30 px-1 py-[1px] text-[9px] font-bold tracking-wide">
+                {workerLabel}
+              </span>
+            )}
             {task.title}
           </div>
           {task.clients?.name && (

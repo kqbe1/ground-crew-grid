@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { FILTER_TYPE_GROUPS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
+import { useWorkerLabels } from "@/hooks/useWorkerLabels";
 
 const statusLabels: Record<string, string> = {
   planifie: "Planifié",
@@ -45,6 +46,7 @@ const typeLabels: Record<string, string> = {
 export default function Taches() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const workerLabels = useWorkerLabels();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -160,7 +162,14 @@ export default function Taches() {
                     <span>{format(new Date(task.scheduled_date), "dd MMM yyyy", { locale: fr })}</span>
                   </div>
                   {task.profiles?.full_name && (
-                    <p className="text-xs text-muted-foreground">{task.profiles.full_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {workerLabels[task.assigned_to] && (
+                        <span className="mr-1 rounded bg-muted px-1 py-[1px] text-[10px] font-bold text-foreground">
+                          {workerLabels[task.assigned_to]}
+                        </span>
+                      )}
+                      {task.profiles.full_name}
+                    </p>
                   )}
                 </CardContent>
               </Card>
@@ -189,7 +198,14 @@ export default function Taches() {
                   <div>
                     <p className="font-medium truncate">{task.title}</p>
                     {task.profiles?.full_name && (
-                      <p className="text-xs text-muted-foreground truncate">{task.profiles.full_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {workerLabels[task.assigned_to] && (
+                          <span className="mr-1 rounded bg-muted px-1 py-[1px] text-[10px] font-bold text-foreground">
+                            {workerLabels[task.assigned_to]}
+                          </span>
+                        )}
+                        {task.profiles.full_name}
+                      </p>
                     )}
                   </div>
                   <span className="truncate self-center">{task.clients?.name || "—"}</span>
