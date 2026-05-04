@@ -1234,6 +1234,35 @@ export type Database = {
           phone: string
         }[]
       }
+      get_my_company_full: {
+        Args: never
+        Returns: {
+          address: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          max_users: number | null
+          name: string
+          notes: string | null
+          plan: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          slug: string
+          subscription_end: string | null
+          subscription_start: string | null
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "companies"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_my_company_id: { Args: never; Returns: string }
       get_my_profile_protected: {
         Args: never
