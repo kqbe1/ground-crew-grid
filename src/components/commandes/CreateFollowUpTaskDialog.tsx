@@ -11,6 +11,7 @@ import { INTERVENTION_TYPE_LABELS } from "@/lib/constants";
 import { CalendarPlus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
 
 interface Props {
   open: boolean;
@@ -29,6 +30,7 @@ export default function CreateFollowUpTaskDialog({ open, onOpenChange, order, on
   const [scheduledDate, setScheduledDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [startTime, setStartTime] = useState("08:00");
   const [durationMinutes, setDurationMinutes] = useState(60);
+  const [endTime, setEndTime] = useState(computeEndTime("08:00", 60));
   const [description, setDescription] = useState("");
 
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
@@ -120,12 +122,28 @@ export default function CreateFollowUpTaskDialog({ open, onOpenChange, order, on
               <Input type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
             </div>
             <div>
-              <Label>Heure</Label>
-              <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+              <Label>Heure de début</Label>
+              <Input
+                type="time"
+                value={startTime}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setStartTime(v);
+                  setDurationMinutes(computeDurationMinutes(v, endTime));
+                }}
+              />
             </div>
             <div>
-              <Label>Durée (min)</Label>
-              <Input type="number" min={15} step={15} value={durationMinutes} onChange={(e) => setDurationMinutes(Number(e.target.value))} />
+              <Label>Heure de fin</Label>
+              <Input
+                type="time"
+                value={endTime}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setEndTime(v);
+                  setDurationMinutes(computeDurationMinutes(startTime, v));
+                }}
+              />
             </div>
           </div>
 
