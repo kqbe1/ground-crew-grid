@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TASK_STATUS_LABELS, QUOTE_STATUS_LABELS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
+import { fetchQuotes } from "@/lib/quotesQuery";
 import { normalizeSearch } from "@/lib/searchUtils";
 import BureauFilterCards from "./BureauFilterCards";
 import BureauReceivedBanner from "./BureauReceivedBanner";
@@ -57,16 +58,13 @@ export default function BureauDashboard() {
       .eq("is_draft", false)
       .order("created_at", { ascending: false });
 
-    // Fetch quotes
-    const { data: quotesRaw } = await supabase
-      .from("quotes")
-      .select(`
-        id, created_at, status, client_name, client_city, client_address,
-        created_by,
-        profiles:created_by(full_name, worker_level)
-      `)
-      .neq("status", "cloture")
-      .order("created_at", { ascending: false });
+    // Fetch quotes (logique partagée avec la page Devis)
+    let quotesRaw: any[] = [];
+    try {
+      quotesRaw = await fetchQuotes({ activeOnly: true });
+    } catch (e) {
+      quotesRaw = [];
+    }
 
     // Fetch parts orders counts
     const { count: commandeCount } = await supabase
