@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeSearch } from "@/lib/searchUtils";
 import { format, getYear, getMonth, differenceInDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS } from "@/lib/constants";
@@ -49,10 +50,10 @@ export default function Entretiens() {
       if (filterType !== "all" && s.intervention_type !== filterType) return false;
       if (filterStatus !== "all" && s.status !== filterStatus) return false;
       if (search) {
-        const q = search.toLowerCase();
-        const name = (s.clients?.name || "").toLowerCase();
-        const addr = (s.client_sites?.address || "").toLowerCase();
-        const equip = `${s.client_equipment?.brand || ""} ${s.client_equipment?.model || ""}`.toLowerCase();
+        const q = normalizeSearch(search);
+        const name = normalizeSearch(s.clients?.name);
+        const addr = normalizeSearch(s.client_sites?.address);
+        const equip = normalizeSearch(`${s.client_equipment?.brand || ""} ${s.client_equipment?.model || ""}`);
         if (!name.includes(q) && !addr.includes(q) && !equip.includes(q)) return false;
       }
       return true;
