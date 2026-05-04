@@ -3,12 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS, INSTALLATION_TYPE_LABELS } from "@/lib/constants";
 import { invalidateQuotesCache } from "@/lib/quotesQuery";
 import { Download, MessageSquare, Send, Loader2, Trash2, CheckCircle2 } from "lucide-react";
-import BackButton from "@/components/ui/back-button";
+import LayoutDetail from "@/components/layout/LayoutDetail";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -108,29 +107,17 @@ export default function DevisDetail() {
   const comments = Array.isArray(quote.internal_comments) ? quote.internal_comments : [];
 
   return (
-    <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-3 min-w-0">
-            <BackButton size="icon" variant="ghost" />
-            <Badge className="bg-rose-500 text-white">+FD</Badge>
-            <div>
-              <h1 className="text-xl font-bold">{quote.client_name}</h1>
-              <p className="text-sm text-muted-foreground">
-                {INSTALLATION_TYPE_LABELS[quote.installation_type]} · {quote.profiles?.full_name} · {format(new Date(quote.created_at), "d MMMM yyyy HH:mm", { locale: fr })}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={downloading}>
-              <Download className="w-4 h-4 mr-1" /> Télécharger
-            </Button>
-          </div>
-        </div>
-
-        {/* Status buttons */}
-        <div className="flex flex-wrap gap-2">
+    <LayoutDetail
+      icon={<Badge className="bg-rose-500 text-white">+FD</Badge>}
+      title={quote.client_name}
+      subtitle={`${INSTALLATION_TYPE_LABELS[quote.installation_type]} · ${quote.profiles?.full_name ?? ""} · ${format(new Date(quote.created_at), "d MMMM yyyy HH:mm", { locale: fr })}`}
+      actions={
+        <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={downloading}>
+          <Download className="w-4 h-4 mr-1" /> Télécharger
+        </Button>
+      }
+      toolbar={
+        <>
           {statuses.map((s) => (
             <Button key={s} size="sm" variant={quote.status === s ? "default" : "outline"} className={quote.status === s ? `${QUOTE_STATUS_COLORS[s]} text-white` : ""} onClick={() => updateStatus(s)}>
               {QUOTE_STATUS_LABELS[s]}
@@ -176,11 +163,9 @@ export default function DevisDetail() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </div>
-      </div>
-
-      <Separator />
-
+        </>
+      }
+    >
       {/* Client info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2 p-4 rounded-lg border">
@@ -286,6 +271,6 @@ export default function DevisDetail() {
           </Button>
         </div>
       </section>
-    </div>
+    </LayoutDetail>
   );
 }

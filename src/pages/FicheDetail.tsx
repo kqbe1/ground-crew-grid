@@ -7,12 +7,11 @@ import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin } from "lucide-react";
-import BackButton from "@/components/ui/back-button";
+import LayoutDetail from "@/components/layout/LayoutDetail";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
 import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import { useSignedUrls } from "@/hooks/useSignedUrl";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
@@ -108,37 +107,27 @@ export default function FicheDetail() {
   const badgeColor = isEntretien ? "bg-blue-500" : "bg-primary";
 
   return (
-    <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-3 min-w-0">
-            <BackButton size="icon" variant="ghost" />
-            <Badge className={`${badgeColor} text-white`}>{badgeType}</Badge>
-            <div className="min-w-0">
-              <h1 className="text-xl font-bold truncate">{task?.title || "Fiche d'intervention"}</h1>
-              <p className="text-sm text-muted-foreground">
-                {task?.clients?.name} · {worker?.full_name} · {format(new Date(sheet.created_at), "d MMMM yyyy HH:mm", { locale: fr })}
-              </p>
-            </div>
-            {interventionType && (
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${INTERVENTION_TYPE_COLORS[interventionType]} hidden sm:inline`}>
-                {INTERVENTION_TYPE_LABELS[interventionType]}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={async () => {
-              const { pdfCfg, logoDataUrl } = await loadPdfConfig();
-              downloadFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
-            }}>
-              <Download className="w-4 h-4 mr-1" /> Télécharger
-            </Button>
-          </div>
-        </div>
-
-        {/* Status buttons */}
-        <div className="flex flex-wrap gap-2">
+    <LayoutDetail
+      icon={<Badge className={`${badgeColor} text-white`}>{badgeType}</Badge>}
+      title={task?.title || "Fiche d'intervention"}
+      subtitle={`${task?.clients?.name ?? ""} · ${worker?.full_name ?? ""} · ${format(new Date(sheet.created_at), "d MMMM yyyy HH:mm", { locale: fr })}`}
+      titleAdornment={
+        interventionType ? (
+          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${INTERVENTION_TYPE_COLORS[interventionType]} hidden sm:inline`}>
+            {INTERVENTION_TYPE_LABELS[interventionType]}
+          </span>
+        ) : null
+      }
+      actions={
+        <Button variant="outline" size="sm" onClick={async () => {
+          const { pdfCfg, logoDataUrl } = await loadPdfConfig();
+          downloadFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
+        }}>
+          <Download className="w-4 h-4 mr-1" /> Télécharger
+        </Button>
+      }
+      toolbar={
+        <>
           {ALL_STATUSES.map((s) => (
             <Button key={s} size="sm" variant={sheet.final_status === s ? "default" : "outline"} className={sheet.final_status === s ? `${statusColor[s]} text-white` : ""} onClick={() => updateStatus(s)}>
               {TASK_STATUS_LABELS[s]}
@@ -159,20 +148,18 @@ export default function FicheDetail() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </div>
-
-        {/* Flags */}
-        <div className="flex flex-wrap gap-2">
+        </>
+      }
+    >
+      {/* Flags */}
+      <div className="flex flex-wrap gap-2">
           {sheet.is_draft && <Badge variant="outline" className="border-dashed">Brouillon</Badge>}
           {sheet.sent_to_client && <Badge variant="outline" className="text-[hsl(var(--color-termine))] border-[hsl(var(--color-termine))]"><Mail className="w-3 h-3 mr-1" /> Envoyé</Badge>}
           {sheet.signature_data && <Badge variant="outline" className="text-[hsl(var(--color-termine))] border-[hsl(var(--color-termine))]"><FileSignature className="w-3 h-3 mr-1" /> Signé</Badge>}
           {sheet.client_absent && <Badge variant="outline" className="text-[hsl(var(--color-replanifier))] border-[hsl(var(--color-replanifier))]"><AlertTriangle className="w-3 h-3 mr-1" /> Client absent</Badge>}
           {sheet.client_present && !sheet.client_absent && <Badge variant="outline" className="text-[hsl(var(--color-termine))] border-[hsl(var(--color-termine))]"><User className="w-3 h-3 mr-1" /> Client présent</Badge>}
           {sheet.binome_name && <Badge variant="outline"><User className="w-3 h-3 mr-1" /> Binôme: {sheet.binome_name} ({sheet.binome_percentage}%)</Badge>}
-        </div>
       </div>
-
-      <Separator />
 
       {/* Type d'entretien */}
       {sheet.entretien_type && (
@@ -352,6 +339,6 @@ export default function FicheDetail() {
       {/* Internal photos */}
       {/* Photos internes */}
       <PhotoGrid photos={internalPhotos} label="Photos internes" />
-    </div>
+    </LayoutDetail>
   );
 }

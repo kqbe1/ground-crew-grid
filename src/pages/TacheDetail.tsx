@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +16,7 @@ import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Loader2, Trash2, Pencil, Clock, User, Calendar, MapPin } from "lucide-react";
-import BackButton from "@/components/ui/back-button";
+import LayoutDetail from "@/components/layout/LayoutDetail";
 import { toast } from "sonner";
 
 const statusColor: Record<string, string> = {
@@ -154,41 +153,35 @@ export default function TacheDetail() {
   const interventionLabel = INTERVENTION_TYPE_LABELS[task.intervention_type] || task.intervention_type;
 
   return (
-    <div className="p-4 md:p-8 lg:px-12 lg:py-10 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-3 min-w-0">
-            <BackButton size="icon" variant="ghost" />
-            <div className="min-w-0">
-              <h1 className="text-xl font-bold truncate">{task.title}</h1>
-              <p className="text-sm text-muted-foreground">
-                {task.clients?.name || "—"} ·{" "}
-                {workerLabels[task.assigned_to] && (
-                  <span className="mr-1 rounded bg-muted px-1 py-[1px] text-[10px] font-bold text-foreground align-middle">
-                    {workerLabels[task.assigned_to]}
-                  </span>
-                )}
-                {task.profiles?.full_name || "Non assigné"} · {format(new Date(task.scheduled_date), "d MMMM yyyy", { locale: fr })}
-              </p>
-            </div>
-            {task.intervention_type && (
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${INTERVENTION_TYPE_COLORS[task.intervention_type] || ""} hidden sm:inline`}>
-                {interventionLabel}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {canEdit && !editing && (
-              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-                <Pencil className="w-4 h-4 mr-1" /> Modifier
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Status buttons */}
-        <div className="flex flex-wrap gap-2">
+    <LayoutDetail
+      title={task.title}
+      subtitle={
+        <>
+          {task.clients?.name || "—"} ·{" "}
+          {workerLabels[task.assigned_to] && (
+            <span className="mr-1 rounded bg-muted px-1 py-[1px] text-[10px] font-bold text-foreground align-middle">
+              {workerLabels[task.assigned_to]}
+            </span>
+          )}
+          {task.profiles?.full_name || "Non assigné"} · {format(new Date(task.scheduled_date), "d MMMM yyyy", { locale: fr })}
+        </>
+      }
+      titleAdornment={
+        task.intervention_type ? (
+          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${INTERVENTION_TYPE_COLORS[task.intervention_type] || ""} hidden sm:inline`}>
+            {interventionLabel}
+          </span>
+        ) : null
+      }
+      actions={
+        canEdit && !editing ? (
+          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+            <Pencil className="w-4 h-4 mr-1" /> Modifier
+          </Button>
+        ) : null
+      }
+      toolbar={
+        <>
           {ALL_STATUSES.map((s) => (
             <Button
               key={s}
@@ -215,11 +208,9 @@ export default function TacheDetail() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </div>
-      </div>
-
-      <Separator />
-
+        </>
+      }
+    >
       {!editing ? (
         /* View mode */
         <div className="space-y-6">
@@ -418,6 +409,6 @@ export default function TacheDetail() {
           </div>
         </div>
       )}
-    </div>
+    </LayoutDetail>
   );
 }
