@@ -79,9 +79,9 @@ export default function Taches() {
     }
     // Search
     if (!search.trim()) return result;
-    const terms = search.toLowerCase().split(/\s+/).filter(Boolean);
+    const terms = normalizeSearch(search).split(/\s+/).filter(Boolean);
     return result.filter((t) => {
-      const haystack = [
+      const haystack = normalizeSearch([
         t.title,
         t.description,
         t.clients?.name,
@@ -93,8 +93,7 @@ export default function Taches() {
         t.scheduled_date,
       ]
         .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+        .join(" "));
       return terms.every((term) => haystack.includes(term));
     });
   }, [tasks, search, typeFilter, statusFilter]);
