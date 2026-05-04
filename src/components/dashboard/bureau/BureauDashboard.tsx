@@ -151,6 +151,18 @@ export default function BureauDashboard() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Realtime: refresh when quotes/sheets/tasks/orders change
+  useEffect(() => {
+    const channel = supabase
+      .channel("bureau-dashboard")
+      .on("postgres_changes", { event: "*", schema: "public", table: "quotes" }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "intervention_sheets" }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "work_tasks" }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "parts_orders" }, () => fetchData())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchData]);
+
   // Apply filters
   const getFilteredFiches = (): UnifiedFiche[] => {
     let result = allFiches;
