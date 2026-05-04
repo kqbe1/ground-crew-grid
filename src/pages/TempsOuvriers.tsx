@@ -337,15 +337,7 @@ export default function TempsOuvriers() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Temps de travail</h1>
-          <p className="text-muted-foreground">
-            Suivi détaillé du temps de travail —{" "}
-            {format(periodRange.start, "d MMM", { locale: fr })} au{" "}
-            {format(periodRange.end, "d MMM yyyy", { locale: fr })}
-          </p>
-        </div>
+      <div className="flex justify-end">
         <Button variant="outline" size="sm" onClick={exportCSV} disabled={filteredSheets.length === 0}>
           <Download className="h-4 w-4 mr-2" />
           Export CSV
