@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
-import { Package, ArrowRight, AlertTriangle, User, FileText, Trash2, Check } from "lucide-react";
+import { Package, AlertTriangle, User, FileText, Trash2, Check } from "lucide-react";
 import LayoutDetail from "@/components/layout/LayoutDetail";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -20,13 +20,6 @@ const statusColors: Record<string, string> = {
   commandee: "bg-order-commandee text-white",
   recue: "bg-order-recue text-white",
   cloturee: "bg-order-cloturee text-white",
-};
-
-const WORKFLOW: Record<string, { next: string | null; label: string; color: string }> = {
-  demandee: { next: "commandee", label: "→ Commandée", color: "bg-order-commandee hover:bg-order-commandee/90 text-white" },
-  commandee: { next: "recue", label: "→ Reçue", color: "bg-order-recue hover:bg-order-recue/90 text-white" },
-  recue: { next: "cloturee", label: "→ Clôturer", color: "bg-order-cloturee hover:bg-order-cloturee/90 text-white" },
-  cloturee: { next: null, label: "", color: "" },
 };
 
 export default function CommandeDetail() {
