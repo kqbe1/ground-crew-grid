@@ -250,13 +250,21 @@ export default function TacheDetail() {
             <h2 className="font-semibold text-sm">Ouvrier</h2>
             <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
               <User className="w-4 h-4 text-muted-foreground" />
-              <div className="font-medium flex items-center gap-2">
+              <div className="font-medium flex items-center gap-2 flex-wrap">
                 {workerLabels[task.assigned_to] && (
                   <span className="rounded bg-background px-1.5 py-0.5 text-xs font-bold border border-border">
                     {workerLabels[task.assigned_to]}
                   </span>
                 )}
                 {task.profiles?.full_name || "Non assigné"}
+                {task.second_assigned_to && (
+                  <span className="flex items-center gap-1.5 text-sm text-muted-foreground ml-2">
+                    <span className="text-xs">+ Binôme</span>
+                    <span className="rounded bg-background px-1.5 py-0.5 text-xs font-bold border border-border">
+                      {workerLabels[task.second_assigned_to] ?? "T?"}
+                    </span>
+                  </span>
+                )}
               </div>
             </div>
           </section>
@@ -325,7 +333,9 @@ export default function TacheDetail() {
                 <SelectTrigger><SelectValue placeholder="Non assigné" /></SelectTrigger>
                 <SelectContent>
                   {workers.map((w) => (
-                    <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>
+                      <SelectItem key={w.id} value={w.id}>
+                        {workerLabels[w.id] ? `${workerLabels[w.id]} · ` : ""}{w.full_name}
+                      </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -340,7 +350,9 @@ export default function TacheDetail() {
                 <SelectContent>
                   <SelectItem value="none">Aucun</SelectItem>
                   {workers.map((w) => (
-                    <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>
+                      <SelectItem key={w.id} value={w.id}>
+                        {workerLabels[w.id] ? `${workerLabels[w.id]} · ` : ""}{w.full_name}
+                      </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
