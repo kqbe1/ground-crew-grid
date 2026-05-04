@@ -187,7 +187,7 @@ export default function MobileTaskDetail() {
 
       <Button
         variant="outline"
-        className="w-full border-orange-300 text-orange-700 hover:bg-orange-50"
+        className="w-full border-[hsl(var(--color-replanifier))] text-[hsl(var(--color-replanifier))] hover:bg-[hsl(var(--color-replanifier))]/10"
         size="lg"
         onClick={() => setShowPartDialog(true)}
       >

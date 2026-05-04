@@ -74,11 +74,11 @@ export default function RecentSheetsPanel() {
           return (
             <div
               key={s.id}
-              className={`flex items-center justify-between text-sm py-1.5 border-b last:border-0 rounded-sm transition-colors ${fresh ? "bg-emerald-50 dark:bg-emerald-950/20 px-1.5 -mx-1.5" : ""}`}
+              className={`flex items-center justify-between text-sm py-1.5 border-b last:border-0 rounded-sm transition-colors ${fresh ? "bg-[hsl(var(--color-termine))]/10 px-1.5 -mx-1.5" : ""}`}
             >
               <div className="min-w-0 flex-1">
                 <div className="font-medium truncate flex items-center gap-1.5">
-                  {fresh && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />}
+                  {fresh && <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--color-termine))] shrink-0" />}
                   {s.work_tasks?.title || "Fiche"}
                 </div>
                 <div className="text-xs text-muted-foreground">
@@ -87,9 +87,9 @@ export default function RecentSheetsPanel() {
               </div>
               <div className="flex items-center gap-1.5 ml-2">
                 {s.client_absent && (
-                  <Badge variant="outline" className="text-[9px] border-amber-400 text-amber-600">Absent</Badge>
+                  <Badge variant="outline" className="text-[9px] border-[hsl(var(--color-replanifier))] text-[hsl(var(--color-replanifier))]">Absent</Badge>
                 )}
-                <Badge className="text-[9px] bg-emerald-600 text-white">
+                <Badge className="text-[9px] bg-[hsl(var(--color-termine))] text-white">
                   {INTERVENTION_TYPE_LABELS[s.work_tasks?.intervention_type || ""]?.split(" ").pop() || "Terminé"}
                 </Badge>
               </div>
