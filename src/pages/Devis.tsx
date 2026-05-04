@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS, INSTALLATION_TYPE_LABELS } from "@/lib/constants";
-import { fetchQuotes, filterQuotes } from "@/lib/quotesQuery";
+import { INSTALLATION_TYPE_LABELS } from "@/lib/constants";
+import { fetchQuotes, filterQuotes, QUOTE_STATUS_LABELS } from "@/lib/quotesQuery";
+import QuoteStatusBadge from "@/components/devis/QuoteStatusBadge";
 import { FileText, Search, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -97,7 +98,7 @@ export default function Devis() {
                       <Badge className="bg-rose-500 text-white text-[10px]">+FD</Badge>
                       <span className="font-medium text-sm">{quote.client_name}</span>
                     </div>
-                    <Badge className={`${QUOTE_STATUS_COLORS[quote.status]} text-white text-xs`}>{QUOTE_STATUS_LABELS[quote.status]}</Badge>
+                    <QuoteStatusBadge status={quote.status} />
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{INSTALLATION_TYPE_LABELS[quote.installation_type]}</span>
@@ -119,7 +120,7 @@ export default function Devis() {
                   </div>
                   <div className="text-sm text-muted-foreground">{quote.client_city}</div>
                   <div className="text-xs text-muted-foreground whitespace-nowrap">{format(new Date(quote.created_at), "d MMM yyyy HH:mm", { locale: fr })}</div>
-                  <Badge className={`${QUOTE_STATUS_COLORS[quote.status]} text-white text-xs`}>{QUOTE_STATUS_LABELS[quote.status]}</Badge>
+                  <QuoteStatusBadge status={quote.status} />
                   <Button variant="ghost" size="icon" onClick={(e) => handleDelete(e, quote.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                 </>
               )}

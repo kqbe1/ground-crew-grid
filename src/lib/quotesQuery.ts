@@ -17,6 +17,32 @@ export const ACTIVE_QUOTE_STATUSES: QuoteStatus[] = QUOTE_STATUSES.filter(
   (s) => s !== "cloture",
 ) as QuoteStatus[];
 
+// Source unique de vérité pour les libellés et couleurs de statuts de devis.
+// Utilisé partout (page Devis, dashboard, PDF, dialogs).
+export const QUOTE_STATUS_LABELS: Record<QuoteStatus, string> = {
+  en_attente: "En attente",
+  dossier_en_cours: "Dossier en cours",
+  en_commande: "En commande",
+  sav: "SAV",
+  cloture: "Clôturé",
+};
+
+export const QUOTE_STATUS_COLORS: Record<QuoteStatus, string> = {
+  en_attente: "bg-amber-500",
+  dossier_en_cours: "bg-blue-500",
+  en_commande: "bg-purple-500",
+  sav: "bg-orange-500",
+  cloture: "bg-emerald-500",
+};
+
+export function quoteStatusLabel(status: string): string {
+  return QUOTE_STATUS_LABELS[status as QuoteStatus] ?? status;
+}
+
+export function quoteStatusColor(status: string): string {
+  return QUOTE_STATUS_COLORS[status as QuoteStatus] ?? "bg-muted";
+}
+
 // Sélection commune utilisée dans toute l'app pour les listes de devis
 export const QUOTE_LIST_SELECT =
   "id, created_at, status, client_name, client_city, client_address, installation_type, created_by, internal_comments, profiles!quotes_created_by_fkey(full_name, worker_level)";

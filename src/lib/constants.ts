@@ -73,21 +73,12 @@ export const FILTER_TYPE_GROUPS = [
   ...STANDALONE_INTERVENTION_TYPES.map((t) => ({ key: t, label: INTERVENTION_TYPE_LABELS[t], types: [t] })),
 ];
 
-export const QUOTE_STATUS_LABELS: Record<string, string> = {
-  en_attente: "En attente",
-  dossier_en_cours: "Dossier en cours",
-  en_commande: "En commande",
-  sav: "SAV",
-  cloture: "Clôturé",
-};
-
-export const QUOTE_STATUS_COLORS: Record<string, string> = {
-  en_attente: "bg-amber-500",
-  dossier_en_cours: "bg-blue-500",
-  en_commande: "bg-purple-500",
-  sav: "bg-orange-500",
-  cloture: "bg-emerald-500",
-};
+// Réexports — la source unique de vérité vit dans `@/lib/quotesQuery`.
+export {
+  QUOTE_STATUS_LABELS,
+  QUOTE_STATUS_COLORS,
+  QUOTE_STATUSES,
+} from "@/lib/quotesQuery";
 
 export const INSTALLATION_TYPE_LABELS: Record<string, string> = {
   chaudiere: "Chaudière",
