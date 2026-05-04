@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import CreateOrderDialog from "@/components/commandes/CreateOrderDialog";
+import LayoutPage from "@/components/layout/LayoutPage";
 
 const statusColors: Record<string, string> = {
   demandee: "bg-order-demandee text-white",
@@ -46,22 +47,27 @@ export default function Commandes() {
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="flex justify-end">
+    <LayoutPage
+      icon={Package}
+      title="Commandes"
+      subtitle={`${orders.length} commande${orders.length > 1 ? "s" : ""}`}
+      actions={
         <Button size="sm" onClick={() => setCreateOpen(true)}>
           <Plus className="w-4 h-4 mr-1" /> Nouvelle
         </Button>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="all">Toutes</TabsTrigger>
-          <TabsTrigger value="demandee">Demandées</TabsTrigger>
-          <TabsTrigger value="commandee">Commandées</TabsTrigger>
-          <TabsTrigger value="recue">Reçues</TabsTrigger>
-          <TabsTrigger value="cloturee">Clôturées</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      }
+      toolbar={
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="flex-wrap h-auto">
+            <TabsTrigger value="all">Toutes</TabsTrigger>
+            <TabsTrigger value="demandee">Demandées</TabsTrigger>
+            <TabsTrigger value="commandee">Commandées</TabsTrigger>
+            <TabsTrigger value="recue">Reçues</TabsTrigger>
+            <TabsTrigger value="cloturee">Clôturées</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      }
+    >
 
       <div className="space-y-2">
         {orders.map((order) => (
@@ -92,6 +98,6 @@ export default function Commandes() {
       </div>
 
       <CreateOrderDialog open={createOpen} onOpenChange={setCreateOpen} onSaved={fetchOrders} />
-    </div>
+    </LayoutPage>
   );
 }
