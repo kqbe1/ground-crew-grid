@@ -88,6 +88,7 @@ export default function CommandeDetail() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
+            <BackButton size="icon" variant="ghost" />
             <Package className="w-5 h-5" />
             <div>
               <h1 className="text-xl font-bold">{order.part_name}</h1>
@@ -96,7 +97,6 @@ export default function CommandeDetail() {
               </p>
             </div>
           </div>
-          <BackButton />
         </div>
 
         {/* Status stepper */}
