@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +46,20 @@ export default function Taches() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [workerFilter, setWorkerFilter] = useState("all");
+  const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, display_order")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true })
+        .order("full_name", { ascending: true });
+      setWorkers(data ?? []);
+    })();
+  }, []);
 
   const { data: tasks = [], refetch } = useQuery({
     queryKey: ["all-tasks"],
@@ -64,6 +78,12 @@ export default function Taches() {
     // Status filter
     if (statusFilter !== "all") {
       result = result.filter((t) => t.status === statusFilter);
+    }
+    // Worker filter
+    if (workerFilter !== "all") {
+      result = result.filter(
+        (t) => t.assigned_to === workerFilter || t.second_assigned_to === workerFilter
+      );
     }
     // Type filter
     if (typeFilter !== "all") {
@@ -92,7 +112,7 @@ export default function Taches() {
         .join(" "));
       return terms.every((term) => haystack.includes(term));
     });
-  }, [tasks, search, typeFilter, statusFilter]);
+  }, [tasks, search, typeFilter, statusFilter, workerFilter]);
 
   return (
     <LayoutPage
@@ -130,6 +150,19 @@ export default function Taches() {
             <SelectItem value="all">Tous les statuts</SelectItem>
             {Object.entries(statusLabels).map(([k, v]) => (
               <SelectItem key={k} value={k}>{v}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={workerFilter} onValueChange={setWorkerFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Ouvrier" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les ouvriers</SelectItem>
+            {workers.map((w) => (
+              <SelectItem key={w.id} value={w.id}>
+                {workerLabels[w.id] ? `${workerLabels[w.id]} · ` : ""}{w.full_name}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
