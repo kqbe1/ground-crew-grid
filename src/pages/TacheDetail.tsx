@@ -409,6 +409,6 @@ export default function TacheDetail() {
           </div>
         </div>
       )}
-    </div>
+    </LayoutDetail>
   );
 }
