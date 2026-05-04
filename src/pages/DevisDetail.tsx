@@ -108,7 +108,7 @@ export default function DevisDetail() {
 
   return (
     <LayoutDetail
-      icon={<Badge className="bg-rose-500 text-white">+FD</Badge>}
+      icon={<Badge className="bg-[hsl(var(--color-devis))] text-white">+FD</Badge>}
       title={quote.client_name}
       subtitle={`${INSTALLATION_TYPE_LABELS[quote.installation_type]} · ${quote.profiles?.full_name ?? ""} · ${format(new Date(quote.created_at), "d MMMM yyyy HH:mm", { locale: fr })}`}
       actions={
@@ -188,7 +188,7 @@ export default function DevisDetail() {
       {/* Urgency & description */}
       <div className="space-y-2">
         <div className="flex gap-2 flex-wrap">
-          {quote.is_urgent && <Badge className="bg-red-500 text-white">🔴 Urgent</Badge>}
+          {quote.is_urgent && <Badge className="bg-destructive text-destructive-foreground">🔴 Urgent</Badge>}
           {quote.existing_installation_remove && <Badge variant="outline">Installation à retirer</Badge>}
           {quote.existing_installation_complete && <Badge variant="outline">Installation à compléter</Badge>}
         </div>

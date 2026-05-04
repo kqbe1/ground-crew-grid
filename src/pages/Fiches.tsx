@@ -128,7 +128,7 @@ export default function Fiches() {
                   {(() => {
                     const isEntretien = intType?.startsWith("entretien_");
                     const badgeType = isEntretien ? "+FE" : "+FI";
-                    const badgeColor = isEntretien ? "bg-blue-500" : "bg-primary";
+                    const badgeColor = isEntretien ? "bg-[hsl(var(--color-fiche-entretien))]" : "bg-primary";
                     return <Badge className={`${badgeColor} text-white shrink-0 text-[10px] px-1.5`}>{badgeType}</Badge>;
                   })()}
                   <div className="min-w-0">

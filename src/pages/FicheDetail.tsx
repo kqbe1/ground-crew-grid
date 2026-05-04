@@ -104,7 +104,7 @@ export default function FicheDetail() {
   const interventionType = task?.intervention_type;
   const isEntretien = interventionType?.startsWith("entretien_");
   const badgeType = isEntretien ? "+FE" : "+FI";
-  const badgeColor = isEntretien ? "bg-blue-500" : "bg-primary";
+  const badgeColor = isEntretien ? "bg-[hsl(var(--color-fiche-entretien))]" : "bg-primary";
 
   return (
     <LayoutDetail

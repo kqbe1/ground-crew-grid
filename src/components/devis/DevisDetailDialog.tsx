@@ -114,7 +114,7 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
             </Button>
             <div className="flex-1">
               <DialogTitle className="flex items-center gap-2">
-                <Badge className="bg-rose-500 text-white">+FD</Badge>
+                <Badge className="bg-[hsl(var(--color-devis))] text-white">+FD</Badge>
                 {quote.client_name}
               </DialogTitle>
               <p className="text-sm text-muted-foreground">
@@ -190,7 +190,7 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
         {/* Urgency & Description */}
         <div className="space-y-2">
           <div className="flex gap-2">
-            {quote.is_urgent && <Badge className="bg-red-500 text-white">🔴 Urgent</Badge>}
+            {quote.is_urgent && <Badge className="bg-destructive text-destructive-foreground">🔴 Urgent</Badge>}
             {quote.existing_installation_remove && <Badge variant="outline">Installation à retirer</Badge>}
             {quote.existing_installation_complete && <Badge variant="outline">Installation à compléter</Badge>}
           </div>

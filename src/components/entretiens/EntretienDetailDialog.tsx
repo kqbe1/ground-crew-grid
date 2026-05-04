@@ -27,8 +27,8 @@ export default function EntretienDetailDialog({ open, onOpenChange, schedule, on
 
   const urgencyStyles = {
     overdue: "bg-destructive/10 text-destructive border-destructive/30",
-    soon: "bg-orange-100 text-orange-800 border-orange-300",
-    ok: "bg-green-100 text-green-800 border-green-300",
+    soon: "alert-warning",
+    ok: "alert-success",
     none: "bg-muted text-muted-foreground",
   };
 
@@ -73,7 +73,7 @@ export default function EntretienDetailDialog({ open, onOpenChange, schedule, on
         </Card>
 
         {legalAlert && (
-          <div className="flex items-center gap-2 text-sm p-2 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
+          <div className="flex items-center gap-2 text-sm p-2 rounded-md alert-warning border">
             <AlertTriangle className="w-4 h-4" />
             Alerte légale Belgique : tous les {legalAlert} an(s)
           </div>

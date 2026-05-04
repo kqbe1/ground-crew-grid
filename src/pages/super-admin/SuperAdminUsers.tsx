@@ -18,10 +18,10 @@ import EditUserDialog from "@/components/admin/EditUserDialog";
 const ALL_ROLES = ["admin", "bureau", "ouvrier"] as const;
 
 const roleBadgeClass: Record<string, string> = {
-  super_admin: "bg-amber-600 text-white",
-  admin: "bg-destructive text-destructive-foreground",
-  bureau: "bg-blue-600 text-white",
-  ouvrier: "bg-green-600 text-white",
+  super_admin: "badge-role-super_admin",
+  admin: "badge-role-admin",
+  bureau: "badge-role-bureau",
+  ouvrier: "badge-role-ouvrier",
 };
 
 export default function SuperAdminUsers() {
