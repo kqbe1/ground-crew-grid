@@ -60,7 +60,7 @@ export default function AppLayout() {
   return (
     <div className="flex h-screen overflow-hidden">
       <AppSidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex items-center justify-end px-4 py-2 border-b border-border bg-background">
           <RealtimeOrderNotifications />
         </header>
