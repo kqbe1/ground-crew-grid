@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { TASK_STATUS_LABELS } from "@/lib/constants";
+import { useWorkerLabels } from "@/hooks/useWorkerLabels";
 
 const SIMPLIFIED_INTERVENTION_LABELS: Record<string, string> = {
   depannage: "Dépannage",
@@ -46,6 +47,7 @@ interface TaskDetailDialogProps {
 export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetailDialogProps) {
   const { role } = useAuth();
   const canEdit = role === "admin" || role === "bureau" || role === "super_admin";
+  const workerLabels = useWorkerLabels();
 
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -160,7 +162,22 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
               </div>
               <div>
                 <span className="text-sm text-muted-foreground">Assigné à</span>
-                <p>{task.profiles?.full_name ?? "Non assigné"}</p>
+                <p className="flex items-center gap-1.5">
+                  {workerLabels[task.assigned_to] && (
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold border border-border">
+                      {workerLabels[task.assigned_to]}
+                    </span>
+                  )}
+                  {task.profiles?.full_name ?? "Non assigné"}
+                </p>
+                {task.second_assigned_to && (
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold border border-border">
+                      {workerLabels[task.second_assigned_to] ?? "T?"}
+                    </span>
+                    Binôme
+                  </p>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
@@ -260,7 +277,9 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
                   <SelectTrigger><SelectValue placeholder="Non assigné" /></SelectTrigger>
                   <SelectContent>
                     {workers.map((w) => (
-                      <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>
+                      <SelectItem key={w.id} value={w.id}>
+                        {workerLabels[w.id] ? `${workerLabels[w.id]} · ` : ""}{w.full_name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -272,7 +291,9 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
                   <SelectContent>
                     <SelectItem value="none">Aucun</SelectItem>
                     {workers.map((w) => (
-                      <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>
+                      <SelectItem key={w.id} value={w.id}>
+                        {workerLabels[w.id] ? `${workerLabels[w.id]} · ` : ""}{w.full_name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
