@@ -23,8 +23,8 @@ import { findOverlaps } from "@/lib/overlapUtils";
 type ViewMode = "day" | "week" | "month";
 const ALL_FILTER_GROUPS = FILTER_TYPE_GROUPS;
 
-function getInitials(name: string) {
-  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+function workerLabel(index: number) {
+  return `T${index + 1}`;
 }
 
 export default function Planning() {
@@ -253,7 +253,7 @@ function PlanningInner() {
           </PopoverTrigger>
           <PopoverContent className="w-56 p-2 bg-popover z-50" align="start">
             <div className="text-sm font-semibold mb-2 px-2">Filtrer par ouvrier</div>
-            {workers.map((w) => (
+            {workers.map((w, idx) => (
               <label key={w.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
                 <Checkbox
                   checked={!visibleWorkerIds || visibleWorkerIds.has(w.id)}
@@ -261,7 +261,7 @@ function PlanningInner() {
                 />
                 <Avatar className="h-5 w-5">
                   <AvatarFallback className="text-[9px] bg-muted text-muted-foreground">
-                    {getInitials(w.full_name)}
+                    {workerLabel(idx)}
                   </AvatarFallback>
                 </Avatar>
                 {w.full_name}
