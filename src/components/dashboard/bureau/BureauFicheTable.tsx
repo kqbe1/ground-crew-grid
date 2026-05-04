@@ -65,6 +65,9 @@ export default function BureauFicheTable({ fiches, onDelete }: Props) {
     else navigate(`/fiches/${f.id}`);
   };
 
+  const rowClasses =
+    "cursor-pointer hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset transition-colors";
+
   const SortButton = ({ col, children }: { col: SortColumn; children: React.ReactNode }) => (
     <button className="flex items-center gap-1 hover:text-foreground" onClick={() => toggleSort(col)}>
       {children}
@@ -92,7 +95,19 @@ export default function BureauFicheTable({ fiches, onDelete }: Props) {
               <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Aucune fiche</TableCell></TableRow>
             )}
             {paginated.map((f) => (
-              <TableRow key={`${f.sourceTable}-${f.id}`} className="cursor-pointer hover:bg-muted/50" onClick={() => handleRowClick(f)}>
+              <TableRow
+                key={`${f.sourceTable}-${f.id}`}
+                className={rowClasses}
+                onClick={() => handleRowClick(f)}
+                tabIndex={0}
+                role="button"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleRowClick(f);
+                  }
+                }}
+              >
                 <TableCell>
                   <Badge className={`text-[10px] ${TYPE_BADGE[f.type]?.className}`}>{TYPE_BADGE[f.type]?.label}</Badge>
                 </TableCell>
