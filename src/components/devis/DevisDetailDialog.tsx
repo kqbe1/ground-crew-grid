@@ -20,7 +20,7 @@ interface Props {
   onUpdated: () => void;
 }
 
-const statuses = ["en_attente", "dossier_en_cours", "en_commande", "sav"] as const;
+const statuses = ["en_attente"] as const;
 
 export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated }: Props) {
   const [newComment, setNewComment] = useState("");
