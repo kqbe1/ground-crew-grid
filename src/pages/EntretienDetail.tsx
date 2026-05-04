@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS } from "@/lib/constants";
 import { format, differenceInDays } from "date-fns";
 import { fr } from "date-fns/locale";
