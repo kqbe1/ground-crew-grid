@@ -71,6 +71,12 @@
     --color-role-bureau: 220 72% 50%;
     --color-role-ouvrier: 142 55% 42%;
 
+    /* Entity colors */
+    --color-devis: 350 80% 55%;
+    --color-fiche: 220 72% 50%;
+    --color-fiche-entretien: 199 89% 48%;
+    --color-commande: 280 60% 55%;
+
     --sidebar-background: 220 30% 12%;
     --sidebar-foreground: 220 14% 92%;
     --sidebar-primary: 220 72% 60%;
