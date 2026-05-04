@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
+import { computeEndTime } from "@/lib/timeRange";
 import { ChevronLeft, ChevronRight, Phone, MapPin, MessageSquare, Package } from "lucide-react";
 import {
   format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
