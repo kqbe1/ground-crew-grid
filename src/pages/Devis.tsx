@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import LayoutPage from "@/components/layout/LayoutPage";
 
 export default function Devis() {
   const navigate = useNavigate();
@@ -91,8 +92,17 @@ export default function Devis() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+    <LayoutPage
+      icon={FileText}
+      title="Devis"
+      subtitle={`${filtered.length} devis`}
+      actions={
+        <Button variant="outline" onClick={handleExportCsv} disabled={filtered.length === 0}>
+          <Download className="w-4 h-4 mr-1" /> Export CSV
+        </Button>
+      }
+      toolbar={
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full">
         <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Rechercher client..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
@@ -118,11 +128,9 @@ export default function Devis() {
             {workers.map((w) => <SelectItem key={w.id} value={w.id}>{w.full_name}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button variant="outline" onClick={handleExportCsv} disabled={filtered.length === 0}>
-          <Download className="w-4 h-4 mr-1" /> Export CSV
-        </Button>
-      </div>
-
+        </div>
+      }
+    >
       <div className="space-y-2">
         {paginated.map((quote) => (
           <Card key={quote.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/devis/${quote.id}`)}>
@@ -182,7 +190,7 @@ export default function Devis() {
           </div>
         </div>
       )}
-    </div>
+    </LayoutPage>
   );
 }
 

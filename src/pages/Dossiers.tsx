@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { Search, FolderOpen, ClipboardList, Wrench, FileText, Package, ChevronRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import LayoutPage from "@/components/layout/LayoutPage";
 
 interface ClientDossier {
   id: string;
@@ -118,11 +119,17 @@ export default function Dossiers() {
   const totalDocs = (d: ClientDossier) => d.fiches_count + d.entretiens_count + d.devis_count + d.commandes_count;
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Rechercher un client..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
-      </div>
+    <LayoutPage
+      icon={FolderOpen}
+      title="Dossiers"
+      subtitle={`${dossiers.length} dossier${dossiers.length > 1 ? "s" : ""}`}
+      toolbar={
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Rechercher un client..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+        </div>
+      }
+    >
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
@@ -219,6 +226,6 @@ export default function Dossiers() {
           )}
         </div>
       )}
-    </div>
+    </LayoutPage>
   );
 }

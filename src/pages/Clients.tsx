@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/searchUtils";
-import { Plus, Search, Phone, Mail, MapPin, Upload, Download } from "lucide-react";
+import { Plus, Search, Phone, Mail, MapPin, Upload, Download, Users } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import CreateEditClientDialog from "@/components/clients/CreateEditClientDialog";
 import ImportCsvDialog from "@/components/clients/ImportCsvDialog";
+import LayoutPage from "@/components/layout/LayoutPage";
 
 type Client = Tables<"clients">;
 
@@ -52,19 +53,24 @@ export default function Clients() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="flex justify-end">
-        <div className="flex gap-2 flex-wrap">
+    <LayoutPage
+      icon={Users}
+      title="Clients"
+      subtitle={`${clients.length} client${clients.length > 1 ? "s" : ""}`}
+      actions={
+        <>
           <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={exportCsv}><Download className="w-4 h-4 mr-1" /> CSV</Button>
           <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={() => setImportOpen(true)}><Upload className="w-4 h-4 mr-1" /> Importer</Button>
           <Button size={isMobile ? "sm" : "default"} onClick={() => setCreateOpen(true)}><Plus className="w-4 h-4 mr-1" /> Nouveau</Button>
+        </>
+      }
+      toolbar={
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Rechercher un client..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Rechercher un client..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
-      </div>
+      }
+    >
 
       {!isMobile ? (
         <div className="border rounded-lg overflow-hidden">
@@ -117,6 +123,6 @@ export default function Clients() {
         onSaved={fetchClients}
       />
       <ImportCsvDialog open={importOpen} onOpenChange={setImportOpen} onImported={fetchClients} />
-    </div>
+    </LayoutPage>
   );
 }

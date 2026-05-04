@@ -7,11 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeSearch } from "@/lib/searchUtils";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, FILTER_TYPE_GROUPS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
-import { FileSignature, Camera, Mail, Search } from "lucide-react";
+import { FileSignature, Camera, Mail, Search, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
 import { useWorkerLabels } from "@/hooks/useWorkerLabels";
+import LayoutPage from "@/components/layout/LayoutPage";
 
 export default function Fiches() {
   const navigate = useNavigate();
@@ -76,45 +77,47 @@ export default function Fiches() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="flex justify-end">
-        <CreateTaskDialog defaultDate={new Date()} onCreated={() => fetchSheets()} />
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 min-w-[180px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Rechercher..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+    <LayoutPage
+      icon={ClipboardList}
+      title="Fiches d'intervention"
+      subtitle={`${filtered.length} fiche${filtered.length > 1 ? "s" : ""}`}
+      actions={<CreateTaskDialog defaultDate={new Date()} onCreated={() => fetchSheets()} />}
+      toolbar={
+        <div className="flex flex-col sm:flex-row gap-3 w-full">
+          <div className="relative flex-1 min-w-[180px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Rechercher..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          </div>
+          <div className="flex gap-2">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[140px]"><SelectValue placeholder="Statut" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                {Object.entries(TASK_STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-[140px]"><SelectValue placeholder="Type" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                {FILTER_TYPE_GROUPS.map((g) => <SelectItem key={g.key} value={g.key}>{g.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={workerFilter} onValueChange={setWorkerFilter}>
+              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Ouvrier" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les ouvriers</SelectItem>
+                {workers.map((w) => (
+                  <SelectItem key={w.id} value={w.id}>
+                    {workerLabels[w.id] ? `${workerLabels[w.id]} · ` : ""}{w.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px]"><SelectValue placeholder="Statut" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              {Object.entries(TASK_STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[140px]"><SelectValue placeholder="Type" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              {FILTER_TYPE_GROUPS.map((g) => <SelectItem key={g.key} value={g.key}>{g.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={workerFilter} onValueChange={setWorkerFilter}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Ouvrier" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les ouvriers</SelectItem>
-              {workers.map((w) => (
-                <SelectItem key={w.id} value={w.id}>
-                  {workerLabels[w.id] ? `${workerLabels[w.id]} · ` : ""}{w.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
+      }
+    >
       <div className="space-y-2">
         {filtered.map((sheet) => {
           const intType = sheet.work_tasks?.intervention_type;
@@ -159,6 +162,6 @@ export default function Fiches() {
         })}
         {filtered.length === 0 && <div className="py-12 text-center text-muted-foreground">Aucune fiche d'intervention</div>}
       </div>
-    </div>
+    </LayoutPage>
   );
 }

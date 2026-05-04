@@ -28,6 +28,7 @@ import {
   eachDayOfInterval,
   isSameDay,
 } from "date-fns";
+import LayoutPage from "@/components/layout/LayoutPage";
 import { fr } from "date-fns/locale";
 import {
   BarChart,
@@ -336,14 +337,16 @@ export default function TempsOuvriers() {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-end">
+    <LayoutPage
+      icon={Clock}
+      title="Temps ouvriers"
+      actions={
         <Button variant="outline" size="sm" onClick={exportCSV} disabled={filteredSheets.length === 0}>
           <Download className="h-4 w-4 mr-2" />
           Export CSV
         </Button>
-      </div>
-
+      }
+    >
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <Select value={period} onValueChange={setPeriod}>
@@ -671,6 +674,6 @@ export default function TempsOuvriers() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </LayoutPage>
   );
 }
