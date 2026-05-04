@@ -78,7 +78,9 @@ export default function MobileTaskDetail() {
         <CardContent className="py-3 space-y-3">
           <div>
             <div className="text-xs text-muted-foreground">Horaire</div>
-            <div className="font-medium">{task.start_time?.slice(0, 5)} · {task.duration_minutes} min</div>
+            <div className="font-medium">
+              {task.start_time?.slice(0, 5)} → {computeEndTime(task.start_time?.slice(0, 5) ?? "", task.duration_minutes ?? 0)}
+            </div>
           </div>
           {task.description && (
             <div>
