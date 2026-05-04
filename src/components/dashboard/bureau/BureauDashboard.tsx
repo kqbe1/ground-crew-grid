@@ -295,6 +295,7 @@ export default function BureauDashboard() {
 // Simple commande list when "Commande" card is active
 function CommandeList() {
   const [orders, setOrders] = useState<any[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     supabase
@@ -326,7 +327,11 @@ function CommandeList() {
             <tr><td colSpan={4} className="text-center text-muted-foreground py-8">Aucune commande en cours</td></tr>
           )}
           {orders.map((o) => (
-            <tr key={o.id} className="border-b last:border-0 hover:bg-muted/30">
+            <tr
+              key={o.id}
+              className="border-b last:border-0 hover:bg-muted/50 cursor-pointer"
+              onClick={() => navigate(`/commandes/${o.id}`)}
+            >
               <td className="px-4 py-2 font-medium">{o.part_name}</td>
               <td className="px-4 py-2 text-muted-foreground">{o.clients?.name ?? "—"}</td>
               <td className="px-4 py-2 text-muted-foreground">{o.profiles?.full_name ?? "—"}</td>
