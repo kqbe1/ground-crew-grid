@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, ChevronRight, Filter, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Users, Calendar as CalendarIcon } from "lucide-react";
 import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, startOfMonth, addMonths, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { INTERVENTION_TYPE_COLORS, FILTER_TYPE_GROUPS } from "@/lib/constants";
@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { TaskClipboardProvider, useTaskClipboard } from "@/components/planning/TaskClipboardContext";
 import { useAuth } from "@/hooks/useAuth";
 import { findOverlaps } from "@/lib/overlapUtils";
+import LayoutPage from "@/components/layout/LayoutPage";
 
 type ViewMode = "day" | "week" | "month";
 const ALL_FILTER_GROUPS = FILTER_TYPE_GROUPS;
@@ -186,7 +187,20 @@ function PlanningInner() {
   };
 
   return (
-    <div className="p-6 space-y-4">
+    <LayoutPage
+      icon={CalendarIcon}
+      title="Planning"
+      actions={
+        <CreateTaskDialog
+          defaultDate={clickContext.date ?? currentDate}
+          defaultHour={clickContext.hour}
+          defaultMinute={clickContext.minute}
+          defaultWorkerId={clickContext.workerId}
+          defaultDuration={clickContext.duration}
+          onCreated={refreshTasks}
+        />
+      }
+    >
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex rounded-lg border border-border overflow-hidden">
           {(["day", "week", "month"] as ViewMode[]).map((mode) => (
@@ -269,17 +283,6 @@ function PlanningInner() {
             )}
           </PopoverContent>
         </Popover>
-
-        <div className="flex-1" />
-
-        <CreateTaskDialog
-          defaultDate={clickContext.date ?? currentDate}
-          defaultHour={clickContext.hour}
-          defaultMinute={clickContext.minute}
-          defaultWorkerId={clickContext.workerId}
-          defaultDuration={clickContext.duration}
-          onCreated={refreshTasks}
-        />
       </div>
 
       <div className="flex items-center gap-3">
@@ -331,6 +334,6 @@ function PlanningInner() {
           onRefresh={refreshTasks}
         />
       )}
-    </div>
+    </LayoutPage>
   );
 }
