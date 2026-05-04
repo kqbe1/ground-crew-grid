@@ -97,8 +97,8 @@ export default function DevisDetail() {
     } catch { toast.error("Erreur PDF"); } finally { setDownloading(false); }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-  if (!quote) return <div className="p-6 text-center text-muted-foreground">Devis introuvable</div>;
+  if (loading) return <LayoutDetail loading resourceLabel="Devis">{null}</LayoutDetail>;
+  if (!quote) return <LayoutDetail notFound resourceLabel="Devis">{null}</LayoutDetail>;
 
   const rooms = Array.isArray(quote.rooms_data) ? quote.rooms_data : [];
   const photos = Array.isArray(quote.photos) ? quote.photos : [];

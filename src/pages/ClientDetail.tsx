@@ -118,8 +118,8 @@ export default function ClientDetail() {
     navigate(-1);
   };
 
-  if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-  if (!client) return <div className="p-6 text-center text-muted-foreground">Client introuvable</div>;
+  if (loading) return <LayoutDetail loading resourceLabel="Client">{null}</LayoutDetail>;
+  if (!client) return <LayoutDetail notFound resourceLabel="Client">{null}</LayoutDetail>;
 
   return (
     <LayoutDetail

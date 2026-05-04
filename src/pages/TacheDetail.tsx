@@ -147,8 +147,8 @@ export default function TacheDetail() {
     navigate(-1);
   };
 
-  if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-  if (!task) return <div className="p-6 text-center text-muted-foreground">Tâche introuvable</div>;
+  if (loading) return <LayoutDetail loading resourceLabel="Tâche">{null}</LayoutDetail>;
+  if (!task) return <LayoutDetail notFound resourceLabel="Tâche">{null}</LayoutDetail>;
 
   const interventionLabel = INTERVENTION_TYPE_LABELS[task.intervention_type] || task.intervention_type;
 
