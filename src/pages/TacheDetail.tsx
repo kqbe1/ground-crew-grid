@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkerLabels } from "@/hooks/useWorkerLabels";
 import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
+import ClientCombobox from "@/components/forms/ClientCombobox";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -69,7 +70,7 @@ export default function TacheDetail() {
   const [memoSecretariat, setMemoSecretariat] = useState("");
 
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  const [clients, setClients] = useState<{ id: string; name: string; address_intervention?: string | null }[]>([]);
 
   const fetchTask = useCallback(async () => {
     if (!id) return;
@@ -104,7 +105,7 @@ export default function TacheDetail() {
     const fetchData = async () => {
       const [w, c] = await Promise.all([
         supabase.from("profiles").select("id, full_name").eq("is_active", true),
-        supabase.from("clients").select("id, name").order("name"),
+        supabase.from("clients").select("id, name, address_intervention").order("name"),
       ]);
       setWorkers(w.data ?? []);
       setClients(c.data ?? []);
@@ -364,14 +365,7 @@ export default function TacheDetail() {
             </div>
             <div>
               <Label>Client</Label>
-              <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
-                <SelectContent>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ClientCombobox clients={clients} value={clientId} onChange={setClientId} placeholder="Rechercher un client..." />
             </div>
           </div>
 
