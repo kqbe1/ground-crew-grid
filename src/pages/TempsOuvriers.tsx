@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS, FILTER_TYPE_GROUPS } from "@/lib/constants";
+import { normalizeSearch } from "@/lib/searchUtils";
 import { Button } from "@/components/ui/button";
 import { Clock, Users, Calendar, TrendingUp, Download, Search, ArrowUpDown, BarChart3 } from "lucide-react";
 import {
@@ -191,11 +192,11 @@ export default function TempsOuvriers() {
 
       // Search
       if (searchQuery) {
-        const q = searchQuery.toLowerCase();
+        const q = normalizeSearch(searchQuery);
         const match =
-          (s.worker?.full_name || "").toLowerCase().includes(q) ||
-          (s.task?.title || "").toLowerCase().includes(q) ||
-          (s.task?.client?.name || "").toLowerCase().includes(q);
+          normalizeSearch(s.worker?.full_name).includes(q) ||
+          normalizeSearch(s.task?.title).includes(q) ||
+          normalizeSearch(s.task?.client?.name).includes(q);
         if (!match) return false;
       }
 
