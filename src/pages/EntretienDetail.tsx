@@ -136,6 +136,6 @@ export default function EntretienDetail() {
         schedule={schedule}
         onSaved={() => { fetchSchedule(); setEditOpen(false); }}
       />
-    </div>
+    </LayoutDetail>
   );
 }
