@@ -28,6 +28,7 @@ import {
   eachDayOfInterval,
   isSameDay,
 } from "date-fns";
+import LayoutPage from "@/components/layout/LayoutPage";
 import { fr } from "date-fns/locale";
 import {
   BarChart,
