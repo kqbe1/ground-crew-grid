@@ -175,11 +175,11 @@ export default function Entretiens() {
 
   // Color for type badges in monthly view
   const typeColors: Record<string, string> = {
-    entretien_gaz: "bg-blue-500",
-    entretien_mazout: "bg-amber-600",
-    entretien_pellets: "bg-green-600",
-    entretien_clim: "bg-cyan-500",
-    entretien_vmc: "bg-purple-500",
+    entretien_gaz: "bg-type-gaz",
+    entretien_mazout: "bg-type-mazout",
+    entretien_pellets: "bg-type-pellets",
+    entretien_clim: "bg-type-clim",
+    entretien_vmc: "bg-type-vmc",
   };
 
   return (
@@ -216,19 +216,19 @@ export default function Entretiens() {
 
       {/* Legal alerts */}
       {legalAlerts.length > 0 && (
-        <Card className="border-amber-300 bg-amber-50/50">
+        <Card className="alert-warning">
           <CardContent className="py-3">
-            <div className="flex items-center gap-2 font-medium text-amber-800 mb-2">
+            <div className="flex items-center gap-2 font-medium mb-2">
               <AlertTriangle className="w-4 h-4" /> Alertes légales ({legalAlerts.length})
             </div>
             <div className="space-y-1">
               {legalAlerts.slice(0, 5).map((s) => (
-                <div key={s.id} className="text-sm text-amber-700 cursor-pointer hover:underline" onClick={() => navigate(`/entretiens/${s.id}`)}>
+                <div key={s.id} className="text-sm cursor-pointer hover:underline" onClick={() => navigate(`/entretiens/${s.id}`)}>
                   {s.clients?.name} — {INTERVENTION_TYPE_LABELS[s.intervention_type]} — Échéance : {format(new Date(s.next_due_date), "dd/MM/yyyy")}
                 </div>
               ))}
               {legalAlerts.length > 5 && (
-                <div className="text-xs text-amber-600">+{legalAlerts.length - 5} autre(s)…</div>
+                <div className="text-xs opacity-80">+{legalAlerts.length - 5} autre(s)…</div>
               )}
             </div>
           </CardContent>

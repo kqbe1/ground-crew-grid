@@ -17,11 +17,11 @@ const PERIODICITY_MONTHS: Record<string, number> = {
 const ENTRETIEN_TYPES = Object.entries(INTERVENTION_TYPE_LABELS).filter(([k]) => k.startsWith("entretien_"));
 
 const typeColors: Record<string, string> = {
-  entretien_gaz: "bg-blue-500",
-  entretien_mazout: "bg-amber-600",
-  entretien_pellets: "bg-green-600",
-  entretien_clim: "bg-cyan-500",
-  entretien_vmc: "bg-purple-500",
+  entretien_gaz: "bg-type-gaz",
+  entretien_mazout: "bg-type-mazout",
+  entretien_pellets: "bg-type-pellets",
+  entretien_clim: "bg-type-clim",
+  entretien_vmc: "bg-type-vmc",
 };
 
 export default function AdminStatsTab() {
@@ -210,10 +210,10 @@ export default function AdminStatsTab() {
   };
 
   const statusColors: Record<string, string> = {
-    planifie: "bg-primary/15 text-primary",
-    termine: "bg-green-100 text-green-800",
-    a_replanifier: "bg-orange-100 text-orange-800",
-    piece_a_commander: "bg-amber-100 text-amber-800",
+    planifie: "badge-status-planifie",
+    termine: "badge-status-termine",
+    a_replanifier: "badge-status-a_replanifier",
+    piece_a_commander: "badge-status-piece_a_commander",
   };
 
   return (
