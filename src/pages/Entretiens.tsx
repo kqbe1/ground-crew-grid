@@ -463,6 +463,6 @@ export default function Entretiens() {
         schedule={editSchedule}
         onSaved={fetchSchedules}
       />
-    </div>
+    </LayoutPage>
   );
 }
