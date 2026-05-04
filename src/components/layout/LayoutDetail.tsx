@@ -116,7 +116,9 @@ export default function LayoutDetail({
             </div>
             {!isStateView && titleAdornment}
           </div>
-          {actions && !error && !notFound && <div className="flex items-center gap-2">{actions}</div>}
+          {actions && !error && !notFound && (
+            <div className="flex items-center gap-2 flex-wrap">{actions}</div>
+          )}
         </div>
 
         {toolbar && !error && !notFound && <div className="flex flex-wrap gap-2">{toolbar}</div>}
