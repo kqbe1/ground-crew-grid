@@ -13,13 +13,16 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+    const supabasePrivate = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { db: { schema: "private" as never } },
+    );
 
-    // 1. Detect SECURITY DEFINER functions exposed in `public`
-    const { data: violations, error } = await supabase
-      .schema("private" as never)
-      .rpc("list_security_definer_violations");
-
-    if (error) throw error;
+    const { data: violations, error } = await supabasePrivate.rpc(
+      "list_security_definer_violations",
+    );
+    if (error) throw new Error(error.message);
 
     const list = (violations ?? []) as Array<{
       function_name: string;
