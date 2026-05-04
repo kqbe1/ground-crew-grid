@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { downloadFichesZip } from "@/lib/downloadFichesZip";
 import { RefreshCw, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
