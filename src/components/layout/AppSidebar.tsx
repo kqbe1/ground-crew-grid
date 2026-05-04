@@ -11,15 +11,12 @@ import {
   ClipboardList,
   Settings,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
   Shield,
   ShieldCheck,
   Building2,
   FileText,
   FolderOpen,
 } from "lucide-react";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -46,7 +43,6 @@ const roleConfig: Record<string, { label: string; color: string; icon: typeof Sh
 export default function AppSidebar() {
   const { role, profile, company, signOut } = useAuth();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
 
   const filteredItems = navItems.filter((item) => role && item.roles.includes(role));
   const currentRoleConfig = role ? roleConfig[role] : null;
@@ -56,55 +52,36 @@ export default function AppSidebar() {
 
   return (
     <aside
-      className={cn(
-        "flex h-screen shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300",
-        collapsed ? "w-16 min-w-16" : "w-64 min-w-64"
-      )}
+      className="flex h-screen w-64 min-w-64 shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
     >
       {/* Logo */}
-      <div className={cn("flex items-center gap-3 px-4 h-16 border-b border-sidebar-border", collapsed && "justify-center")}>
+      <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-4">
         {showCompanyLogo && company.logo_url ? (
           <>
             <img
               src={company.logo_url}
               alt={companyLabel}
-              className={cn(
-                "object-contain flex-shrink-0",
-                collapsed ? "w-8 h-8" : "w-8 h-8"
-              )}
+              className="h-8 w-8 flex-shrink-0 object-contain"
             />
-            {!collapsed && (
-              <h1 className="text-sm font-bold truncate">{companyLabel}</h1>
-            )}
+            <h1 className="truncate text-sm font-bold">{companyLabel}</h1>
           </>
         ) : (
           <>
             <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
               <WrenchIcon className="w-4 h-4 text-sidebar-primary-foreground" />
             </div>
-            {!collapsed && (
-              <h1 className="text-sm font-bold truncate">{showCompanyLogo ? companyLabel : "PME Terrain"}</h1>
-            )}
+            <h1 className="truncate text-sm font-bold">{showCompanyLogo ? companyLabel : "PME Terrain"}</h1>
           </>
         )}
       </div>
 
       {/* Role badge */}
-      {currentRoleConfig && !collapsed && (
+      {currentRoleConfig && (
         <div className="px-4 py-2 border-b border-sidebar-border">
           <Badge className={cn("text-[10px] gap-1", currentRoleConfig.color)}>
             <currentRoleConfig.icon className="w-3 h-3" />
             {currentRoleConfig.label}
           </Badge>
-        </div>
-      )}
-      {currentRoleConfig && collapsed && (
-        <div className="flex justify-center py-2 border-b border-sidebar-border" title={currentRoleConfig.label}>
-          <currentRoleConfig.icon className={cn("w-4 h-4",
-            role === "super_admin" ? "text-[hsl(var(--color-role-super-admin))]" :
-            role === "admin" ? "text-destructive" :
-            role === "bureau" ? "text-[hsl(var(--color-role-bureau))]" : "text-secondary"
-          )} />
         </div>
       )}
 
@@ -116,7 +93,7 @@ export default function AppSidebar() {
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-[hsl(var(--color-role-super-admin))]/10 text-[hsl(var(--color-role-super-admin))] hover:bg-[hsl(var(--color-role-super-admin))]/20 transition-colors"
           >
             <ShieldCheck className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && <span>Console SuperAdmin</span>}
+            <span>Console SuperAdmin</span>
           </NavLink>
         </div>
       )}
@@ -138,7 +115,7 @@ export default function AppSidebar() {
             }
           >
             <item.icon className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && <span className="truncate">{item.label}</span>}
+            <span className="truncate">{item.label}</span>
           </NavLink>
         ))}
       </nav>
@@ -146,18 +123,11 @@ export default function AppSidebar() {
       {/* Footer */}
       <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
         <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full transition-colors"
-        >
-          {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-          {!collapsed && <span>Réduire</span>}
-        </button>
-        <button
           onClick={signOut}
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/60 hover:bg-destructive/20 hover:text-destructive w-full transition-colors"
         >
           <LogOut className="w-5 h-5" />
-          {!collapsed && <span>Déconnexion</span>}
+          <span>Déconnexion</span>
         </button>
       </div>
     </aside>

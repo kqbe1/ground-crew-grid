@@ -6,8 +6,6 @@ import {
   Users,
   LogOut,
   ShieldCheck,
-  ChevronLeft,
-  ChevronRight,
   Settings,
   ScrollText,
   MoreHorizontal,
@@ -28,7 +26,6 @@ const navItems = [
 
 export default function SuperAdminLayout() {
   const { session, loading, role, profile, signOut } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
   const isMobile = useIsMobile();
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -114,30 +111,20 @@ export default function SuperAdminLayout() {
   return (
     <div className="flex h-screen overflow-hidden">
       <aside
-        className={cn(
-          "flex h-screen shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300",
-          collapsed ? "w-16 min-w-16" : "w-64 min-w-64"
-        )}
+        className="flex h-screen w-64 min-w-64 shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
       >
-        <div className={cn("flex items-center gap-3 px-4 h-16 border-b border-sidebar-border", collapsed && "justify-center")}>
+        <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-4">
           <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[hsl(var(--color-role-super-admin))] flex items-center justify-center">
             <ShieldCheck className="w-4 h-4 text-white" />
           </div>
-          {!collapsed && <h1 className="text-sm font-bold truncate">PME Terrain</h1>}
+          <h1 className="truncate text-sm font-bold">PME Terrain</h1>
         </div>
 
-        {!collapsed && (
-          <div className="px-4 py-2 border-b border-sidebar-border">
-            <Badge className="text-[10px] gap-1 bg-[hsl(var(--color-role-super-admin))] text-white">
-              <ShieldCheck className="w-3 h-3" /> Super Admin
-            </Badge>
-          </div>
-        )}
-        {collapsed && (
-          <div className="flex justify-center py-2 border-b border-sidebar-border" title="Super Admin">
-            <ShieldCheck className="w-4 h-4 text-[hsl(var(--color-role-super-admin))]" />
-          </div>
-        )}
+        <div className="px-4 py-2 border-b border-sidebar-border">
+          <Badge className="text-[10px] gap-1 bg-[hsl(var(--color-role-super-admin))] text-white">
+            <ShieldCheck className="w-3 h-3" /> Super Admin
+          </Badge>
+        </div>
 
         <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
           {navItems.map((item) => (
@@ -153,19 +140,15 @@ export default function SuperAdminLayout() {
               }
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
-              {!collapsed && <span className="truncate">{item.label}</span>}
+              <span className="truncate">{item.label}</span>
             </NavLink>
           ))}
         </nav>
 
         <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
-          <button onClick={() => setCollapsed(!collapsed)} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full transition-colors">
-            {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-            {!collapsed && <span>Réduire</span>}
-          </button>
           <button onClick={signOut} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/60 hover:bg-destructive/20 hover:text-destructive w-full transition-colors">
             <LogOut className="w-5 h-5" />
-            {!collapsed && <span>Déconnexion</span>}
+            <span>Déconnexion</span>
           </button>
         </div>
       </aside>
