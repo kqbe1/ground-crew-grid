@@ -1323,7 +1323,7 @@ export type Database = {
         | "a_replanifier"
         | "piece_a_commander"
         | "sav"
-      worker_level: "T0" | "T1" | "T2"
+      worker_level: "T0" | "T1" | "T2" | "T3" | "T4" | "T5"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1505,7 +1505,7 @@ export const Constants = {
         "piece_a_commander",
         "sav",
       ],
-      worker_level: ["T0", "T1", "T2"],
+      worker_level: ["T0", "T1", "T2", "T3", "T4", "T5"],
     },
   },
 } as const
