@@ -65,7 +65,12 @@ export const WORKER_LEVEL_LABELS: Record<string, string> = {
   T0: "T0 - Apprenti",
   T1: "T1 - Ouvrier",
   T2: "T2 - Chef d'équipe",
+  T3: "T3 - Technicien",
+  T4: "T4 - Technicien senior",
+  T5: "T5 - Responsable technique",
 };
+
+export const WORKER_LEVELS = ["T0", "T1", "T2", "T3", "T4", "T5"] as const;
 
 export const ENERGY_TYPE_LABELS: Record<string, string> = {
   gaz: "Gaz",
