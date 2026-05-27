@@ -12,6 +12,7 @@ import { Plus, Search, ShieldAlert, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import CreateUserDialog from "@/components/admin/CreateUserDialog";
 import EditUserDialog from "@/components/admin/EditUserDialog";
+import { WORKER_LEVELS, WORKER_LEVEL_LABELS } from "@/lib/constants";
 
 const roleColors: Record<string, string> = {
   super_admin: "badge-role-super_admin",
@@ -142,13 +143,15 @@ export default function AdminUsersTab() {
                 {u.role === "ouvrier" && (
                   <>
                     <Select value={u.worker_level || ""} onValueChange={(v) => updateWorkerLevel(u.id, v)}>
-                      <SelectTrigger className="w-[120px]">
+                      <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Niveau..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="T0">T0 - Apprenti</SelectItem>
-                        <SelectItem value="T1">T1 - Ouvrier</SelectItem>
-                        <SelectItem value="T2">T2 - Chef</SelectItem>
+                        {WORKER_LEVELS.map((lvl) => (
+                          <SelectItem key={lvl} value={lvl}>
+                            {WORKER_LEVEL_LABELS[lvl]}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <div className="flex items-center gap-1.5" title="Autoriser les demandes de devis">

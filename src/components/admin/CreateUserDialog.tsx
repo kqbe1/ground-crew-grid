@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { WORKER_LEVELS, WORKER_LEVEL_LABELS } from "@/lib/constants";
 
 interface Props {
   open: boolean;
@@ -24,6 +25,7 @@ export default function CreateUserDialog({ open, onOpenChange, onCreated, caller
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState("ouvrier");
+  const [workerLevel, setWorkerLevel] = useState<string>("T1");
   const [loading, setLoading] = useState(false);
 
   const allowedRoles = ROLES_BY_CALLER[callerRole] || [];
@@ -42,7 +44,13 @@ export default function CreateUserDialog({ open, onOpenChange, onCreated, caller
             "Authorization": `Bearer ${session?.access_token}`,
             "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
-          body: JSON.stringify({ email, password, full_name: fullName, role }),
+          body: JSON.stringify({
+            email,
+            password,
+            full_name: fullName,
+            role,
+            ...(role === "ouvrier" ? { worker_level: workerLevel } : {}),
+          }),
         }
       );
       const result = await resp.json();
@@ -50,7 +58,7 @@ export default function CreateUserDialog({ open, onOpenChange, onCreated, caller
         throw new Error(result.error || "Erreur lors de la création");
       }
       toast.success("Utilisateur créé avec succès");
-      setEmail(""); setPassword(""); setFullName(""); setRole("ouvrier");
+      setEmail(""); setPassword(""); setFullName(""); setRole("ouvrier"); setWorkerLevel("T1");
       onOpenChange(false);
       onCreated();
     } catch (err: any) {
@@ -96,6 +104,19 @@ export default function CreateUserDialog({ open, onOpenChange, onCreated, caller
               </SelectContent>
             </Select>
           </div>
+          {role === "ouvrier" && (
+            <div className="space-y-2">
+              <Label>Niveau ouvrier</Label>
+              <Select value={workerLevel} onValueChange={setWorkerLevel}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {WORKER_LEVELS.map((lvl) => (
+                    <SelectItem key={lvl} value={lvl}>{WORKER_LEVEL_LABELS[lvl]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>

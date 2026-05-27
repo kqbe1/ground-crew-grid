@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { email, password, full_name, role, company_id } = body;
+    const { email, password, full_name, role, company_id, worker_level } = body;
     const normalizedEmail = typeof email === "string" ? normalizeEmail(email) : "";
 
     if (!email || !password || !full_name || !role) {
@@ -326,7 +326,14 @@ Deno.serve(async (req) => {
 
     const { error: profileError } = await adminClient
       .from("profiles")
-      .update({ role, company_id: targetCompanyId, email: normalizedEmail, full_name, is_active: true })
+      .update({
+        role,
+        company_id: targetCompanyId,
+        email: normalizedEmail,
+        full_name,
+        is_active: true,
+        ...(role === "ouvrier" && worker_level ? { worker_level } : {}),
+      })
       .eq("id", newUser.user.id);
 
     if (profileError) {
