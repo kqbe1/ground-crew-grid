@@ -3,34 +3,43 @@ import { supabase } from "@/integrations/supabase/client";
 import { generateFichePdf } from "@/lib/generateFichePdf";
 import { generateDevisPdf } from "@/lib/generateDevisPdf";
 import type { UnifiedFiche } from "@/components/dashboard/bureau/types";
+import { fetchLogoDataUrl, ficheDocumentType } from "@/lib/pdfConfig";
 
 export async function downloadFichesZip(fiches: UnifiedFiche[]) {
   if (fiches.length === 0) return;
 
   const zip = new JSZip();
 
-  // Load PDF settings
-  const { data: pdfSettings } = await supabase
-    .from("pdf_settings")
-    .select("*")
-    .limit(1)
-    .maybeSingle();
-
-  const config: any = pdfSettings ?? {};
-
-  // Fetch logo if available
-  let logoDataUrl: string | null = null;
-  if (config.logo_url) {
-    try {
-      const res = await fetch(config.logo_url);
-      const blob = await res.blob();
-      logoDataUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(blob);
-      });
-    } catch { /* ignore logo errors */ }
+  // Load all PDF settings rows for the current company, keyed by document_type.
+  const { data: { user } } = await supabase.auth.getUser();
+  let companyId: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", user.id)
+      .maybeSingle();
+    companyId = profile?.company_id ?? null;
   }
+
+  const { data: allSettings } = companyId
+    ? await supabase.from("pdf_settings").select("*").eq("company_id", companyId)
+    : await supabase.from("pdf_settings").select("*").limit(1);
+
+  const settingsByType: Record<string, any> = {};
+  for (const s of allSettings ?? []) settingsByType[s.document_type] = s;
+  const fallback = settingsByType["fiche_intervention"] ?? (allSettings ?? [])[0] ?? {};
+  const getConfig = (docType: string) => settingsByType[docType] ?? fallback;
+
+  // Cache logos by path (one company can use the same logo across types).
+  const logoCache: Record<string, string | null> = {};
+  const getLogo = async (path: string | null | undefined) => {
+    if (!path) return null;
+    if (path in logoCache) return logoCache[path];
+    const data = await fetchLogoDataUrl(path);
+    logoCache[path] = data;
+    return data;
+  };
 
   // Separate sheets vs quotes
   const sheetIds = fiches.filter((f) => f.sourceTable === "intervention_sheets").map((f) => f.id);
@@ -49,6 +58,8 @@ export async function downloadFichesZip(fiches: UnifiedFiche[]) {
 
     for (const sheet of sheets ?? []) {
       try {
+        const config = getConfig(ficheDocumentType(sheet));
+        const logoDataUrl = await getLogo(config?.logo_url);
         const doc = generateFichePdf(sheet, config, logoDataUrl);
         const pdfBlob = doc.output("arraybuffer");
         const clientName = sheet.work_tasks?.clients?.name ?? "inconnu";
@@ -69,6 +80,8 @@ export async function downloadFichesZip(fiches: UnifiedFiche[]) {
 
     for (const quote of quotes ?? []) {
       try {
+        const config = getConfig("devis");
+        const logoDataUrl = await getLogo(config?.logo_url);
         const doc = generateDevisPdf(quote, config, logoDataUrl);
         const pdfBlob = doc.output("arraybuffer");
         const clientName = quote.client_name ?? "inconnu";

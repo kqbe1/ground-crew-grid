@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { downloadDevisPdf } from "@/lib/generateDevisPdf";
+import { loadPdfConfigAndLogo } from "@/lib/pdfConfig";
 
 interface Props {
   quote: any;
@@ -31,21 +32,9 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
   useEffect(() => {
     if (!open) return;
     (async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user?.user) return;
-      const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.user.id).single();
-      if (!profile?.company_id) return;
-      const { data: settings } = await supabase.from("pdf_settings").select("*").eq("company_id", profile.company_id).maybeSingle();
-      setPdfSettings(settings);
-      if (settings?.logo_url) {
-        try {
-          const resp = await fetch(settings.logo_url);
-          const blob = await resp.blob();
-          const reader = new FileReader();
-          reader.onload = () => setLogoDataUrl(reader.result as string);
-          reader.readAsDataURL(blob);
-        } catch { /* skip */ }
-      }
+      const { pdfCfg, logoDataUrl: logo } = await loadPdfConfigAndLogo("devis");
+      setPdfSettings(pdfCfg);
+      setLogoDataUrl(logo);
     })();
   }, [open]);
 
@@ -87,6 +76,8 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
           company_vat: pdfSettings.company_vat,
           primary_color: pdfSettings.primary_color,
           footer_text: pdfSettings.footer_text,
+          document_title: pdfSettings.document_title,
+          text_blocks: pdfSettings.text_blocks,
         } : undefined,
         logoDataUrl
       );

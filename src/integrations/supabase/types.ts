@@ -714,6 +714,7 @@ export type Database = {
           company_website: string
           created_at: string
           document_title: string
+          document_type: string
           footer_text: string
           id: string
           logo_url: string | null
@@ -728,6 +729,7 @@ export type Database = {
           show_photos_before: boolean
           show_signature: boolean
           show_worker_info: boolean
+          text_blocks: Json
           updated_at: string
         }
         Insert: {
@@ -740,6 +742,7 @@ export type Database = {
           company_website?: string
           created_at?: string
           document_title?: string
+          document_type?: string
           footer_text?: string
           id?: string
           logo_url?: string | null
@@ -754,6 +757,7 @@ export type Database = {
           show_photos_before?: boolean
           show_signature?: boolean
           show_worker_info?: boolean
+          text_blocks?: Json
           updated_at?: string
         }
         Update: {
@@ -766,6 +770,7 @@ export type Database = {
           company_website?: string
           created_at?: string
           document_title?: string
+          document_type?: string
           footer_text?: string
           id?: string
           logo_url?: string | null
@@ -780,6 +785,7 @@ export type Database = {
           show_photos_before?: boolean
           show_signature?: boolean
           show_worker_info?: boolean
+          text_blocks?: Json
           updated_at?: string
         }
         Relationships: [

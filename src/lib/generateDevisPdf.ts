@@ -13,6 +13,15 @@ export interface DevisPdfConfig {
   logo_url: string | null;
   primary_color: string;
   footer_text: string;
+  document_title: string;
+  text_blocks: any;
+}
+
+export interface DevisTextBlock {
+  id?: string;
+  title?: string;
+  content: string;
+  position?: "top" | "bottom";
 }
 
 const defaultConfig: DevisPdfConfig = {
@@ -25,6 +34,8 @@ const defaultConfig: DevisPdfConfig = {
   logo_url: null,
   primary_color: "#1a1a2e",
   footer_text: "",
+  document_title: "",
+  text_blocks: [],
 };
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -132,6 +143,35 @@ export function generateDevisPdf(
     y += 5.5;
   };
 
+  const renderTextBlocks = (position: "top" | "bottom") => {
+    const blocks = Array.isArray(cfg.text_blocks) ? (cfg.text_blocks as DevisTextBlock[]) : [];
+    const matching = blocks.filter((b) => (b?.position ?? "top") === position && (b?.content?.trim() || b?.title?.trim()));
+    if (matching.length === 0) return;
+    for (const b of matching) {
+      checkPage(10);
+      if (b.title?.trim()) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(pr, pg, pb);
+        doc.text(b.title.trim(), margin + 2, y);
+        y += 5;
+      }
+      if (b.content?.trim()) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(50);
+        const lines = doc.splitTextToSize(b.content.trim(), contentW - 4);
+        for (const line of lines) {
+          checkPage(5);
+          doc.text(line, margin + 2, y);
+          y += 4.5;
+        }
+      }
+      y += 3;
+    }
+    doc.setTextColor(0);
+  };
+
   // ═══════════ HEADER ═══════════
   doc.setFillColor(pr, pg, pb);
   doc.rect(0, 0, pageW, 3, "F");
@@ -183,7 +223,10 @@ export function generateDevisPdf(
   doc.setFontSize(14);
   doc.setTextColor(pr, pg, pb);
   const installLabel = INSTALLATION_TYPE_LABELS[quote.installation_type] || quote.installation_type;
-  doc.text(`DEVIS — ${installLabel}`, pageW / 2, y + 1, { align: "center" });
+  const titleText = cfg.document_title?.trim()
+    ? `${cfg.document_title.trim().toUpperCase()} — ${installLabel}`
+    : `DEVIS — ${installLabel}`;
+  doc.text(titleText, pageW / 2, y + 1, { align: "center" });
   y += 10;
 
   // Ref + date
@@ -204,6 +247,9 @@ export function generateDevisPdf(
   doc.setFont("helvetica", "bold");
   doc.text(`Statut : ${QUOTE_STATUS_LABELS[quote.status] || quote.status}`, pageW / 2, y + 2, { align: "center" });
   y += 8;
+
+  // Custom text blocks (top)
+  renderTextBlocks("top");
 
   // Urgency
   if (quote.is_urgent) {
@@ -389,6 +435,9 @@ export function generateDevisPdf(
     addSection("Créé par");
     addField("Technicien :", quote.profiles.full_name);
   }
+
+  // Custom text blocks (bottom)
+  renderTextBlocks("bottom");
 
   addFooter();
   return doc;

@@ -24,6 +24,14 @@ export interface PdfConfig {
   show_client_info: boolean;
   show_intervention_type: boolean;
   footer_text: string;
+  text_blocks: any;
+}
+
+export interface PdfTextBlock {
+  id?: string;
+  title?: string;
+  content: string;
+  position?: "top" | "bottom";
 }
 
 const defaultConfig: PdfConfig = {
@@ -47,6 +55,7 @@ const defaultConfig: PdfConfig = {
   show_client_info: true,
   show_intervention_type: true,
   footer_text: "",
+  text_blocks: [],
 };
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -146,6 +155,35 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
     y += 5.5;
   };
 
+  const renderTextBlocks = (position: "top" | "bottom") => {
+    const blocks = Array.isArray(cfg.text_blocks) ? (cfg.text_blocks as PdfTextBlock[]) : [];
+    const matching = blocks.filter((b) => (b?.position ?? "top") === position && (b?.content?.trim() || b?.title?.trim()));
+    if (matching.length === 0) return;
+    for (const b of matching) {
+      checkPage(10);
+      if (b.title?.trim()) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(pr, pg, pb);
+        doc.text(b.title.trim(), margin + 2, y);
+        y += 5;
+      }
+      if (b.content?.trim()) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(50);
+        const lines = doc.splitTextToSize(b.content.trim(), contentW - 4);
+        for (const line of lines) {
+          checkPage(5);
+          doc.text(line, margin + 2, y);
+          y += 4.5;
+        }
+      }
+      y += 3;
+    }
+    doc.setTextColor(0);
+  };
+
   // ═══════════════════════════ HEADER ═══════════════════════════
 
   // Primary color bar at top
@@ -213,6 +251,9 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
   doc.setTextColor(130);
   doc.text(`Réf: FI-${sheet.id?.substring(0, 8)?.toUpperCase() || "XXXX"}  •  ${format(new Date(), "d MMMM yyyy à HH:mm", { locale: fr })}`, pageW / 2, y, { align: "center" });
   y += 8;
+
+  // Custom text blocks (top)
+  renderTextBlocks("top");
 
   // ═══════════════════════════ INFO SECTION ═══════════════════════════
   addSection("Informations générales");
@@ -492,6 +533,9 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
       }
     }
   }
+
+  // Custom text blocks (bottom)
+  renderTextBlocks("bottom");
 
   // Final footer
   addFooter();
