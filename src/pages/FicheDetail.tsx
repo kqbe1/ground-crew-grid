@@ -11,6 +11,7 @@ import LayoutDetail from "@/components/layout/LayoutDetail";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
 import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
+import { loadPdfConfigAndLogo, ficheDocumentType } from "@/lib/pdfConfig";
 import { Textarea } from "@/components/ui/textarea";
 import { useSignedUrls } from "@/hooks/useSignedUrl";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -52,24 +53,8 @@ export default function FicheDetail() {
   const internalPhotos = useSignedUrls(sheet?.internal_photos || []);
 
   const loadPdfConfig = useCallback(async () => {
-    const { data: pdfCfg } = await supabase.from("pdf_settings").select("*").limit(1).single();
-    let logoDataUrl: string | null = null;
-    if (pdfCfg?.logo_url) {
-      try {
-        const { data: signedData } = await supabase.storage.from("intervention-photos").createSignedUrl(pdfCfg.logo_url, 60);
-        if (signedData?.signedUrl) {
-          const resp = await fetch(signedData.signedUrl);
-          const blob = await resp.blob();
-          logoDataUrl = await new Promise<string>((res) => {
-            const r = new FileReader();
-            r.onloadend = () => res(r.result as string);
-            r.readAsDataURL(blob);
-          });
-        }
-      } catch {}
-    }
-    return { pdfCfg, logoDataUrl };
-  }, []);
+    return await loadPdfConfigAndLogo(ficheDocumentType(sheet));
+  }, [sheet]);
 
   const updateStatus = async (status: string) => {
     const { error } = await supabase.from("intervention_sheets").update({ final_status: status } as any).eq("id", id);
