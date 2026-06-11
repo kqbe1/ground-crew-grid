@@ -98,6 +98,7 @@ export default function MobileFicheEntretienForm() {
     const handle = window.setTimeout(() => {
       try {
         localStorage.setItem(draftKey(taskId), JSON.stringify({
+          savedAt: Date.now(),
           step, coords, entretienType, photosBefore, observationsBefore, nameplate,
           nameplatePhotos, supplies, checkedItems, photosAfter, hoursStatus, signature,
           description, internalComment, internalPhotos,
