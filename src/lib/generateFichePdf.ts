@@ -24,6 +24,14 @@ export interface PdfConfig {
   show_client_info: boolean;
   show_intervention_type: boolean;
   footer_text: string;
+  text_blocks: PdfTextBlock[];
+}
+
+export interface PdfTextBlock {
+  id?: string;
+  title?: string;
+  content: string;
+  position?: "top" | "bottom";
 }
 
 const defaultConfig: PdfConfig = {
@@ -47,6 +55,7 @@ const defaultConfig: PdfConfig = {
   show_client_info: true,
   show_intervention_type: true,
   footer_text: "",
+  text_blocks: [],
 };
 
 function hexToRgb(hex: string): [number, number, number] {
