@@ -77,11 +77,35 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Scope target users to caller's company (super_admin exempt)
+    let allowedUserIds = payload.user_ids
+    if (callerProfile.role !== 'super_admin') {
+      const { data: sameCompany, error: scopeErr } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .in('id', payload.user_ids)
+        .eq('company_id', callerProfile.company_id)
+      if (scopeErr) {
+        return new Response(JSON.stringify({ error: scopeErr.message }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      allowedUserIds = (sameCompany ?? []).map((p) => p.id)
+    }
+
+    if (!allowedUserIds.length) {
+      return new Response(JSON.stringify({ sent: 0, message: 'No authorized recipients' }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Fetch tokens for target users
     const { data: tokens, error: tokensErr } = await supabaseAdmin
       .from('push_tokens')
       .select('token, user_id')
-      .in('user_id', payload.user_ids)
+      .in('user_id', allowedUserIds)
 
     if (tokensErr) {
       return new Response(JSON.stringify({ error: tokensErr.message }), {
