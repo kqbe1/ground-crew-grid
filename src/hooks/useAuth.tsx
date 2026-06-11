@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { purgeAllDrafts, pruneStaleFicheDrafts } from "@/lib/draftStorage";
 
 type AppRole = "admin" | "bureau" | "ouvrier" | "super_admin";
 
@@ -178,6 +179,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let isActive = true;
     let initialDone = false;
 
+    // Nettoyage des brouillons obsolètes au démarrage de la session.
+    pruneStaleFicheDrafts();
+
     const runSync = (nextSession: Session | null) => {
       if (!isActive) return;
       void syncAuthState(nextSession);
@@ -186,6 +190,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event === "INITIAL_SESSION") {
         initialDone = true;
+      }
+
+      if (event === "SIGNED_OUT") {
+        purgeAllDrafts();
       }
 
       runSync(nextSession);
@@ -230,6 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    purgeAllDrafts();
     await supabase.auth.signOut();
   };
 
