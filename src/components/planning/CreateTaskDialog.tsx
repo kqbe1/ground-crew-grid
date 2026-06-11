@@ -23,6 +23,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
 import ClientCombobox from "@/components/forms/ClientCombobox";
 
+const DRAFT_KEY = "create_task_draft_v1";
+function loadDraft(): any | null {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+function clearDraft() {
+  try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
+}
+
 interface CreateTaskDialogProps {
   defaultDate: Date;
   defaultHour?: number;
@@ -34,40 +45,51 @@ interface CreateTaskDialogProps {
 
 export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinute, defaultWorkerId, defaultDuration, onCreated }: CreateTaskDialogProps) {
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
+  const _draft = loadDraft();
+  const [open, setOpen] = useState<boolean>(_draft?.open ?? false);
   const [loading, setLoading] = useState(false);
 
-  const [title, setTitle] = useState("");
-  const [interventionType, setInterventionType] = useState<string>("autre");
-  const [assignedTo, setAssignedTo] = useState<string>(defaultWorkerId ?? "");
-  const [scheduledDate, setScheduledDate] = useState(format(defaultDate, "yyyy-MM-dd"));
-  const [startTime, setStartTime] = useState(
-    defaultHour !== undefined
+  const [title, setTitle] = useState<string>(_draft?.title ?? "");
+  const [interventionType, setInterventionType] = useState<string>(_draft?.interventionType ?? "autre");
+  const [assignedTo, setAssignedTo] = useState<string>(_draft?.assignedTo ?? defaultWorkerId ?? "");
+  const [scheduledDate, setScheduledDate] = useState<string>(_draft?.scheduledDate ?? format(defaultDate, "yyyy-MM-dd"));
+  const [startTime, setStartTime] = useState<string>(
+    _draft?.startTime ?? (defaultHour !== undefined
       ? `${String(defaultHour).padStart(2, "0")}:${String(defaultMinute ?? 0).padStart(2, "0")}`
-      : "08:00"
+      : "08:00")
   );
-  const [durationMinutes, setDurationMinutes] = useState(defaultDuration ?? 60);
-  const [endTime, setEndTime] = useState(
-    computeEndTime(
+  const [durationMinutes, setDurationMinutes] = useState<number>(_draft?.durationMinutes ?? (defaultDuration ?? 60));
+  const [endTime, setEndTime] = useState<string>(
+    _draft?.endTime ?? computeEndTime(
       defaultHour !== undefined
         ? `${String(defaultHour).padStart(2, "0")}:${String(defaultMinute ?? 0).padStart(2, "0")}`
         : "08:00",
       defaultDuration ?? 60
     )
   );
-  const [clientId, setClientId] = useState<string>("");
-  const [description, setDescription] = useState("");
-  const [memoSecretariat, setMemoSecretariat] = useState("");
+  const [clientId, setClientId] = useState<string>(_draft?.clientId ?? "");
+  const [description, setDescription] = useState<string>(_draft?.description ?? "");
+  const [memoSecretariat, setMemoSecretariat] = useState<string>(_draft?.memoSecretariat ?? "");
 
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string; address_intervention?: string | null }[]>([]);
   const [existingTasks, setExistingTasks] = useState<any[]>([]);
 
+  // Persist draft as user types / opens dialog
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+        open, title, interventionType, assignedTo, scheduledDate, startTime, endTime,
+        durationMinutes, clientId, description, memoSecretariat,
+      }));
+    } catch {}
+  }, [open, title, interventionType, assignedTo, scheduledDate, startTime, endTime, durationMinutes, clientId, description, memoSecretariat]);
+
   useEffect(() => {
     if (!open) return;
     const fetchData = async () => {
       const [w, c] = await Promise.all([
-        supabase.from("profiles").select("id, full_name").eq("is_active", true),
+        supabase.from("profiles").select("id, full_name, role").eq("is_active", true).in("role", ["ouvrier", "admin"]),
         supabase.from("clients").select("id, name, address_intervention").order("name"),
       ]);
       setWorkers(w.data ?? []);
@@ -94,9 +116,9 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
     return findOverlaps(assignedTo, scheduledDate, startTime, durationMinutes, existingTasks);
   }, [assignedTo, scheduledDate, startTime, durationMinutes, existingTasks]);
 
-  // Reset defaults when dialog opens with new context
+  // Reset defaults when dialog opens with new context (only when there's no draft to preserve)
   useEffect(() => {
-    if (open) {
+    if (open && !_draft) {
       setScheduledDate(format(defaultDate, "yyyy-MM-dd"));
       const newStart =
         defaultHour !== undefined
@@ -142,6 +164,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
     setDescription("");
     setMemoSecretariat("");
     setOpen(false);
+    clearDraft();
     onCreated();
   };
 

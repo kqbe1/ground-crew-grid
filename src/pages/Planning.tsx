@@ -24,8 +24,18 @@ import LayoutPage from "@/components/layout/LayoutPage";
 type ViewMode = "day" | "week" | "month";
 const ALL_FILTER_GROUPS = FILTER_TYPE_GROUPS;
 
-function workerLabel(index: number) {
-  return `T${index + 1}`;
+function workerLabel(worker: any, ouvrierIndex: number) {
+  if (worker?.role === "admin") return null;
+  return `T${ouvrierIndex + 1}`;
+}
+
+const PLANNING_STATE_KEY = "planning_view_state_v1";
+function loadPlanningState() {
+  try {
+    const raw = sessionStorage.getItem(PLANNING_STATE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
 }
 
 export default function Planning() {
@@ -39,27 +49,52 @@ export default function Planning() {
 function PlanningInner() {
   const { user } = useAuth();
   const routerNavigate = useNavigate();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>("day");
+  const _persisted = loadPlanningState();
+  const [currentDate, setCurrentDate] = useState<Date>(
+    _persisted?.currentDate ? new Date(_persisted.currentDate) : new Date()
+  );
+  const [viewMode, setViewMode] = useState<ViewMode>(_persisted?.viewMode ?? "day");
   const [tasks, setTasks] = useState<any[]>([]);
   const [workers, setWorkers] = useState<any[]>([]);
-  const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set());
-  const [visibleWorkerIds, setVisibleWorkerIds] = useState<Set<string> | null>(null);
+  const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(
+    new Set(_persisted?.hiddenTypes ?? [])
+  );
+  const [visibleWorkerIds, setVisibleWorkerIds] = useState<Set<string> | null>(
+    _persisted?.visibleWorkerIds ? new Set(_persisted.visibleWorkerIds) : null
+  );
   const [clickContext, setClickContext] = useState<{ date?: Date; hour?: number; minute?: number; workerId?: string; duration?: number }>({});
   const [refreshKey, setRefreshKey] = useState(0);
   const refreshTasks = useCallback(() => setRefreshKey((k) => k + 1), []);
   const { copiedTask, clearClipboard } = useTaskClipboard();
+
+  // Persist view/filter state across navigations
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(PLANNING_STATE_KEY, JSON.stringify({
+        viewMode,
+        currentDate: currentDate.toISOString(),
+        hiddenTypes: Array.from(hiddenTypes),
+        visibleWorkerIds: visibleWorkerIds ? Array.from(visibleWorkerIds) : null,
+      }));
+    } catch {}
+  }, [viewMode, currentDate, hiddenTypes, visibleWorkerIds]);
 
   const openTaskDetail = (task: any) => routerNavigate(`/taches/${task.id}`);
 
   const fetchWorkers = useCallback(async () => {
     const { data } = await supabase
       .from("profiles")
-      .select("id, full_name, worker_level, display_order")
+      .select("id, full_name, worker_level, display_order, role")
       .eq("is_active", true)
+      .in("role", ["ouvrier", "admin"])
       .order("display_order", { ascending: true })
       .order("full_name", { ascending: true });
-    setWorkers(data ?? []);
+    // Ouvriers d'abord, admin en dernier
+    const sorted = (data ?? []).slice().sort((a: any, b: any) => {
+      if (a.role === b.role) return 0;
+      return a.role === "admin" ? 1 : -1;
+    });
+    setWorkers(sorted);
   }, []);
 
   useEffect(() => { fetchWorkers(); }, [fetchWorkers]);
@@ -262,7 +297,10 @@ function PlanningInner() {
           </PopoverTrigger>
           <PopoverContent className="w-56 p-2 bg-popover z-50" align="start">
             <div className="text-sm font-semibold mb-2 px-2">Filtrer par ouvrier</div>
-            {workers.map((w, idx) => (
+            {workers.map((w) => {
+              const ouvrierIdx = workers.filter((x) => x.role === "ouvrier").findIndex((x) => x.id === w.id);
+              const label = workerLabel(w, ouvrierIdx);
+              return (
               <label key={w.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
                 <Checkbox
                   checked={!visibleWorkerIds || visibleWorkerIds.has(w.id)}
@@ -270,12 +308,13 @@ function PlanningInner() {
                 />
                 <Avatar className="h-5 w-5">
                   <AvatarFallback className="text-[9px] bg-muted text-muted-foreground">
-                    {workerLabel(idx)}
+                    {label ?? (w.full_name?.[0] ?? "?")}
                   </AvatarFallback>
                 </Avatar>
                 {w.full_name}
               </label>
-            ))}
+              );
+            })}
             {visibleWorkerIds && (
               <Button variant="ghost" size="sm" className="w-full mt-1" onClick={() => setVisibleWorkerIds(null)}>
                 Tous afficher

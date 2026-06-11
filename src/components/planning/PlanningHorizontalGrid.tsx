@@ -15,8 +15,9 @@ const ROW_HEIGHT = 80;
 const WORKER_COL_WIDTH = 200;
 const MIN_HOUR_WIDTH = 80;
 
-function workerLabel(index: number) {
-  return `T${index + 1}`;
+function workerLabelFor(worker: any, ouvrierIndex: number) {
+  if (worker?.role === "admin") return null;
+  return `T${ouvrierIndex + 1}`;
 }
 
 interface Props {
@@ -44,7 +45,8 @@ export default function PlanningHorizontalGrid({
 
   const workerLabelMap = useMemo(() => {
     const m: Record<string, string> = {};
-    workers.forEach((w, i) => { m[w.id] = `T${i + 1}`; });
+    const ouvriers = workers.filter((w) => w.role === "ouvrier");
+    ouvriers.forEach((w, i) => { m[w.id] = `T${i + 1}`; });
     return m;
   }, [workers]);
 
@@ -159,7 +161,9 @@ export default function PlanningHorizontalGrid({
         </div>
 
         {/* Rows */}
-        {workers.map((w, idx) => {
+        {workers.map((w) => {
+          const ouvrierIdx = workers.filter((x) => x.role === "ouvrier").findIndex((x) => x.id === w.id);
+          const label = workerLabelFor(w, ouvrierIdx);
           const workerTasks = dayTasks.filter((t) => t.assigned_to === w.id);
           const isSelectingRow = selection?.workerId === w.id;
           return (
@@ -195,7 +199,7 @@ export default function PlanningHorizontalGrid({
                 <GripVertical className="w-4 h-4 text-muted-foreground shrink-0" />
                 <Avatar className="h-9 w-9 shrink-0">
                   <AvatarFallback className="text-xs font-semibold bg-muted text-muted-foreground">
-                    {workerLabel(idx)}
+                    {label ?? (w.full_name?.[0] ?? "?")}
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium truncate">{w.full_name}</span>

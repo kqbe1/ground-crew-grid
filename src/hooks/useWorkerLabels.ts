@@ -13,13 +13,16 @@ export function useWorkerLabels() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, full_name, display_order, is_active")
+        .select("id, full_name, display_order, is_active, role")
         .eq("is_active", true)
+        .in("role", ["ouvrier", "admin"])
         .order("display_order", { ascending: true })
         .order("full_name", { ascending: true });
       if (cancelled || !data) return;
       const map: Record<string, string> = {};
-      data.forEach((w, i) => {
+      // Ouvriers d'abord (T1, T2…), admin sans label numéroté
+      const ouvriers = data.filter((w: any) => w.role === "ouvrier");
+      ouvriers.forEach((w: any, i) => {
         map[w.id] = `T${i + 1}`;
       });
       setLabels(map);
