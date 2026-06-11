@@ -68,7 +68,8 @@ export function usePushNotifications() {
         // Handle notification tap (app opened from notification)
         PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
           const data = action.notification.data;
-          if (data?.route) {
+          // Only allow internal navigation to prevent open-redirect via attacker-controlled push data
+          if (typeof data?.route === "string" && /^\/[A-Za-z0-9\-_/?&=.%]*$/.test(data.route)) {
             window.location.href = data.route;
           }
         });
