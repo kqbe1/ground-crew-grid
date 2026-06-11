@@ -19,39 +19,53 @@ import { Textarea } from "@/components/ui/textarea";
 
 const TOTAL_STEPS = 9;
 
+const draftKey = (taskId?: string) => `fiche_draft:intervention:${taskId ?? "new"}`;
+function loadDraft(taskId?: string): any | null {
+  try {
+    const raw = localStorage.getItem(draftKey(taskId));
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+function clearDraft(taskId?: string) {
+  try { localStorage.removeItem(draftKey(taskId)); } catch {}
+}
+
 export default function MobileFicheInterventionForm() {
   const { taskId } = useParams();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { isOnline, save } = useOfflineDrafts();
-  const [step, setStep] = useState(1);
+  const _draft = loadDraft(taskId);
+  const [step, setStep] = useState<number>(_draft?.step ?? 1);
   const [submitting, setSubmitting] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  const [dirty, setDirty] = useState<boolean>(!!_draft);
 
-  const [coords, setCoords] = useState<CoordinatesData>({
+  const [coords, setCoords] = useState<CoordinatesData>(_draft?.coords ?? {
     clientName: "", clientAddress: "", clientPostal: "", clientCity: "",
     clientPhone: "", clientEmail: "", billingSame: true, billingName: "",
     billingAddress: "", billingPostal: "", billingCity: "", billingPhone: "", billingEmail: "",
   });
-  const [photosBefore, setPhotosBefore] = useState<string[]>([]);
-  const [observationsBefore, setObservationsBefore] = useState("");
-  const [nameplate, setNameplate] = useState<NameplateData>(emptyNameplate);
-  const [nameplatePhotos, setNameplatePhotos] = useState<string[]>([]);
-  const [description, setDescription] = useState("");
-  const [supplies, setSupplies] = useState("");
-  const [photosAfter, setPhotosAfter] = useState<string[]>([]);
-  const [hoursStatus, setHoursStatus] = useState<HoursStatusData>({
+  const [photosBefore, setPhotosBefore] = useState<string[]>(_draft?.photosBefore ?? []);
+  const [observationsBefore, setObservationsBefore] = useState<string>(_draft?.observationsBefore ?? "");
+  const [nameplate, setNameplate] = useState<NameplateData>(_draft?.nameplate ?? emptyNameplate);
+  const [nameplatePhotos, setNameplatePhotos] = useState<string[]>(_draft?.nameplatePhotos ?? []);
+  const [description, setDescription] = useState<string>(_draft?.description ?? "");
+  const [supplies, setSupplies] = useState<string>(_draft?.supplies ?? "");
+  const [photosAfter, setPhotosAfter] = useState<string[]>(_draft?.photosAfter ?? []);
+  const [hoursStatus, setHoursStatus] = useState<HoursStatusData>(_draft?.hoursStatus ?? {
     arrivalTime: "", departureTime: "", statusDetail: "", statusComment: "",
   });
-  const [signature, setSignature] = useState<SignatureData>({
+  const [signature, setSignature] = useState<SignatureData>(_draft?.signature ?? {
     technicianName: profile?.full_name || "",
     binomeName: "", binomePercentage: 0, clientAbsent: false, signatureData: "",
   });
-  const [internalComment, setInternalComment] = useState("");
-  const [internalPhotos, setInternalPhotos] = useState<string[]>([]);
+  const [internalComment, setInternalComment] = useState<string>(_draft?.internalComment ?? "");
+  const [internalPhotos, setInternalPhotos] = useState<string[]>(_draft?.internalPhotos ?? []);
 
   useEffect(() => {
     if (!taskId) return;
+    // Ne pas écraser les valeurs déjà saisies par l'utilisateur (brouillon restauré)
+    if (loadDraft(taskId)) return;
     (async () => {
       const { data: task } = await supabase
         .from("work_tasks")
@@ -77,8 +91,24 @@ export default function MobileFicheInterventionForm() {
     }
   }, [profile?.full_name]);
 
+  // Persistance globale du brouillon (debounce 300ms)
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey(taskId), JSON.stringify({
+          step, coords, photosBefore, observationsBefore, nameplate, nameplatePhotos,
+          description, supplies, photosAfter, hoursStatus, signature,
+          internalComment, internalPhotos,
+        }));
+      } catch { /* quota dépassé — ignoré */ }
+    }, 300);
+    return () => window.clearTimeout(handle);
+  }, [taskId, step, coords, photosBefore, observationsBefore, nameplate, nameplatePhotos,
+      description, supplies, photosAfter, hoursStatus, signature, internalComment, internalPhotos]);
+
   const handleClose = () => {
     if (dirty && !confirm("Quitter sans enregistrer ?")) return;
+    clearDraft(taskId);
     navigate(-1);
   };
 
@@ -196,6 +226,7 @@ export default function MobileFicheInterventionForm() {
           icon: <WifiOff className="w-4 h-4" />,
         });
       }
+      clearDraft(taskId);
       navigate("/mobile");
     } catch (err) {
       console.error(err);
