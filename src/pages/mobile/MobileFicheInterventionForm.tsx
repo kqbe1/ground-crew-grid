@@ -96,6 +96,7 @@ export default function MobileFicheInterventionForm() {
     const handle = window.setTimeout(() => {
       try {
         localStorage.setItem(draftKey(taskId), JSON.stringify({
+          savedAt: Date.now(),
           step, coords, photosBefore, observationsBefore, nameplate, nameplatePhotos,
           description, supplies, photosAfter, hoursStatus, signature,
           internalComment, internalPhotos,
