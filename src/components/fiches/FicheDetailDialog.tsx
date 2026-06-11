@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
 import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
+import { loadPdfConfigAndLogo, ficheDocumentType } from "@/lib/pdfConfig";
 
 interface FicheDetailDialogProps {
   sheet: any;
@@ -24,26 +25,8 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
   const [loadingPdf, setLoadingPdf] = useState(false);
 
   const loadPdfConfig = useCallback(async () => {
-    const { data: pdfCfg } = await supabase.from("pdf_settings").select("*").limit(1).single();
-    let logoDataUrl: string | null = null;
-    if (pdfCfg?.logo_url) {
-      try {
-        const { data: signedData } = await supabase.storage
-          .from("intervention-photos")
-          .createSignedUrl(pdfCfg.logo_url, 60);
-        if (signedData?.signedUrl) {
-          const resp = await fetch(signedData.signedUrl);
-          const blob = await resp.blob();
-          logoDataUrl = await new Promise<string>((res) => {
-            const r = new FileReader();
-            r.onloadend = () => res(r.result as string);
-            r.readAsDataURL(blob);
-          });
-        }
-      } catch {}
-    }
-    return { pdfCfg, logoDataUrl };
-  }, []);
+    return await loadPdfConfigAndLogo(ficheDocumentType(sheet));
+  }, [sheet]);
 
   const handlePreviewPdf = useCallback(async () => {
     if (pdfUrl) return;
@@ -81,24 +64,7 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
     setSending(true);
     try {
       // 1. Generate & download the PDF
-      const { data: pdfCfg } = await supabase.from("pdf_settings").select("*").limit(1).single();
-      let logoDataUrl: string | null = null;
-      if (pdfCfg?.logo_url) {
-        try {
-          const { data: signedData } = await supabase.storage
-            .from("intervention-photos")
-            .createSignedUrl(pdfCfg.logo_url, 60);
-          if (signedData?.signedUrl) {
-            const resp = await fetch(signedData.signedUrl);
-            const blob = await resp.blob();
-            logoDataUrl = await new Promise<string>((res) => {
-              const r = new FileReader();
-              r.onloadend = () => res(r.result as string);
-              r.readAsDataURL(blob);
-            });
-          }
-        } catch {}
-      }
+      const { pdfCfg, logoDataUrl } = await loadPdfConfigAndLogo(ficheDocumentType(sheet));
       downloadFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
 
       // 2. Open mailto with pre-filled subject & body
