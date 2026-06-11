@@ -15,9 +15,9 @@ const ROW_HEIGHT = 80;
 const WORKER_COL_WIDTH = 200;
 const MIN_HOUR_WIDTH = 80;
 
-function workerLabelFor(worker: any, ouvrierIndex: number) {
+function workerLabelFor(worker: any) {
   if (worker?.role === "admin") return null;
-  return `T${ouvrierIndex + 1}`;
+  return worker?.worker_level ?? null;
 }
 
 interface Props {
@@ -45,8 +45,9 @@ export default function PlanningHorizontalGrid({
 
   const workerLabelMap = useMemo(() => {
     const m: Record<string, string> = {};
-    const ouvriers = workers.filter((w) => w.role === "ouvrier");
-    ouvriers.forEach((w, i) => { m[w.id] = `T${i + 1}`; });
+    workers.forEach((w) => {
+      if (w.role === "ouvrier" && w.worker_level) m[w.id] = w.worker_level;
+    });
     return m;
   }, [workers]);
 
@@ -162,8 +163,7 @@ export default function PlanningHorizontalGrid({
 
         {/* Rows */}
         {workers.map((w) => {
-          const ouvrierIdx = workers.filter((x) => x.role === "ouvrier").findIndex((x) => x.id === w.id);
-          const label = workerLabelFor(w, ouvrierIdx);
+          const label = workerLabelFor(w);
           const workerTasks = dayTasks.filter((t) => t.assigned_to === w.id);
           const isSelectingRow = selection?.workerId === w.id;
           return (

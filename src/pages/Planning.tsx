@@ -24,9 +24,9 @@ import LayoutPage from "@/components/layout/LayoutPage";
 type ViewMode = "day" | "week" | "month";
 const ALL_FILTER_GROUPS = FILTER_TYPE_GROUPS;
 
-function workerLabel(worker: any, ouvrierIndex: number) {
+function workerLabel(worker: any) {
   if (worker?.role === "admin") return null;
-  return `T${ouvrierIndex + 1}`;
+  return worker?.worker_level ?? null;
 }
 
 const PLANNING_STATE_KEY = "planning_view_state_v1";
@@ -298,8 +298,7 @@ function PlanningInner() {
           <PopoverContent className="w-56 p-2 bg-popover z-50" align="start">
             <div className="text-sm font-semibold mb-2 px-2">Filtrer par ouvrier</div>
             {workers.map((w) => {
-              const ouvrierIdx = workers.filter((x) => x.role === "ouvrier").findIndex((x) => x.id === w.id);
-              const label = workerLabel(w, ouvrierIdx);
+              const label = workerLabel(w);
               return (
               <label key={w.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
                 <Checkbox

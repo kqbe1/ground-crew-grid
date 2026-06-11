@@ -13,17 +13,18 @@ export function useWorkerLabels() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, full_name, display_order, is_active, role")
+        .select("id, full_name, display_order, is_active, role, worker_level")
         .eq("is_active", true)
         .in("role", ["ouvrier", "admin"])
         .order("display_order", { ascending: true })
         .order("full_name", { ascending: true });
       if (cancelled || !data) return;
       const map: Record<string, string> = {};
-      // Ouvriers d'abord (T1, T2…), admin sans label numéroté
-      const ouvriers = data.filter((w: any) => w.role === "ouvrier");
-      ouvriers.forEach((w: any, i) => {
-        map[w.id] = `T${i + 1}`;
+      // Le label vient du worker_level assigné manuellement (T0..T5).
+      // L'admin n'a pas de label numéroté.
+      data.forEach((w: any) => {
+        if (w.role !== "ouvrier") return;
+        if (w.worker_level) map[w.id] = w.worker_level;
       });
       setLabels(map);
     })();
