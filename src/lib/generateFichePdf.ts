@@ -24,7 +24,7 @@ export interface PdfConfig {
   show_client_info: boolean;
   show_intervention_type: boolean;
   footer_text: string;
-  text_blocks: PdfTextBlock[];
+  text_blocks: any;
 }
 
 export interface PdfTextBlock {
