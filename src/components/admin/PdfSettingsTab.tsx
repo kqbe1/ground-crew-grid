@@ -95,11 +95,11 @@ function newBlockId() {
 function normalizeBlocks(raw: unknown): TextBlock[] {
   if (!Array.isArray(raw)) return [];
   return raw
-    .map((b: any) => ({
+    .map((b: any): TextBlock => ({
       id: typeof b?.id === "string" && b.id ? b.id : newBlockId(),
       title: typeof b?.title === "string" ? b.title : "",
       content: typeof b?.content === "string" ? b.content : "",
-      position: b?.position === "bottom" ? "bottom" : "top",
+      position: (b?.position === "bottom" ? "bottom" : "top") as "top" | "bottom",
     }))
     .filter((b) => b.title || b.content);
 }
