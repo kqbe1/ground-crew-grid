@@ -31,13 +31,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const extractSessionRole = (session: Session | null): AppRole | null => {
-  const rawRole = session?.user?.user_metadata?.role;
-  return rawRole === "admin" || rawRole === "bureau" || rawRole === "ouvrier" || rawRole === "super_admin"
-    ? rawRole
-    : null;
-};
-
 const extractSessionCompanyId = (session: Session | null): string | null => {
   const rawCompanyId = session?.user?.user_metadata?.company_id;
   return typeof rawCompanyId === "string" && rawCompanyId.length > 0 ? rawCompanyId : null;
@@ -63,10 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const applySessionFallback = (session: Session | null) => {
-    const sessionRole = extractSessionRole(session);
     const sessionCompanyId = extractSessionCompanyId(session);
 
-    setRole(sessionRole);
+    // Never trust user_metadata for role — only the DB profile decides privileges.
+    setRole(null);
     setProfile((current) => ({
       full_name:
         current?.full_name ||
@@ -109,10 +102,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (error) {
+      // Profile fetch failed — sign the user out rather than trust client-side fallbacks.
+      await supabase.auth.signOut();
+      resetAuthState();
       return;
     }
 
     if (!data) {
+      setRole(null);
       return;
     }
 
@@ -146,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    setRole((data.role as AppRole) ?? extractSessionRole(session) ?? null);
+    setRole((data.role as AppRole) ?? null);
     setProfile({
       full_name: data.full_name,
       worker_level: data.worker_level,
