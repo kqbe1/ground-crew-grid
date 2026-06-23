@@ -60,6 +60,7 @@ export default function TacheDetail() {
   const [interventionType, setInterventionType] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
   const [secondAssignedTo, setSecondAssignedTo] = useState("");
+  const [binomeId, setBinomeId] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(60);
@@ -70,12 +71,13 @@ export default function TacheDetail() {
 
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string; address_intervention?: string | null }[]>([]);
+  const [binomes, setBinomes] = useState<{ id: string; name: string; code: string; kind: string }[]>([]);
 
   const fetchTask = useCallback(async () => {
     if (!id) return;
     const { data } = await supabase
       .from("work_tasks")
-      .select("*, clients(name, address_intervention, phone, email), profiles!work_tasks_assigned_to_fkey(full_name), client_sites(address)")
+      .select("*, clients(name, address_intervention, phone, email), profiles!work_tasks_assigned_to_fkey(full_name), client_sites(address), task_binomes!work_tasks_binome_id_fkey(name, code, kind)")
       .eq("id", id)
       .single();
     setTask(data);
@@ -84,6 +86,7 @@ export default function TacheDetail() {
       setInterventionType(data.intervention_type ?? "autre");
       setAssignedTo(data.assigned_to ?? "");
       setSecondAssignedTo(data.second_assigned_to ?? "");
+      setBinomeId(data.binome_id ?? "");
       setScheduledDate(data.scheduled_date ?? "");
       const st = data.start_time?.slice(0, 5) ?? "08:00";
       const dur = data.duration_minutes ?? 60;
@@ -102,12 +105,14 @@ export default function TacheDetail() {
   useEffect(() => {
     if (!canEdit) return;
     const fetchData = async () => {
-      const [w, c] = await Promise.all([
+      const [w, c, b] = await Promise.all([
         supabase.from("profiles").select("id, full_name").eq("is_active", true),
         supabase.from("clients").select("id, name, address_intervention").order("name"),
+        supabase.from("task_binomes").select("id, name, code, kind").eq("is_active", true).order("code"),
       ]);
       setWorkers(w.data ?? []);
       setClients(c.data ?? []);
+      setBinomes((b.data ?? []) as any);
     };
     fetchData();
   }, [canEdit]);
@@ -126,6 +131,7 @@ export default function TacheDetail() {
       intervention_type: interventionType as any,
       assigned_to: assignedTo || null,
       second_assigned_to: (secondAssignedTo && secondAssignedTo !== "none") ? secondAssignedTo : null,
+      binome_id: binomeId || null,
       scheduled_date: scheduledDate,
       start_time: startTime,
       duration_minutes: durationMinutes,
@@ -256,10 +262,19 @@ export default function TacheDetail() {
                 {task.profiles?.full_name || "Non assigné"}
                 {task.second_assigned_to && (
                   <span className="flex items-center gap-1.5 text-sm text-muted-foreground ml-2">
-                    <span className="text-xs">+ Binôme</span>
+                    <span className="text-xs">+ Second</span>
                     <span className="rounded bg-background px-1.5 py-0.5 text-xs font-bold border border-border">
                       {workerLabels[task.second_assigned_to] ?? "T?"}
                     </span>
+                  </span>
+                )}
+                {task.task_binomes && (
+                  <span className="flex items-center gap-1.5 text-sm text-muted-foreground ml-2">
+                    <span className="text-xs">+ Binôme</span>
+                    <span className="rounded bg-background px-1.5 py-0.5 text-xs font-bold border border-border">
+                      {task.task_binomes.code}
+                    </span>
+                    <span className="text-xs">{task.task_binomes.name}</span>
                   </span>
                 )}
               </div>
@@ -358,6 +373,19 @@ export default function TacheDetail() {
               <Label>Client</Label>
               <ClientCombobox clients={clients} value={clientId} onChange={setClientId} placeholder="Rechercher un client..." />
             </div>
+          </div>
+
+          <div>
+            <Label>Binôme</Label>
+            <Select value={binomeId || "__none"} onValueChange={(v) => setBinomeId(v === "__none" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Aucun binôme" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none">Aucun binôme</SelectItem>
+                {binomes.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>{b.code} — {b.name} ({b.kind})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
