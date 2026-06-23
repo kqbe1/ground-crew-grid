@@ -390,7 +390,10 @@ function TaskCard({ task, navigate }: { task: Task; navigate: (path: string) => 
     <Card
       className={cn(
         "animate-slide-in cursor-pointer active:scale-[0.98] transition-transform border-l-4",
-        task.sheet_submitted ? "border-l-status-termine bg-status-termine/5" : "border-l-transparent",
+        task.sheet_status === "draft" && "border-l-status-replanifier bg-status-replanifier/5",
+        task.sheet_status === "submitted" && "border-l-status-planifie bg-status-planifie/5",
+        task.sheet_status === "completed" && "border-l-status-termine bg-status-termine/5",
+        !task.sheet_status && "border-l-transparent",
       )}
       onClick={() => navigate(`/mobile/tache/${task.id}`)}
     >
