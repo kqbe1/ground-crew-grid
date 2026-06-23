@@ -291,10 +291,19 @@ export default function FicheDetail() {
       </section>
 
       {/* Observations avant intervention */}
-      {sheet.observations_before && (
+      {(editing || sheet.observations_before) && (
         <section className="space-y-2">
           <h2 className="font-semibold text-sm">Observations avant intervention</h2>
-          <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{sheet.observations_before}</p>
+          {editing ? (
+            <Textarea
+              value={edit.observations_before}
+              onChange={(e) => setEdit((p) => ({ ...p, observations_before: e.target.value }))}
+              rows={3}
+              placeholder="Aucune observation"
+            />
+          ) : (
+            <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{sheet.observations_before}</p>
+          )}
         </section>
       )}
 
@@ -319,11 +328,20 @@ export default function FicheDetail() {
         </section>
       )}
 
-      {/* Description / Checklist */}
-      {sheet.description && (
+      {/* Description du travail */}
+      {(editing || sheet.description) && (
         <section className="space-y-2">
           <h2 className="font-semibold text-sm">Description du travail</h2>
-          <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{sheet.description}</p>
+          {editing ? (
+            <Textarea
+              value={edit.description}
+              onChange={(e) => setEdit((p) => ({ ...p, description: e.target.value }))}
+              rows={4}
+              placeholder="Aucune description"
+            />
+          ) : (
+            <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{sheet.description}</p>
+          )}
         </section>
       )}
 
@@ -342,10 +360,19 @@ export default function FicheDetail() {
       )}
 
       {/* Fournitures */}
-      {sheet.supplies_description && (
+      {(editing || sheet.supplies_description) && (
         <section className="space-y-2">
           <h2 className="font-semibold text-sm">Fournitures utilisées</h2>
-          <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{sheet.supplies_description}</p>
+          {editing ? (
+            <Textarea
+              value={edit.supplies_description}
+              onChange={(e) => setEdit((p) => ({ ...p, supplies_description: e.target.value }))}
+              rows={3}
+              placeholder="Aucune fourniture"
+            />
+          ) : (
+            <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{sheet.supplies_description}</p>
+          )}
         </section>
       )}
 
