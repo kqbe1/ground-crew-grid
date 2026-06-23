@@ -254,7 +254,8 @@ function WeekView({ tasks, currentDate, navigate, onSelectDay }: { tasks: Task[]
                     key={task.id}
                     onClick={() => navigate(`/mobile/tache/${task.id}`)}
                     className={cn(
-                      "flex items-center gap-3 p-2.5 rounded-lg border bg-card cursor-pointer active:scale-[0.98] transition-transform"
+                      "flex items-center gap-3 p-2.5 rounded-lg border-l-4 border bg-card cursor-pointer active:scale-[0.98] transition-transform",
+                      task.sheet_submitted ? "border-l-success" : "border-l-transparent",
                     )}
                   >
                     <div className="flex-1 min-w-0">
