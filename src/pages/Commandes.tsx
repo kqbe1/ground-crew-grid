@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import CreateOrderDialog from "@/components/commandes/CreateOrderDialog";
 import LayoutPage from "@/components/layout/LayoutPage";
+import { SheetStatusBadge, computeSheetStatus, sheetStatusBorderClass } from "@/components/shared/SheetStatusBadge";
 
 const statusColors: Record<string, string> = {
   demandee: "bg-order-demandee text-white",
@@ -35,7 +36,7 @@ export default function Commandes() {
   const fetchOrders = useCallback(async () => {
     const query = supabase
       .from("parts_orders")
-      .select("*, clients(name), work_tasks(title), profiles!parts_orders_requested_by_fkey(full_name)")
+      .select("*, clients(name), work_tasks(title, intervention_sheets(is_draft, final_status)), profiles!parts_orders_requested_by_fkey(full_name)")
       .order("created_at", { ascending: false });
     if (activeTab !== "all") {
       query.eq("status", activeTab as "demandee" | "commandee" | "recue" | "cloturee");
@@ -70,10 +71,17 @@ export default function Commandes() {
     >
 
       <div className="space-y-2">
-        {orders.map((order) => (
+        {orders.map((order) => {
+          const linkedSheet = order.work_tasks?.intervention_sheets?.[0];
+          const sheetStatus = computeSheetStatus(linkedSheet);
+          return (
           <Card
             key={order.id}
-            className={cn("animate-slide-in cursor-pointer hover:shadow-md transition-shadow", urgencyColors[order.urgency])}
+            className={cn(
+              "animate-slide-in cursor-pointer hover:shadow-md transition-shadow",
+              urgencyColors[order.urgency],
+              sheetStatusBorderClass(sheetStatus),
+            )}
             onClick={() => navigate(`/commandes/${order.id}`)}
           >
             <CardContent className="py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
@@ -88,12 +96,14 @@ export default function Commandes() {
                 {order.urgency !== "normal" && (
                   <Badge variant="destructive" className="gap-1 text-xs"><AlertTriangle className="w-3 h-3" />{order.urgency === "critique" ? "Critique" : "Urgent"}</Badge>
                 )}
+                <SheetStatusBadge status={sheetStatus} />
                 <Badge className={cn(statusColors[order.status], "text-xs")}>{ORDER_STATUS_LABELS[order.status]}</Badge>
                 <span className="text-xs text-muted-foreground">{format(new Date(order.created_at), "d MMM", { locale: fr })}</span>
               </div>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
         {orders.length === 0 && <div className="py-12 text-center text-muted-foreground">Aucune commande</div>}
       </div>
 
