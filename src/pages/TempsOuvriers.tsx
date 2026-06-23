@@ -73,6 +73,17 @@ function getDuration(s: SheetRow) {
   return Math.max(0, differenceInMinutes(new Date(s.departure_time), new Date(s.arrival_time)));
 }
 
+/**
+ * Date effective d'une fiche : on privilégie l'heure d'arrivée saisie par
+ * l'ouvrier sur le terrain (= réalité), puis on retombe sur la date planifiée
+ * de la tâche, et enfin sur la date de création de la fiche.
+ */
+function getSheetDate(s: SheetRow): Date {
+  if (s.arrival_time) return new Date(s.arrival_time);
+  if (s.task?.scheduled_date) return parseISO(s.task.scheduled_date);
+  return parseISO(s.created_at);
+}
+
 const CHART_COLORS = [
   "hsl(var(--primary))",
   "hsl(var(--accent))",
@@ -180,7 +191,7 @@ export default function TempsOuvriers() {
     return sheets.filter((s) => {
       if (selectedWorker !== "all" && s.worker_id !== selectedWorker) return false;
       if (!s.arrival_time || !s.departure_time) return false;
-      const date = parseISO(s.task?.scheduled_date || s.created_at);
+      const date = getSheetDate(s);
       if (date < periodRange.start || date > periodRange.end) return false;
 
       // Type filter
@@ -212,7 +223,7 @@ export default function TempsOuvriers() {
       let cmp = 0;
       switch (sortKey) {
         case "date":
-          cmp = (a.task?.scheduled_date || a.created_at).localeCompare(b.task?.scheduled_date || b.created_at);
+          cmp = getSheetDate(a).getTime() - getSheetDate(b).getTime();
           break;
         case "worker":
           cmp = (a.worker?.full_name || "").localeCompare(b.worker?.full_name || "");
@@ -288,10 +299,7 @@ export default function TempsOuvriers() {
   const dailyTrend = useMemo(() => {
     const days = eachDayOfInterval({ start: periodRange.start, end: periodRange.end > now ? now : periodRange.end });
     return days.map((day) => {
-      const daySheets = filteredSheets.filter((s) => {
-        const d = parseISO(s.task?.scheduled_date || s.created_at);
-        return isSameDay(d, day);
-      });
+      const daySheets = filteredSheets.filter((s) => isSameDay(getSheetDate(s), day));
       const mins = daySheets.reduce((acc, s) => acc + getDuration(s), 0);
       return { date: format(day, "dd/MM"), heures: +(mins / 60).toFixed(1), fiches: daySheets.length };
     });
@@ -302,7 +310,7 @@ export default function TempsOuvriers() {
     const rows = sortedSheets.map((s) => {
       const mins = getDuration(s);
       return [
-        s.task?.scheduled_date ? format(parseISO(s.task.scheduled_date), "dd/MM/yyyy") : "",
+        format(getSheetDate(s), "dd/MM/yyyy"),
         s.worker?.full_name || "",
         s.task?.title || "",
         s.task?.client?.name || "",
