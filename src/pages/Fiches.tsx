@@ -13,6 +13,8 @@ import { fr } from "date-fns/locale";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
 import { useWorkerLabels } from "@/hooks/useWorkerLabels";
 import LayoutPage from "@/components/layout/LayoutPage";
+import { SheetStatusBadge, computeSheetStatus, sheetStatusBorderClass } from "@/components/shared/SheetStatusBadge";
+import { cn } from "@/lib/utils";
 
 export default function Fiches() {
   const navigate = useNavigate();
@@ -68,14 +70,6 @@ export default function Fiches() {
     return true;
   });
 
-  const statusColor: Record<string, string> = {
-    planifie: "bg-[hsl(var(--color-planifie))]",
-    termine: "bg-[hsl(var(--color-termine))]",
-    a_replanifier: "bg-[hsl(var(--color-replanifier))]",
-    piece_a_commander: "bg-[hsl(var(--color-piece))]",
-    sav: "bg-[hsl(var(--color-sav))]",
-  };
-
   return (
     <LayoutPage
       icon={ClipboardList}
@@ -121,8 +115,13 @@ export default function Fiches() {
       <div className="space-y-2">
         {filtered.map((sheet) => {
           const intType = sheet.work_tasks?.intervention_type;
+          const sheetStatus = computeSheetStatus(sheet);
           return (
-            <Card key={sheet.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/fiches/${sheet.id}`)}>
+            <Card
+              key={sheet.id}
+              className={cn("hover:shadow-md transition-shadow cursor-pointer", sheetStatusBorderClass(sheetStatus))}
+              onClick={() => navigate(`/fiches/${sheet.id}`)}
+            >
               <CardContent className="py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
               <div className="flex items-center gap-3 flex-1 min-w-0">
                   {(() => {
@@ -152,8 +151,7 @@ export default function Fiches() {
                   {sheet.sent_to_client && <div className="p-1 rounded bg-[hsl(var(--color-termine))]/10" title="Envoyé"><Mail className="w-3.5 h-3.5 text-[hsl(var(--color-termine))]" /></div>}
                   {sheet.signature_data && <div className="p-1 rounded bg-[hsl(var(--color-termine))]/10" title="Signé"><FileSignature className="w-3.5 h-3.5 text-[hsl(var(--color-termine))]" /></div>}
                   {(sheet.photos_before?.length > 0 || sheet.photos_after?.length > 0) && <div className="p-1 rounded bg-primary/10" title="Photos"><Camera className="w-3.5 h-3.5 text-primary" /></div>}
-                  {sheet.is_draft && <Badge variant="outline" className="border-dashed text-xs">Brouillon</Badge>}
-                  <Badge className={`${statusColor[sheet.final_status]} text-white text-xs`}>{TASK_STATUS_LABELS[sheet.final_status]}</Badge>
+                  <SheetStatusBadge status={sheetStatus} />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">{format(new Date(sheet.created_at), "d MMM yyyy", { locale: fr })}</span>
                 </div>
               </CardContent>
