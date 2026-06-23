@@ -202,6 +202,21 @@ export default function FicheDetail() {
               {TASK_STATUS_LABELS[s]}
             </Button>
           ))}
+          {editing ? (
+            <>
+              <Button size="sm" onClick={saveEdits} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+                Enregistrer
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setEditing(false)} disabled={saving}>
+                <X className="w-4 h-4 mr-1" /> Annuler
+              </Button>
+            </>
+          ) : (
+            <Button size="sm" variant="outline" onClick={startEditing}>
+              <Pencil className="w-4 h-4 mr-1" /> Modifier
+            </Button>
+          )}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button size="sm" variant="destructive"><Trash2 className="w-4 h-4 mr-1" /> Supprimer</Button>
