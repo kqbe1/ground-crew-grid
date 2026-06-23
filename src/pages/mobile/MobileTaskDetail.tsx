@@ -3,31 +3,20 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS, TASK_STATUS_LABELS } from "@/lib/constants";
 import { computeEndTime } from "@/lib/timeRange";
-import { Phone, MapPin, ClipboardList, MessageSquare, KeyRound, UserRound, Building2, StickyNote, Package } from "lucide-react";
+import { Phone, MapPin, ClipboardList, MessageSquare, KeyRound, UserRound, Building2, StickyNote } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
-import { toast } from "sonner";
 
 export default function MobileTaskDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useAuth();
   const [task, setTask] = useState<any>(null);
-  const [showPartDialog, setShowPartDialog] = useState(false);
-  const [partName, setPartName] = useState("");
-  const [partRef, setPartRef] = useState("");
-  const [partQty, setPartQty] = useState(1);
-  const [partUrgency, setPartUrgency] = useState<"normal" | "urgent" | "critique">("normal");
-  const [partNotes, setPartNotes] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
+  const [sheetSubmitted, setSheetSubmitted] = useState(false);
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -50,6 +39,21 @@ export default function MobileTaskDetail() {
       }
     };
     if (id) fetchTask();
+    try {
+      const interv = localStorage.getItem(`fiche_draft:intervention:${id}`);
+      const entr = localStorage.getItem(`fiche_draft:entretien:${id}`);
+      setHasDraft(!!(interv || entr));
+    } catch { /* ignore */ }
+    (async () => {
+      if (!id) return;
+      const { data } = await supabase
+        .from("intervention_sheets")
+        .select("id")
+        .eq("work_task_id", id)
+        .eq("is_draft", false)
+        .maybeSingle();
+      if (data) setSheetSubmitted(true);
+    })();
   }, [id]);
 
   if (!task) {
@@ -71,6 +75,12 @@ export default function MobileTaskDetail() {
           <div className="flex gap-2 mt-1">
             <Badge>{INTERVENTION_TYPE_LABELS[task.intervention_type]}</Badge>
             <Badge variant="outline">{TASK_STATUS_LABELS[task.status]}</Badge>
+            {hasDraft && !sheetSubmitted && (
+              <Badge className="bg-status-replanifier text-white">Brouillon</Badge>
+            )}
+            {sheetSubmitted && (
+              <Badge className="bg-status-termine text-white">Fiche envoyée</Badge>
+            )}
           </div>
         </div>
       </div>
@@ -181,102 +191,11 @@ export default function MobileTaskDetail() {
         className="w-full"
         size="lg"
         onClick={() => navigate(`/mobile/fiche/${task.id}`)}
+        disabled={sheetSubmitted}
       >
-        <ClipboardList className="w-5 h-5 mr-2" /> Compléter la fiche
+        <ClipboardList className="w-5 h-5 mr-2" />
+        {sheetSubmitted ? "Fiche envoyée" : (hasDraft ? "Reprendre la fiche" : "Compléter la fiche")}
       </Button>
-
-      <Button
-        variant="outline"
-        className="w-full border-[hsl(var(--color-replanifier))] text-[hsl(var(--color-replanifier))] hover:bg-[hsl(var(--color-replanifier))]/10"
-        size="lg"
-        onClick={() => setShowPartDialog(true)}
-      >
-        <Package className="w-5 h-5 mr-2" /> Demander une pièce
-      </Button>
-
-      {/* Part request dialog */}
-      <Dialog open={showPartDialog} onOpenChange={setShowPartDialog}>
-        <DialogContent className="max-w-[360px]">
-          <DialogHeader>
-            <DialogTitle>Demander une pièce</DialogTitle>
-            <DialogDescription>La tâche sera marquée « à replanifier » pour le bureau.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label>Nom de la pièce *</Label>
-              <Input value={partName} onChange={(e) => setPartName(e.target.value)} placeholder="Ex: Vanne 3 voies" />
-            </div>
-            <div>
-              <Label>Référence</Label>
-              <Input value={partRef} onChange={(e) => setPartRef(e.target.value)} placeholder="Optionnel" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Quantité</Label>
-                <Input type="number" min={1} value={partQty} onChange={(e) => setPartQty(Number(e.target.value) || 1)} />
-              </div>
-              <div>
-                <Label>Urgence</Label>
-                <Select value={partUrgency} onValueChange={(v: any) => setPartUrgency(v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="normal">Normal</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                    <SelectItem value="critique">Critique</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <Label>Notes</Label>
-              <Textarea value={partNotes} onChange={(e) => setPartNotes(e.target.value)} placeholder="Infos complémentaires…" rows={2} />
-            </div>
-            <Button
-              className="w-full"
-              disabled={!partName.trim() || submitting}
-              onClick={async () => {
-                if (!user) return;
-                setSubmitting(true);
-                try {
-                  const { error: orderError } = await supabase.from("parts_orders").insert({
-                    part_name: partName.trim(),
-                    part_reference: partRef.trim() || null,
-                    quantity: partQty,
-                    urgency: partUrgency,
-                    notes: partNotes.trim() || null,
-                    work_task_id: task.id,
-                    client_id: task.client_id || null,
-                    requested_by: user.id,
-                    status: "demandee",
-                  } as any);
-                  if (orderError) throw orderError;
-
-                  const { error: taskError } = await supabase
-                    .from("work_tasks")
-                    .update({ status: "piece_a_commander" as any })
-                    .eq("id", task.id);
-                  if (taskError) throw taskError;
-
-                  toast.success("Pièce demandée — tâche marquée à replanifier");
-                  setTask({ ...task, status: "piece_a_commander" });
-                  setShowPartDialog(false);
-                  setPartName("");
-                  setPartRef("");
-                  setPartQty(1);
-                  setPartUrgency("normal");
-                  setPartNotes("");
-                } catch (err: any) {
-                  toast.error("Erreur: " + err.message);
-                } finally {
-                  setSubmitting(false);
-                }
-              }}
-            >
-              {submitting ? "Envoi…" : "Envoyer la demande"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

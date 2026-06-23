@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
 import { computeEndTime } from "@/lib/timeRange";
-import { ChevronLeft, ChevronRight, Phone, MapPin, MessageSquare, Package } from "lucide-react";
+import { ChevronLeft, ChevronRight, Phone, MapPin, MessageSquare, Package, CheckCircle2 } from "lucide-react";
 import {
   format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
   startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval,
@@ -15,6 +15,14 @@ import {
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import MemosSecretariatPanel from "@/components/mobile/MemosSecretariatPanel";
+
+function hasDraftFor(id: string): boolean {
+  try {
+    return !!(localStorage.getItem(`fiche_draft:intervention:${id}`) ||
+              localStorage.getItem(`fiche_draft:entretien:${id}`));
+  } catch { return false; }
+}
 
 type ViewMode = "jour" | "semaine" | "mois";
 
@@ -31,6 +39,7 @@ interface Task {
   scheduled_date: string;
   clients: { name: string; phone: string | null; address_intervention: string | null } | null;
   client_sites: { address: string } | null;
+  sheet_submitted?: boolean;
 }
 
 export default function MobileAgenda() {
@@ -72,7 +81,7 @@ export default function MobileAgenda() {
   useEffect(() => {
     if (!user) return;
     const fetchTasks = async () => {
-      const [tasksRes, clientsRes] = await Promise.all([
+      const [tasksRes, clientsRes, sheetsRes] = await Promise.all([
         supabase
           .from("work_tasks")
           .select("*, client_sites(address)")
@@ -81,13 +90,20 @@ export default function MobileAgenda() {
           .lte("scheduled_date", dateRange.to)
           .order("start_time"),
         supabase.rpc("get_my_clients_safe"),
+        supabase
+          .from("intervention_sheets")
+          .select("work_task_id, is_draft")
+          .eq("worker_id", user.id)
+          .eq("is_draft", false),
       ]);
       const clientMap = Object.fromEntries(
         (clientsRes.data ?? []).map((c: any) => [c.id, c])
       );
+      const submittedSet = new Set((sheetsRes.data ?? []).map((s: any) => s.work_task_id));
       const enriched = (tasksRes.data ?? []).map((t: any) => ({
         ...t,
         clients: t.client_id ? clientMap[t.client_id] ?? null : null,
+        sheet_submitted: submittedSet.has(t.id),
       }));
       setTasks(enriched as Task[]);
     };
@@ -137,6 +153,11 @@ export default function MobileAgenda() {
 
   return (
     <div className="p-4 space-y-3">
+      {view === "jour" && (
+        <MemosSecretariatPanel
+          tasks={tasks.filter((t) => t.scheduled_date === format(currentDate, "yyyy-MM-dd"))}
+        />
+      )}
       {/* View tabs */}
       <div className="flex bg-muted rounded-lg p-0.5">
         {(["jour", "semaine", "mois"] as ViewMode[]).map((v) => (
@@ -233,7 +254,8 @@ function WeekView({ tasks, currentDate, navigate, onSelectDay }: { tasks: Task[]
                     key={task.id}
                     onClick={() => navigate(`/mobile/tache/${task.id}`)}
                     className={cn(
-                      "flex items-center gap-3 p-2.5 rounded-lg border bg-card cursor-pointer active:scale-[0.98] transition-transform"
+                      "flex items-center gap-3 p-2.5 rounded-lg border-l-4 border bg-card cursor-pointer active:scale-[0.98] transition-transform",
+                      task.sheet_submitted ? "border-l-status-termine" : "border-l-transparent",
                     )}
                   >
                     <div className="flex-1 min-w-0">

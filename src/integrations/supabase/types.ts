@@ -425,6 +425,8 @@ export type Database = {
           supplies_description: string | null
           updated_at: string
           work_status_detail: string | null
+          work_status_details: string[] | null
+          work_status_notes: Json | null
           work_task_id: string
           worker_id: string | null
         }
@@ -471,6 +473,8 @@ export type Database = {
           supplies_description?: string | null
           updated_at?: string
           work_status_detail?: string | null
+          work_status_details?: string[] | null
+          work_status_notes?: Json | null
           work_task_id: string
           worker_id?: string | null
         }
@@ -517,6 +521,8 @@ export type Database = {
           supplies_description?: string | null
           updated_at?: string
           work_status_detail?: string | null
+          work_status_details?: string[] | null
+          work_status_notes?: Json | null
           work_task_id?: string
           worker_id?: string | null
         }
@@ -676,6 +682,7 @@ export type Database = {
           ordered_at: string | null
           part_name: string
           part_reference: string | null
+          photos: string[] | null
           quantity: number
           received_at: string | null
           requested_by: string
@@ -695,6 +702,7 @@ export type Database = {
           ordered_at?: string | null
           part_name: string
           part_reference?: string | null
+          photos?: string[] | null
           quantity?: number
           received_at?: string | null
           requested_by: string
@@ -714,6 +722,7 @@ export type Database = {
           ordered_at?: string | null
           part_name?: string
           part_reference?: string | null
+          photos?: string[] | null
           quantity?: number
           received_at?: string | null
           requested_by?: string

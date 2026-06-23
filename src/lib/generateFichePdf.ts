@@ -285,10 +285,22 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
   }
 
   addField("Statut :", TASK_STATUS_LABELS[sheet.final_status] || sheet.final_status);
-  if (sheet.work_status_detail && sheet.work_status_detail !== sheet.final_status) {
-    addField("Détail statut :", sheet.work_status_detail);
+  const statusLabels: Record<string, string> = {
+    termine: "Travail terminé",
+    piece_a_commander: "Pièce à commander",
+    piece_commandee: "Pièce commandée",
+    a_refixer: "A refixer pour autre travail",
+    sav: "SAV",
+    autre: "Autre",
+  };
+  const details: string[] = Array.isArray(sheet.work_status_details) && sheet.work_status_details.length > 0
+    ? sheet.work_status_details
+    : (sheet.work_status_detail ? [sheet.work_status_detail] : []);
+  const notes: Record<string, string> = sheet.work_status_notes ?? {};
+  for (const d of details) {
+    addField("• " + (statusLabels[d] ?? d), notes[d] ? notes[d] : "");
   }
-  if (sheet.status_comment) {
+  if (sheet.status_comment && details.length === 0) {
     addField("Commentaire statut :", sheet.status_comment);
   }
   addField("Date :", format(new Date(sheet.created_at), "d MMMM yyyy", { locale: fr }));

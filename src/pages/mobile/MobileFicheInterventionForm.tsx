@@ -9,15 +9,16 @@ import { uploadPhotos, uploadSignature } from "@/lib/storageUpload";
 
 import StepProgressBar from "@/components/mobile/steps/StepProgressBar";
 import StepNavigation from "@/components/mobile/steps/StepNavigation";
-import CoordinatesStep, { type CoordinatesData } from "@/components/mobile/steps/CoordinatesStep";
 import PhotoStep from "@/components/mobile/steps/PhotoStep";
 import NameplateStep, { type NameplateData, emptyNameplate } from "@/components/mobile/steps/NameplateStep";
 import HoursStatusStep, { type HoursStatusData } from "@/components/mobile/steps/HoursStatusStep";
 import SignatureStep, { type SignatureData } from "@/components/mobile/steps/SignatureStep";
 import InternalStep from "@/components/mobile/steps/InternalStep";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 8;
 
 const draftKey = (taskId?: string) => `fiche_draft:intervention:${taskId ?? "new"}`;
 function loadDraft(taskId?: string): any | null {
@@ -39,12 +40,9 @@ export default function MobileFicheInterventionForm() {
   const [step, setStep] = useState<number>(_draft?.step ?? 1);
   const [submitting, setSubmitting] = useState(false);
   const [dirty, setDirty] = useState<boolean>(!!_draft);
+  const [hasDraft, setHasDraft] = useState<boolean>(!!_draft);
 
-  const [coords, setCoords] = useState<CoordinatesData>(_draft?.coords ?? {
-    clientName: "", clientAddress: "", clientPostal: "", clientCity: "",
-    clientPhone: "", clientEmail: "", billingSame: true, billingName: "",
-    billingAddress: "", billingPostal: "", billingCity: "", billingPhone: "", billingEmail: "",
-  });
+  const [readOnly, setReadOnly] = useState<boolean>(false);
   const [photosBefore, setPhotosBefore] = useState<string[]>(_draft?.photosBefore ?? []);
   const [observationsBefore, setObservationsBefore] = useState<string>(_draft?.observationsBefore ?? "");
   const [nameplate, setNameplate] = useState<NameplateData>(_draft?.nameplate ?? emptyNameplate);
@@ -53,7 +51,7 @@ export default function MobileFicheInterventionForm() {
   const [supplies, setSupplies] = useState<string>(_draft?.supplies ?? "");
   const [photosAfter, setPhotosAfter] = useState<string[]>(_draft?.photosAfter ?? []);
   const [hoursStatus, setHoursStatus] = useState<HoursStatusData>(_draft?.hoursStatus ?? {
-    arrivalTime: "", departureTime: "", statusDetail: "", statusComment: "",
+    arrivalTime: "", departureTime: "", statusDetail: "", statusDetails: [], statusNotes: {},
   });
   const [signature, setSignature] = useState<SignatureData>(_draft?.signature ?? {
     technicianName: profile?.full_name || "",
@@ -64,24 +62,27 @@ export default function MobileFicheInterventionForm() {
 
   useEffect(() => {
     if (!taskId) return;
+    // Vérifie si une fiche envoyée existe : bascule en lecture seule
+    (async () => {
+      const { data: existing } = await supabase
+        .from("intervention_sheets")
+        .select("id, is_draft")
+        .eq("work_task_id", taskId)
+        .eq("is_draft", false)
+        .maybeSingle();
+      if (existing) setReadOnly(true);
+    })();
     // Ne pas écraser les valeurs déjà saisies par l'utilisateur (brouillon restauré)
-    if (loadDraft(taskId)) return;
+    if (loadDraft(taskId)) {
+      toast.info("Brouillon repris");
+      return;
+    }
     (async () => {
       const { data: task } = await supabase
         .from("work_tasks")
-        .select("*, clients(name, address_intervention, phone, email, address_billing), binome:task_binomes!work_tasks_binome_id_fkey(name, code, kind)")
+        .select("*, clients(name), binome:task_binomes!work_tasks_binome_id_fkey(name, code, kind)")
         .eq("id", taskId)
         .maybeSingle();
-      if (task?.clients) {
-        const c = task.clients as any;
-        setCoords((prev) => ({
-          ...prev,
-          clientName: c.name || "",
-          clientAddress: c.address_intervention || "",
-          clientPhone: c.phone || "",
-          clientEmail: c.email || "",
-        }));
-      }
       const binome = (task as any)?.binome;
       if (binome?.name) {
         setSignature((prev) => ({ ...prev, binomeName: `${binome.code} — ${binome.name}` }));
@@ -101,14 +102,15 @@ export default function MobileFicheInterventionForm() {
       try {
         localStorage.setItem(draftKey(taskId), JSON.stringify({
           savedAt: Date.now(),
-          step, coords, photosBefore, observationsBefore, nameplate, nameplatePhotos,
+          step, photosBefore, observationsBefore, nameplate, nameplatePhotos,
           description, supplies, photosAfter, hoursStatus, signature,
           internalComment, internalPhotos,
         }));
+        setHasDraft(true);
       } catch { /* quota dépassé — ignoré */ }
     }, 300);
     return () => window.clearTimeout(handle);
-  }, [taskId, step, coords, photosBefore, observationsBefore, nameplate, nameplatePhotos,
+  }, [taskId, step, photosBefore, observationsBefore, nameplate, nameplatePhotos,
       description, supplies, photosAfter, hoursStatus, signature, internalComment, internalPhotos]);
 
   const handleClose = () => {
@@ -117,10 +119,17 @@ export default function MobileFicheInterventionForm() {
     navigate(-1);
   };
 
+  const handleDeleteDraft = () => {
+    if (!confirm("Supprimer définitivement le brouillon ?")) return;
+    clearDraft(taskId);
+    setHasDraft(false);
+    toast.success("Brouillon supprimé");
+    navigate(-1);
+  };
+
   const validateStep = (): boolean => {
     switch (step) {
-      case 1: return !!coords.clientName.trim();
-      case 7: return !!hoursStatus.statusDetail;
+      case 6: return (hoursStatus.statusDetails?.length ?? 0) > 0;
       default: return true;
     }
   };
@@ -139,13 +148,18 @@ export default function MobileFicheInterventionForm() {
 
   const handleBack = () => { if (step > 1) setStep(step - 1); };
 
-  const mapStatusToFinal = (detail: string): string => {
+  const mapStatusToFinal = (details: string[]): string => {
+    // Priorité : piece_a_commander > sav > a_refixer > termine > autre
+    const priority = ["piece_a_commander", "piece_commandee", "sav", "a_refixer", "termine", "autre"];
     const map: Record<string, string> = {
       termine: "termine", piece_a_commander: "piece_a_commander",
       piece_commandee: "piece_a_commander", a_refixer: "a_replanifier",
       sav: "sav", autre: "planifie",
     };
-    return map[detail] || "termine";
+    for (const p of priority) {
+      if (details.includes(p)) return map[p];
+    }
+    return "termine";
   };
 
   const buildPayload = (
@@ -154,13 +168,14 @@ export default function MobileFicheInterventionForm() {
     finalSignature: string,
   ) => {
     const now = new Date().toISOString().split("T")[0];
+    const details = hoursStatus.statusDetails ?? (hoursStatus.statusDetail ? [hoursStatus.statusDetail] : []);
     return {
       work_task_id: taskId,
       worker_id: user!.id,
       arrival_time: hoursStatus.arrivalTime ? `${now}T${hoursStatus.arrivalTime}:00` : null,
       departure_time: hoursStatus.departureTime ? `${now}T${hoursStatus.departureTime}:00` : null,
       description,
-      final_status: mapStatusToFinal(hoursStatus.statusDetail),
+      final_status: mapStatusToFinal(details),
       client_present: !signature.clientAbsent,
       client_absent: signature.clientAbsent,
       signature_data: finalSignature || null,
@@ -174,23 +189,11 @@ export default function MobileFicheInterventionForm() {
       internal_comment: internalComment || null,
       internal_photos: finalInternalPhotos,
       observations_before: observationsBefore || null,
-      billing_same_as_intervention: coords.billingSame,
-      billing_name: coords.billingName || null,
-      billing_address: coords.billingAddress || null,
-      billing_postal_code: coords.billingPostal || null,
-      billing_city: coords.billingCity || null,
-      billing_phone: coords.billingPhone || null,
-      billing_email: coords.billingEmail || null,
-      client_name_override: coords.clientName || null,
-      client_address_override: coords.clientAddress || null,
-      client_postal_override: coords.clientPostal || null,
-      client_city_override: coords.clientCity || null,
-      client_phone_override: coords.clientPhone || null,
-      client_email_override: coords.clientEmail || null,
       binome_name: signature.binomeName || null,
       binome_percentage: signature.binomePercentage || null,
-      work_status_detail: hoursStatus.statusDetail || null,
-      status_comment: hoursStatus.statusComment || null,
+      work_status_detail: details[0] || null,
+      work_status_details: details.length > 0 ? details : null,
+      work_status_notes: hoursStatus.statusNotes ?? {},
     };
   };
 
@@ -248,18 +251,17 @@ export default function MobileFicheInterventionForm() {
 
   const renderStep = () => {
     switch (step) {
-      case 1: return <CoordinatesStep data={coords} onChange={handleChange(setCoords)} />;
-      case 2: return (
+      case 1: return (
         <PhotoStep title="Photos avant travaux" sectionLabel="Photos avant travaux"
           photos={photosBefore} onPhotosChange={handleChange(setPhotosBefore)}
           showObservations observations={observationsBefore}
           onObservationsChange={handleChange(setObservationsBefore)} />
       );
-      case 3: return (
+      case 2: return (
         <NameplateStep data={nameplate} onChange={handleChange(setNameplate)}
           photos={nameplatePhotos} onPhotosChange={handleChange(setNameplatePhotos)} />
       );
-      case 4: return (
+      case 3: return (
         <div className="space-y-4">
           <h2 className="text-lg font-bold">Description du travail</h2>
           <Textarea value={description}
@@ -267,7 +269,7 @@ export default function MobileFicheInterventionForm() {
             placeholder="Décrivez le travail effectué ici..." rows={6} />
         </div>
       );
-      case 5: return (
+      case 4: return (
         <div className="space-y-4">
           <h2 className="text-lg font-bold">Fournitures</h2>
           <div className="bg-muted/50 rounded-lg px-3 py-2">
@@ -278,13 +280,13 @@ export default function MobileFicheInterventionForm() {
             placeholder="Décrivez les fournitures utilisées..." rows={4} />
         </div>
       );
-      case 6: return (
+      case 5: return (
         <PhotoStep title="Photos après travaux" sectionLabel="Photos après travaux"
           photos={photosAfter} onPhotosChange={handleChange(setPhotosAfter)} />
       );
-      case 7: return <HoursStatusStep data={hoursStatus} onChange={handleChange(setHoursStatus)} />;
-      case 8: return <SignatureStep data={signature} onChange={handleChange(setSignature)} />;
-      case 9: return (
+      case 6: return <HoursStatusStep data={hoursStatus} onChange={handleChange(setHoursStatus)} />;
+      case 7: return <SignatureStep data={signature} onChange={handleChange(setSignature)} />;
+      case 8: return (
         <InternalStep title="Commentaire interne & Achats"
           internalComment={internalComment} onCommentChange={handleChange(setInternalComment)}
           internalPhotos={internalPhotos} onPhotosChange={handleChange(setInternalPhotos)} />
@@ -292,6 +294,17 @@ export default function MobileFicheInterventionForm() {
       default: return null;
     }
   };
+
+  if (readOnly) {
+    return (
+      <div className="p-4 space-y-3">
+        <div className="rounded-lg border border-status-termine/30 bg-status-termine/10 p-4 text-sm">
+          Cette fiche a déjà été envoyée. Seul le bureau peut la modifier maintenant.
+        </div>
+        <Button variant="outline" className="w-full" onClick={() => navigate(-1)}>Retour</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-4 pb-24">
@@ -301,6 +314,14 @@ export default function MobileFicheInterventionForm() {
           onNext={handleNext} onBack={handleBack} onClose={handleClose}
           nextDisabled={!validateStep()} isSubmitting={submitting} />
       </div>
+      {hasDraft && (
+        <div className="flex items-center justify-between gap-2 text-xs px-2 py-1.5 rounded-md bg-status-replanifier/10 border border-status-replanifier/30">
+          <span className="font-medium text-status-replanifier">Brouillon en cours</span>
+          <button type="button" onClick={handleDeleteDraft} className="flex items-center gap-1 text-status-replanifier hover:underline">
+            <Trash2 className="w-3 h-3" /> Supprimer
+          </button>
+        </div>
+      )}
       {!isOnline && (
         <div className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-full alert-warning w-fit">
           <WifiOff className="w-3 h-3" /> Hors ligne
