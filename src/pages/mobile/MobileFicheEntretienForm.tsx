@@ -285,7 +285,7 @@ export default function MobileFicheEntretienForm() {
   if (readOnly) {
     return (
       <div className="p-4 space-y-3">
-        <div className="rounded-lg border border-success/30 bg-success/10 p-4 text-sm">
+        <div className="rounded-lg border border-status-termine/30 bg-status-termine/10 p-4 text-sm">
           Cette fiche a déjà été envoyée. Seul le bureau peut la modifier maintenant.
         </div>
         <Button variant="outline" className="w-full" onClick={() => navigate(-1)}>Retour</Button>
@@ -302,9 +302,9 @@ export default function MobileFicheEntretienForm() {
           nextDisabled={!validateStep()} isSubmitting={submitting} />
       </div>
       {hasDraft && (
-        <div className="flex items-center justify-between gap-2 text-xs px-2 py-1.5 rounded-md bg-warning/10 border border-warning/30">
-          <span className="font-medium text-warning">Brouillon en cours</span>
-          <button type="button" onClick={handleDeleteDraft} className="flex items-center gap-1 text-warning hover:underline">
+        <div className="flex items-center justify-between gap-2 text-xs px-2 py-1.5 rounded-md bg-status-replanifier/10 border border-status-replanifier/30">
+          <span className="font-medium text-status-replanifier">Brouillon en cours</span>
+          <button type="button" onClick={handleDeleteDraft} className="flex items-center gap-1 text-status-replanifier hover:underline">
             <Trash2 className="w-3 h-3" /> Supprimer
           </button>
         </div>

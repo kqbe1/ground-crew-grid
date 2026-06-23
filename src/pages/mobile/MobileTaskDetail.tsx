@@ -76,10 +76,10 @@ export default function MobileTaskDetail() {
             <Badge>{INTERVENTION_TYPE_LABELS[task.intervention_type]}</Badge>
             <Badge variant="outline">{TASK_STATUS_LABELS[task.status]}</Badge>
             {hasDraft && !sheetSubmitted && (
-              <Badge className="bg-warning text-warning-foreground">Brouillon</Badge>
+              <Badge className="bg-status-replanifier text-white">Brouillon</Badge>
             )}
             {sheetSubmitted && (
-              <Badge className="bg-success text-success-foreground">Fiche envoyée</Badge>
+              <Badge className="bg-status-termine text-white">Fiche envoyée</Badge>
             )}
           </div>
         </div>
