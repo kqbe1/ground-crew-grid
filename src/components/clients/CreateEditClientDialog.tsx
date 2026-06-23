@@ -207,7 +207,7 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
             <Input value={form.address_billing} onChange={(e) => set("address_billing", e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>Contact syndic</Label>
+            <Label>Propriétaire / Syndic</Label>
             <Input value={form.contact_syndic} onChange={(e) => set("contact_syndic", e.target.value)} />
           </div>
           <div className="space-y-2">
