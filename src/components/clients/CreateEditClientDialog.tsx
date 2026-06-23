@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 import { Plus, Trash2 } from "lucide-react";
+import ClientCombobox, { type ClientOption } from "@/components/forms/ClientCombobox";
 
 type Client = Tables<"clients">;
 
@@ -49,6 +50,19 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
   });
   const [draftEquipments, setDraftEquipments] = useState<DraftEquipment[]>([]);
   const [newEq, setNewEq] = useState<DraftEquipment>({ name: "", brand: "", model: "", energy_type: "autre" });
+  const [ownerClientId, setOwnerClientId] = useState<string>("");
+  const [allClients, setAllClients] = useState<ClientOption[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("id, name, address_intervention, email, phone")
+        .order("name");
+      setAllClients((data ?? []) as ClientOption[]);
+    })();
+  }, [open]);
 
   useEffect(() => {
     if (client) {
@@ -66,6 +80,7 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
         birthday: client.birthday || "",
         region: (client as any).region || "",
       });
+      setOwnerClientId((client as any).owner_client_id || "");
     } else {
       setForm({
         name: "", phone: "", phone_secondary: "", email: "",
@@ -73,6 +88,7 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
         contact_locataire: "", notes_internal: "", syndic_keys_codes: "", birthday: "",
         region: "",
       });
+      setOwnerClientId("");
     }
   }, [client, open]);
 
@@ -95,6 +111,7 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
       syndic_keys_codes: form.syndic_keys_codes || null,
       birthday: form.birthday || null,
       region: (form.region || null) as any,
+      owner_client_id: ownerClientId || null,
     };
 
     let savedClientId = client?.id ?? null;
@@ -208,7 +225,19 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
           </div>
           <div className="space-y-2">
             <Label>Propriétaire / Syndic</Label>
-            <Input value={form.contact_syndic} onChange={(e) => set("contact_syndic", e.target.value)} />
+            <ClientCombobox
+              clients={allClients.filter((c) => c.id !== client?.id)}
+              value={ownerClientId}
+              onChange={setOwnerClientId}
+              placeholder="Sélectionner une fiche existante..."
+              emptyLabel="Aucun propriétaire/syndic"
+            />
+            <Input
+              value={form.contact_syndic}
+              onChange={(e) => set("contact_syndic", e.target.value)}
+              placeholder="Ou saisir un contact libre (nom, téléphone...)"
+              className="text-xs"
+            />
           </div>
           <div className="space-y-2">
             <Label>Contact locataire</Label>
