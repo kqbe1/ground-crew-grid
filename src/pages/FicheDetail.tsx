@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin, Package, ExternalLink } from "lucide-react";
+import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin, Package, ExternalLink, Pencil, X, Save } from "lucide-react";
 import LayoutDetail from "@/components/layout/LayoutDetail";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
@@ -54,6 +54,15 @@ export default function FicheDetail() {
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [orders, setOrders] = useState<any[]>([]);
+  const [editing, setEditing] = useState(false);
+  const [edit, setEdit] = useState<{
+    description: string;
+    observations_before: string;
+    supplies_description: string;
+    status_comment: string;
+    work_status_notes: Record<string, string>;
+  }>({ description: "", observations_before: "", supplies_description: "", status_comment: "", work_status_notes: {} });
+  const [saving, setSaving] = useState(false);
 
   const fetchSheet = useCallback(async () => {
     if (!id) return;
@@ -124,6 +133,36 @@ export default function FicheDetail() {
     fetchSheet();
   };
 
+  const startEditing = () => {
+    setEdit({
+      description: sheet.description ?? "",
+      observations_before: sheet.observations_before ?? "",
+      supplies_description: sheet.supplies_description ?? "",
+      status_comment: sheet.status_comment ?? "",
+      work_status_notes: { ...(sheet.work_status_notes ?? {}) },
+    });
+    setEditing(true);
+  };
+
+  const saveEdits = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("intervention_sheets")
+      .update({
+        description: edit.description || null,
+        observations_before: edit.observations_before || null,
+        supplies_description: edit.supplies_description || null,
+        status_comment: edit.status_comment || null,
+        work_status_notes: edit.work_status_notes ?? {},
+      } as any)
+      .eq("id", id!);
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Fiche mise à jour");
+    setEditing(false);
+    fetchSheet();
+  };
+
   if (loading) return <LayoutDetail loading resourceLabel="Fiche">{null}</LayoutDetail>;
   if (!sheet) return <LayoutDetail notFound resourceLabel="Fiche">{null}</LayoutDetail>;
 
@@ -163,6 +202,21 @@ export default function FicheDetail() {
               {TASK_STATUS_LABELS[s]}
             </Button>
           ))}
+          {editing ? (
+            <>
+              <Button size="sm" onClick={saveEdits} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+                Enregistrer
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setEditing(false)} disabled={saving}>
+                <X className="w-4 h-4 mr-1" /> Annuler
+              </Button>
+            </>
+          ) : (
+            <Button size="sm" variant="outline" onClick={startEditing}>
+              <Pencil className="w-4 h-4 mr-1" /> Modifier
+            </Button>
+          )}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button size="sm" variant="destructive"><Trash2 className="w-4 h-4 mr-1" /> Supprimer</Button>
@@ -237,10 +291,19 @@ export default function FicheDetail() {
       </section>
 
       {/* Observations avant intervention */}
-      {sheet.observations_before && (
+      {(editing || sheet.observations_before) && (
         <section className="space-y-2">
           <h2 className="font-semibold text-sm">Observations avant intervention</h2>
-          <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{sheet.observations_before}</p>
+          {editing ? (
+            <Textarea
+              value={edit.observations_before}
+              onChange={(e) => setEdit((p) => ({ ...p, observations_before: e.target.value }))}
+              rows={3}
+              placeholder="Aucune observation"
+            />
+          ) : (
+            <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{sheet.observations_before}</p>
+          )}
         </section>
       )}
 
@@ -265,11 +328,20 @@ export default function FicheDetail() {
         </section>
       )}
 
-      {/* Description / Checklist */}
-      {sheet.description && (
+      {/* Description du travail */}
+      {(editing || sheet.description) && (
         <section className="space-y-2">
           <h2 className="font-semibold text-sm">Description du travail</h2>
-          <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{sheet.description}</p>
+          {editing ? (
+            <Textarea
+              value={edit.description}
+              onChange={(e) => setEdit((p) => ({ ...p, description: e.target.value }))}
+              rows={4}
+              placeholder="Aucune description"
+            />
+          ) : (
+            <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{sheet.description}</p>
+          )}
         </section>
       )}
 
@@ -288,10 +360,19 @@ export default function FicheDetail() {
       )}
 
       {/* Fournitures */}
-      {sheet.supplies_description && (
+      {(editing || sheet.supplies_description) && (
         <section className="space-y-2">
           <h2 className="font-semibold text-sm">Fournitures utilisées</h2>
-          <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{sheet.supplies_description}</p>
+          {editing ? (
+            <Textarea
+              value={edit.supplies_description}
+              onChange={(e) => setEdit((p) => ({ ...p, supplies_description: e.target.value }))}
+              rows={3}
+              placeholder="Aucune fourniture"
+            />
+          ) : (
+            <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{sheet.supplies_description}</p>
+          )}
         </section>
       )}
 
@@ -340,8 +421,23 @@ export default function FicheDetail() {
                 {details.map((d) => (
                   <div key={d} className="p-3 rounded-lg border text-sm">
                     <div className="font-medium">{WORK_STATUS_LABELS[d] ?? d}</div>
-                    {notes[d] && (
-                      <p className="mt-1 text-muted-foreground whitespace-pre-wrap">{notes[d]}</p>
+                    {editing ? (
+                      <Textarea
+                        className="mt-2"
+                        rows={2}
+                        value={edit.work_status_notes[d] ?? ""}
+                        onChange={(e) =>
+                          setEdit((p) => ({
+                            ...p,
+                            work_status_notes: { ...p.work_status_notes, [d]: e.target.value },
+                          }))
+                        }
+                        placeholder={`Note pour « ${WORK_STATUS_LABELS[d] ?? d} »...`}
+                      />
+                    ) : (
+                      notes[d] && (
+                        <p className="mt-1 text-muted-foreground whitespace-pre-wrap">{notes[d]}</p>
+                      )
                     )}
                   </div>
                 ))}
@@ -349,8 +445,20 @@ export default function FicheDetail() {
             </div>
           );
         })()}
-        {sheet.status_comment && (
-          <p className="text-sm text-muted-foreground">Commentaire statut : {sheet.status_comment}</p>
+        {(editing || sheet.status_comment) && (
+          <div className="space-y-1">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase">Commentaire statut</h3>
+            {editing ? (
+              <Textarea
+                rows={2}
+                value={edit.status_comment}
+                onChange={(e) => setEdit((p) => ({ ...p, status_comment: e.target.value }))}
+                placeholder="Commentaire général sur le statut"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">{sheet.status_comment}</p>
+            )}
+          </div>
         )}
       </section>
 
