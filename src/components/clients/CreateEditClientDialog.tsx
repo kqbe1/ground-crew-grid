@@ -97,18 +97,62 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
       region: (form.region || null) as any,
     };
 
-    const { error } = client
-      ? await supabase.from("clients").update(payload).eq("id", client.id)
-      : await supabase.from("clients").insert(payload as any);
+    let savedClientId = client?.id ?? null;
+    if (client) {
+      const { error } = await supabase.from("clients").update(payload).eq("id", client.id);
+      if (error) { setLoading(false); toast.error("Erreur : " + error.message); return; }
+    } else {
+      const { data, error } = await supabase.from("clients").insert(payload as any).select("id").single();
+      if (error || !data) { setLoading(false); toast.error("Erreur : " + (error?.message || "création client")); return; }
+      savedClientId = data.id;
+    }
+
+    // Auto-create primary site from address_intervention if not already present
+    let primarySiteId: string | null = null;
+    if (savedClientId && form.address_intervention.trim()) {
+      const addr = form.address_intervention.trim();
+      const { data: existing } = await supabase
+        .from("client_sites").select("id")
+        .eq("client_id", savedClientId).eq("address", addr).maybeSingle();
+      if (existing?.id) {
+        primarySiteId = existing.id;
+      } else {
+        const { count } = await supabase.from("client_sites")
+          .select("id", { count: "exact" }).eq("client_id", savedClientId);
+        const { data: site } = await supabase.from("client_sites").insert({
+          client_id: savedClientId, name: "Adresse principale",
+          address: addr, is_primary: (count ?? 0) === 0,
+        } as any).select("id").single();
+        primarySiteId = site?.id ?? null;
+      }
+    }
+
+    // Insert draft equipments (only used in creation flow)
+    if (savedClientId && draftEquipments.length > 0 && primarySiteId) {
+      const rows = draftEquipments.filter((e) => e.name.trim()).map((e) => ({
+        client_site_id: primarySiteId, name: e.name.trim(),
+        brand: e.brand || null, model: e.model || null,
+        energy_type: e.energy_type as any,
+      }));
+      if (rows.length > 0) {
+        const { error: eqErr } = await supabase.from("client_equipment").insert(rows as any);
+        if (eqErr) toast.error("Équipements : " + eqErr.message);
+      }
+    }
 
     setLoading(false);
-    if (error) {
-      toast.error("Erreur : " + error.message);
-    } else {
-      toast.success(client ? "Client modifié" : "Client créé");
-      onOpenChange(false);
-      onSaved();
-    }
+    toast.success(client ? "Client modifié" : "Client créé");
+    onOpenChange(false);
+    onSaved();
+  };
+
+  const addDraftEquipment = () => {
+    if (!newEq.name.trim()) return;
+    setDraftEquipments((prev) => [...prev, newEq]);
+    setNewEq({ name: "", brand: "", model: "", energy_type: "autre" });
+  };
+  const removeDraftEquipment = (idx: number) => {
+    setDraftEquipments((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const set = (key: string, val: string) => setForm((f) => ({ ...f, [key]: val }));
