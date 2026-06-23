@@ -37,8 +37,8 @@ interface Task {
   memo_secretariat: string | null;
   material_needed: string | null;
   scheduled_date: string;
-  clients: { name: string; phone: string | null; address_intervention: string | null } | null;
-  client_sites: { address: string } | null;
+  clients: { name: string; phone: string | null; address_intervention: string | null; postal_code: string | null; city: string | null } | null;
+  client_sites: { address: string; postal_code: string | null; city: string | null } | null;
   sheet_submitted?: boolean;
 }
 
