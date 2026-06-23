@@ -8,8 +8,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
+import { Plus, Trash2 } from "lucide-react";
 
 type Client = Tables<"clients">;
+
+const ENERGY_LABELS: Record<string, string> = {
+  gaz: "Gaz", mazout: "Mazout", pellets: "Pellets", electricite: "Électricité",
+  clim: "Clim", vmc: "VMC", autre: "Autre",
+};
+
+type DraftEquipment = {
+  name: string;
+  brand: string;
+  model: string;
+  energy_type: string;
+};
 
 interface Props {
   open: boolean;
