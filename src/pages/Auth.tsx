@@ -5,20 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Wrench, Shield } from "lucide-react";
+import { Wrench } from "lucide-react";
 
 export default function Auth() {
   const { session, loading } = useAuth();
   const { toast } = useToast();
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
-  const [signupName, setSignupName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth();
 
   if (loading) {
     return (
@@ -40,18 +36,6 @@ export default function Auth() {
     setIsSubmitting(false);
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    const { error } = await signUp(signupEmail, signupPassword, signupName);
-    if (error) {
-      toast({ title: "Erreur d'inscription", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Inscription réussie", description: "Votre compte a bien été créé. Vous pouvez vous connecter directement." });
-    }
-    setIsSubmitting(false);
-  };
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-6">
@@ -64,54 +48,27 @@ export default function Auth() {
         </div>
 
         <Card>
-          <Tabs defaultValue="login">
-            <CardHeader className="pb-2">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Connexion</TabsTrigger>
-                <TabsTrigger value="signup">Inscription</TabsTrigger>
-              </TabsList>
-            </CardHeader>
-            <CardContent>
-              <TabsContent value="login" className="mt-0">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input id="login-email" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required placeholder="vous@entreprise.be" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Mot de passe</Label>
-                    <Input id="login-password" type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} required placeholder="••••••••" />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? "Connexion..." : "Se connecter"}
-                  </Button>
-                </form>
-              </TabsContent>
-              <TabsContent value="signup" className="mt-0">
-                <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Nom complet</Label>
-                    <Input id="signup-name" type="text" value={signupName} onChange={e => setSignupName(e.target.value)} required placeholder="Jean Dupont" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input id="signup-email" type="email" value={signupEmail} onChange={e => setSignupEmail(e.target.value)} required placeholder="vous@entreprise.be" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Mot de passe</Label>
-                    <Input id="signup-password" type="password" value={signupPassword} onChange={e => setSignupPassword(e.target.value)} required minLength={6} placeholder="Min. 6 caractères" />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? "Inscription..." : "S'inscrire"}
-                  </Button>
-                </form>
-                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                  <Shield className="w-3 h-3" />
-                  <span>Un admin devra vous attribuer un rôle après inscription</span>
-                </div>
-              </TabsContent>
-            </CardContent>
-          </Tabs>
+          <CardHeader>
+            <CardTitle>Connexion</CardTitle>
+            <CardDescription>
+              Les comptes sont créés par votre administrateur. Contactez-le si vous n'avez pas d'accès.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-email">Email</Label>
+                <Input id="login-email" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required placeholder="vous@entreprise.be" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="login-password">Mot de passe</Label>
+                <Input id="login-password" type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} required placeholder="••••••••" />
+              </div>
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Connexion..." : "Se connecter"}
+              </Button>
+            </form>
+          </CardContent>
         </Card>
       </div>
     </div>
