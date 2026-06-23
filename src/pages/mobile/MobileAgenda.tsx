@@ -37,8 +37,8 @@ interface Task {
   memo_secretariat: string | null;
   material_needed: string | null;
   scheduled_date: string;
-  clients: { name: string; phone: string | null; address_intervention: string | null } | null;
-  client_sites: { address: string } | null;
+  clients: { name: string; phone: string | null; address_intervention: string | null; postal_code: string | null; city: string | null } | null;
+  client_sites: { address: string; postal_code: string | null; city: string | null } | null;
   sheet_submitted?: boolean;
 }
 
@@ -84,7 +84,7 @@ export default function MobileAgenda() {
       const [tasksRes, clientsRes, sheetsRes] = await Promise.all([
         supabase
           .from("work_tasks")
-          .select("*, client_sites(address)")
+          .select("*, client_sites(address, postal_code, city)")
           .eq("assigned_to", user.id)
           .gte("scheduled_date", dateRange.from)
           .lte("scheduled_date", dateRange.to)
@@ -388,7 +388,15 @@ function TaskCard({ task, navigate }: { task: Task; navigate: (path: string) => 
 
         <div className="flex items-center gap-2 text-sm">
           <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="truncate">{task.client_sites?.address || task.clients?.address_intervention}</span>
+          <span className="truncate">
+            {(() => {
+              const addr = task.client_sites?.address || task.clients?.address_intervention || "";
+              const postal = task.client_sites?.postal_code || task.clients?.postal_code || "";
+              const city = task.client_sites?.city || task.clients?.city || "";
+              const locality = [postal, city].filter(Boolean).join(" ");
+              return locality ? `${addr} — ${locality}` : addr;
+            })()}
+          </span>
         </div>
 
         <div className="flex items-center justify-between">
@@ -433,8 +441,11 @@ function TaskCard({ task, navigate }: { task: Task; navigate: (path: string) => 
             className="flex-1"
             onClick={(e) => {
               e.stopPropagation();
-              const addr = task.client_sites?.address || task.clients?.address_intervention;
-              if (addr) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`);
+              const addr = task.client_sites?.address || task.clients?.address_intervention || "";
+              const postal = task.client_sites?.postal_code || task.clients?.postal_code || "";
+              const city = task.client_sites?.city || task.clients?.city || "";
+              const fullAddr = [addr, postal, city].filter(Boolean).join(", ");
+              if (fullAddr) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddr)}`);
             }}
           >
             <MapPin className="w-3.5 h-3.5 mr-1" /> GPS

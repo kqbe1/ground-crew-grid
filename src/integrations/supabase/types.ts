@@ -195,6 +195,7 @@ export type Database = {
       client_sites: {
         Row: {
           address: string
+          city: string | null
           client_id: string
           company_id: string
           created_at: string
@@ -202,10 +203,12 @@ export type Database = {
           is_primary: boolean
           name: string
           notes: string | null
+          postal_code: string | null
           updated_at: string
         }
         Insert: {
           address: string
+          city?: string | null
           client_id: string
           company_id: string
           created_at?: string
@@ -213,10 +216,12 @@ export type Database = {
           is_primary?: boolean
           name: string
           notes?: string | null
+          postal_code?: string | null
           updated_at?: string
         }
         Update: {
           address?: string
+          city?: string | null
           client_id?: string
           company_id?: string
           created_at?: string
@@ -224,6 +229,7 @@ export type Database = {
           is_primary?: boolean
           name?: string
           notes?: string | null
+          postal_code?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -248,6 +254,7 @@ export type Database = {
           address_billing: string | null
           address_intervention: string | null
           birthday: string | null
+          city: string | null
           company_id: string
           contact_locataire: string | null
           contact_syndic: string | null
@@ -259,6 +266,7 @@ export type Database = {
           owner_client_id: string | null
           phone: string | null
           phone_secondary: string | null
+          postal_code: string | null
           region: Database["public"]["Enums"]["client_region"] | null
           syndic_keys_codes: string | null
           updated_at: string
@@ -267,6 +275,7 @@ export type Database = {
           address_billing?: string | null
           address_intervention?: string | null
           birthday?: string | null
+          city?: string | null
           company_id: string
           contact_locataire?: string | null
           contact_syndic?: string | null
@@ -278,6 +287,7 @@ export type Database = {
           owner_client_id?: string | null
           phone?: string | null
           phone_secondary?: string | null
+          postal_code?: string | null
           region?: Database["public"]["Enums"]["client_region"] | null
           syndic_keys_codes?: string | null
           updated_at?: string
@@ -286,6 +296,7 @@ export type Database = {
           address_billing?: string | null
           address_intervention?: string | null
           birthday?: string | null
+          city?: string | null
           company_id?: string
           contact_locataire?: string | null
           contact_syndic?: string | null
@@ -297,6 +308,7 @@ export type Database = {
           owner_client_id?: string | null
           phone?: string | null
           phone_secondary?: string | null
+          postal_code?: string | null
           region?: Database["public"]["Enums"]["client_region"] | null
           syndic_keys_codes?: string | null
           updated_at?: string
@@ -1337,10 +1349,12 @@ export type Database = {
         Args: never
         Returns: {
           address_intervention: string
+          city: string
           email: string
           id: string
           name: string
           phone: string
+          postal_code: string
         }[]
       }
       get_my_company_full: {
