@@ -375,6 +375,68 @@ export default function FicheDetail() {
       {/* Commentaires internes */}
       <section className="space-y-3 border-t pt-4">
         <h2 className="font-semibold text-sm flex items-center gap-2">
+          <Package className="w-4 h-4" /> Commandes de pièces liées ({orders.length})
+        </h2>
+        {orders.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aucune commande liée à cette intervention.</p>
+        ) : (
+          <div className="space-y-2">
+            {orders.map((o) => (
+              <div key={o.id} className="p-3 rounded-lg border space-y-2">
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm flex items-center gap-2">
+                      {o.part_name}
+                      {o.urgency && o.urgency !== "normal" && (
+                        <Badge variant="destructive" className="gap-1 text-xs">
+                          <AlertTriangle className="w-3 h-3" />
+                          {o.urgency === "critique" ? "Critique" : "Urgent"}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Qté: {o.quantity}
+                      {o.part_reference ? ` · Réf: ${o.part_reference}` : ""}
+                      {o.supplier ? ` · ${o.supplier}` : ""}
+                      {o.profiles?.full_name ? ` · Demandée par ${o.profiles.full_name}` : ""}
+                    </div>
+                    {o.notes && (
+                      <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{o.notes}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge className={`${orderStatusColors[o.status]} text-xs`}>
+                      {ORDER_STATUS_LABELS[o.status]}
+                    </Badge>
+                    <Button size="sm" variant="ghost" onClick={() => navigate(`/commandes/${o.id}`)}>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+                {!isReadOnly && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {ORDER_STATUSES.map((s) => (
+                      <Button
+                        key={s}
+                        size="sm"
+                        variant={o.status === s ? "default" : "outline"}
+                        className={o.status === s ? `${orderStatusColors[s]} h-7 text-xs` : "h-7 text-xs"}
+                        onClick={() => updateOrderStatus(o.id, s)}
+                      >
+                        {ORDER_STATUS_LABELS[s]}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Commentaires internes */}
+      <section className="space-y-3 border-t pt-4">
+        <h2 className="font-semibold text-sm flex items-center gap-2">
           <MessageSquare className="w-4 h-4" /> Achats & Commentaires internes
         </h2>
         {sheet.internal_comment && (
