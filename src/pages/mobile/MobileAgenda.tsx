@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
 import { computeEndTime } from "@/lib/timeRange";
-import { ChevronLeft, ChevronRight, Phone, MapPin, MessageSquare, Package, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Phone, MapPin, MessageSquare, Package, CheckCircle2, Pencil, Send } from "lucide-react";
 import {
   format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
   startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval,
@@ -40,6 +40,7 @@ interface Task {
   clients: { name: string; phone: string | null; address_intervention: string | null; postal_code: string | null; city: string | null } | null;
   client_sites: { address: string; postal_code: string | null; city: string | null } | null;
   sheet_submitted?: boolean;
+  sheet_status: "draft" | "submitted" | "completed" | null;
 }
 
 export default function MobileAgenda() {
@@ -92,19 +93,38 @@ export default function MobileAgenda() {
         supabase.rpc("get_my_clients_safe"),
         supabase
           .from("intervention_sheets")
-          .select("work_task_id, is_draft")
-          .eq("worker_id", user.id)
-          .eq("is_draft", false),
+          .select("work_task_id, is_draft, final_status")
+          .eq("worker_id", user.id),
       ]);
       const clientMap = Object.fromEntries(
         (clientsRes.data ?? []).map((c: any) => [c.id, c])
       );
-      const submittedSet = new Set((sheetsRes.data ?? []).map((s: any) => s.work_task_id));
-      const enriched = (tasksRes.data ?? []).map((t: any) => ({
-        ...t,
-        clients: t.client_id ? clientMap[t.client_id] ?? null : null,
-        sheet_submitted: submittedSet.has(t.id),
-      }));
+      const sheetMap = new Map<string, { is_draft: boolean; final_status: string | null }>();
+      (sheetsRes.data ?? []).forEach((s: any) => {
+        sheetMap.set(s.work_task_id, { is_draft: s.is_draft, final_status: s.final_status });
+      });
+      const enriched = (tasksRes.data ?? []).map((t: any) => {
+        const sheet = sheetMap.get(t.id);
+        const hasLocalDraft = hasDraftFor(t.id);
+        let sheet_status: Task["sheet_status"] = null;
+        if (hasLocalDraft) {
+          sheet_status = "draft";
+        } else if (sheet) {
+          if (sheet.is_draft) {
+            sheet_status = "draft";
+          } else if (sheet.final_status === "termine") {
+            sheet_status = "completed";
+          } else {
+            sheet_status = "submitted";
+          }
+        }
+        return {
+          ...t,
+          clients: t.client_id ? clientMap[t.client_id] ?? null : null,
+          sheet_submitted: sheet ? !sheet.is_draft : false,
+          sheet_status,
+        };
+      });
       setTasks(enriched as Task[]);
     };
     fetchTasks();
@@ -255,7 +275,10 @@ function WeekView({ tasks, currentDate, navigate, onSelectDay }: { tasks: Task[]
                     onClick={() => navigate(`/mobile/tache/${task.id}`)}
                     className={cn(
                       "flex items-center gap-3 p-2.5 rounded-lg border-l-4 border bg-card cursor-pointer active:scale-[0.98] transition-transform",
-                      task.sheet_submitted ? "border-l-status-termine" : "border-l-transparent",
+                      task.sheet_status === "draft" && "border-l-status-replanifier bg-status-replanifier/5",
+                      task.sheet_status === "submitted" && "border-l-status-planifie bg-status-planifie/5",
+                      task.sheet_status === "completed" && "border-l-status-termine bg-status-termine/5",
+                      !task.sheet_status && "border-l-transparent",
                     )}
                   >
                     <div className="flex-1 min-w-0">
@@ -370,7 +393,10 @@ function TaskCard({ task, navigate }: { task: Task; navigate: (path: string) => 
     <Card
       className={cn(
         "animate-slide-in cursor-pointer active:scale-[0.98] transition-transform border-l-4",
-        task.sheet_submitted ? "border-l-status-termine bg-status-termine/5" : "border-l-transparent",
+        task.sheet_status === "draft" && "border-l-status-replanifier bg-status-replanifier/5",
+        task.sheet_status === "submitted" && "border-l-status-planifie bg-status-planifie/5",
+        task.sheet_status === "completed" && "border-l-status-termine bg-status-termine/5",
+        !task.sheet_status && "border-l-transparent",
       )}
       onClick={() => navigate(`/mobile/tache/${task.id}`)}
     >
@@ -386,9 +412,19 @@ function TaskCard({ task, navigate }: { task: Task; navigate: (path: string) => 
             <Badge className={cn("text-xs", INTERVENTION_TYPE_COLORS[task.intervention_type])}>
               {INTERVENTION_TYPE_LABELS[task.intervention_type]}
             </Badge>
-            {task.sheet_submitted && (
-              <Badge variant="outline" className="text-[10px] gap-1 border-status-termine text-status-termine">
-                <CheckCircle2 className="w-3 h-3" /> Fiche envoyée
+            {task.sheet_status === "draft" && (
+              <Badge variant="outline" className="text-[10px] gap-1 badge-sheet-draft">
+                <Pencil className="w-3 h-3" /> Brouillon
+              </Badge>
+            )}
+            {task.sheet_status === "submitted" && (
+              <Badge variant="outline" className="text-[10px] gap-1 badge-sheet-submitted">
+                <Send className="w-3 h-3" /> Envoyé au bureau
+              </Badge>
+            )}
+            {task.sheet_status === "completed" && (
+              <Badge variant="outline" className="text-[10px] gap-1 badge-sheet-completed">
+                <CheckCircle2 className="w-3 h-3" /> Terminé
               </Badge>
             )}
           </div>
