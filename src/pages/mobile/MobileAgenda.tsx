@@ -40,6 +40,7 @@ interface Task {
   clients: { name: string; phone: string | null; address_intervention: string | null; postal_code: string | null; city: string | null } | null;
   client_sites: { address: string; postal_code: string | null; city: string | null } | null;
   sheet_submitted?: boolean;
+  sheet_status: "draft" | "submitted" | "completed" | null;
 }
 
 export default function MobileAgenda() {
