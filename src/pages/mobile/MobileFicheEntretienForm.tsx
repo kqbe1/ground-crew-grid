@@ -73,7 +73,7 @@ export default function MobileFicheEntretienForm() {
         .maybeSingle();
       if (existing) setReadOnly(true);
     })();
-    if (loadDraft(taskId)) { toast.info("Brouillon repris"); return; }
+    if (loadDraft(taskId)) toast.info("Brouillon repris");
     (async () => {
       const { data: task } = await supabase
         .from("work_tasks")
@@ -82,7 +82,11 @@ export default function MobileFicheEntretienForm() {
         .maybeSingle();
       const binome = (task as any)?.binome;
       if (binome?.name) {
-        setSignature((prev) => ({ ...prev, binomeName: `${binome.code} — ${binome.name}` }));
+        setSignature((prev) =>
+          prev.binomeName?.trim()
+            ? prev
+            : { ...prev, binomeName: `${binome.code} — ${binome.name}` },
+        );
       }
     })();
   }, [taskId]);
