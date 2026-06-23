@@ -650,11 +650,7 @@ export default function TempsOuvriers() {
                       const mins = getDuration(s);
                       return (
                         <TableRow key={s.id}>
-                          <TableCell>
-                            {s.task?.scheduled_date
-                              ? format(parseISO(s.task.scheduled_date), "dd/MM/yyyy")
-                              : "-"}
-                          </TableCell>
+                          <TableCell>{format(getSheetDate(s), "dd/MM/yyyy")}</TableCell>
                           <TableCell>{s.worker?.full_name || "-"}</TableCell>
                           <TableCell className="max-w-[200px] truncate">{s.task?.title || "-"}</TableCell>
                           <TableCell>{s.task?.client?.name || "-"}</TableCell>
