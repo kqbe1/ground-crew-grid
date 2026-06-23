@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin, Package, ExternalLink } from "lucide-react";
+import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin, Package, ExternalLink, Pencil, X, Save } from "lucide-react";
 import LayoutDetail from "@/components/layout/LayoutDetail";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
@@ -54,6 +54,15 @@ export default function FicheDetail() {
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [orders, setOrders] = useState<any[]>([]);
+  const [editing, setEditing] = useState(false);
+  const [edit, setEdit] = useState<{
+    description: string;
+    observations_before: string;
+    supplies_description: string;
+    status_comment: string;
+    work_status_notes: Record<string, string>;
+  }>({ description: "", observations_before: "", supplies_description: "", status_comment: "", work_status_notes: {} });
+  const [saving, setSaving] = useState(false);
 
   const fetchSheet = useCallback(async () => {
     if (!id) return;
@@ -121,6 +130,36 @@ export default function FicheDetail() {
     if (error) { toast.error(error.message); return; }
     toast.success("Commentaire ajouté");
     setNewComment("");
+    fetchSheet();
+  };
+
+  const startEditing = () => {
+    setEdit({
+      description: sheet.description ?? "",
+      observations_before: sheet.observations_before ?? "",
+      supplies_description: sheet.supplies_description ?? "",
+      status_comment: sheet.status_comment ?? "",
+      work_status_notes: { ...(sheet.work_status_notes ?? {}) },
+    });
+    setEditing(true);
+  };
+
+  const saveEdits = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("intervention_sheets")
+      .update({
+        description: edit.description || null,
+        observations_before: edit.observations_before || null,
+        supplies_description: edit.supplies_description || null,
+        status_comment: edit.status_comment || null,
+        work_status_notes: edit.work_status_notes ?? {},
+      } as any)
+      .eq("id", id!);
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Fiche mise à jour");
+    setEditing(false);
     fetchSheet();
   };
 
