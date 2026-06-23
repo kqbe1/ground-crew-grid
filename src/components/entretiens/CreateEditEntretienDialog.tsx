@@ -12,6 +12,14 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type Schedule = Tables<"maintenance_schedules">;
 
+const TYPE_TO_ENERGY: Record<string, string> = {
+  entretien_gaz: "gaz",
+  entretien_mazout: "mazout",
+  entretien_pellets: "pellets",
+  entretien_clim: "clim",
+  entretien_vmc: "vmc",
+};
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -24,6 +32,8 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
   const [clients, setClients] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
   const [equipment, setEquipment] = useState<any[]>([]);
+  const [legalRules, setLegalRules] = useState<Record<string, string>>({});
+  const [clientRegion, setClientRegion] = useState<string | null>(null);
   const [form, setForm] = useState({
     client_id: "",
     client_site_id: "",
@@ -39,7 +49,13 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
 
   useEffect(() => {
     if (!open) return;
-    supabase.from("clients").select("id, name").order("name").then(({ data }) => setClients(data ?? []));
+    supabase.from("clients").select("id, name, region").order("name").then(({ data }) => setClients(data ?? []));
+    supabase.from("legal_maintenance_rules" as any).select("energy_type, region, periodicity")
+      .then(({ data }) => {
+        const map: Record<string, string> = {};
+        (data ?? []).forEach((r: any) => { map[`${r.energy_type}|${r.region}`] = r.periodicity; });
+        setLegalRules(map);
+      });
     if (schedule) {
       setForm({
         client_id: schedule.client_id,
@@ -59,14 +75,25 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
   }, [open, schedule]);
 
   useEffect(() => {
-    if (!form.client_id) { setSites([]); setEquipment([]); return; }
+    if (!form.client_id) { setSites([]); setEquipment([]); setClientRegion(null); return; }
     supabase.from("client_sites").select("id, name, address").eq("client_id", form.client_id).then(({ data }) => setSites(data ?? []));
+    const c = clients.find((c) => c.id === form.client_id);
+    setClientRegion(c?.region ?? null);
   }, [form.client_id]);
 
   useEffect(() => {
     if (!form.client_site_id) { setEquipment([]); return; }
     supabase.from("client_equipment").select("id, name, brand, model").eq("client_site_id", form.client_site_id).then(({ data }) => setEquipment(data ?? []));
   }, [form.client_site_id]);
+
+  // Auto-fill periodicity from legal rules when type or region changes (only for new entretiens)
+  useEffect(() => {
+    if (schedule) return;
+    const energy = TYPE_TO_ENERGY[form.intervention_type];
+    if (!energy || !clientRegion) return;
+    const rule = legalRules[`${energy}|${clientRegion}`];
+    if (rule) setForm((f) => ({ ...f, periodicity: rule }));
+  }, [form.intervention_type, clientRegion, legalRules, schedule]);
 
   const handleSubmit = async () => {
     if (!form.client_id || !form.next_due_date) { toast.error("Client et prochaine échéance obligatoires"); return; }

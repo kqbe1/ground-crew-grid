@@ -1,95 +1,64 @@
+# Lot de modifications — Bureau / Admin / Planning / Fiches
 
-## Objectif
+## 1. Formulaire création de tâche (Planning)
 
-Refondre la grille du planning bureau (vues Jour, Semaine, Mois) :
-1. **Inverser les axes** : ouvriers en lignes (à gauche), heures en colonnes (en haut).
-2. **Réordonner les ouvriers** par drag-and-drop vertical, avec ordre persisté en base par société.
-3. **Sélection multi-créneaux** (cliquer-glisser vertical sur la ligne d'un ouvrier) pour créer une tâche avec durée pré-remplie.
+`src/components/planning/CreateTaskDialog.tsx`
+- Réordonner les champs : **Client** placé en premier (au-dessus de Titre).
+- Bug horaire lors du clic sur un créneau : le brouillon `sessionStorage` (`create_task_draft_v1`) restaure l'ancien `startTime` et ignore le `defaultHour/defaultMinute` reçu. Correction : quand le dialog s'ouvre via un clic créneau, on force `startTime/scheduledDate/duration/assignedTo` à partir des `default*` props (priorité contexte > draft). Le draft reste utilisé uniquement si le dialog est ouvert via le bouton « Nouvelle tâche ».
 
-## 1. Base de données
+## 2. Niveaux techniciens T0 → T20
 
-Ajouter une colonne `display_order` sur `profiles` pour ordonner les ouvriers dans le planning :
+- `src/lib/constants.ts` : étendre `WORKER_LEVELS` et `WORKER_LEVEL_LABELS` jusque T20.
+- Aucun changement de schéma : `worker_level` est déjà du texte libre.
+- Vérifier que `CreateUserDialog` et `EditUserDialog` affichent bien la liste complète (scroll Select déjà géré).
 
-```sql
-ALTER TABLE public.profiles
-  ADD COLUMN display_order INTEGER NOT NULL DEFAULT 0;
+## 3. Binômes B0 → B20 (dropdown dans la création de tâche + fiches)
 
--- Initialiser l'ordre par nom dans chaque société
-WITH ranked AS (
-  SELECT id, ROW_NUMBER() OVER (PARTITION BY company_id ORDER BY full_name) AS rn
-  FROM public.profiles
-)
-UPDATE public.profiles p SET display_order = ranked.rn
-FROM ranked WHERE ranked.id = p.id;
-```
+Constat : la table `binomes` existe mais n'est pas utilisée. Les fiches d'intervention stockent juste `binome_name` (texte libre) et `binome_percentage`. La demande = une nomenclature **B0…B20** réutilisable et liée à un nom (ex. « stagiaire Pierre »).
 
-La policy existante `admin_update_company_profiles` couvre déjà la mise à jour de cette colonne par admin/bureau (id ≠ auth.uid()). Pour permettre à un admin/bureau de réordonner aussi sa propre carte, ajouter une policy ciblée :
+Approche minimale, alignée sur les techniciens :
+- Ajouter une colonne `binome_level` (text) sur `profiles` pour permettre d'assigner un label B0…B20 à un utilisateur (en plus de `worker_level`). Optionnel par utilisateur.
+- `src/lib/constants.ts` : `BINOME_LEVELS = ["B0".."B20"]` + labels.
+- Admin → onglet Utilisateurs : dans `CreateUserDialog` / `EditUserDialog`, ajouter un champ « Niveau binôme » (Select B0–B20 ou vide).
+- `CreateTaskDialog` : nouveau Select « Binôme » listant les profils ayant un `binome_level` non nul, affichés `B3 — Pierre`. Stocke l'id dans `work_tasks.second_assigned_to` (colonne déjà existante).
+- Fiches mobiles (`MobileFicheInterventionForm` + `MobileFicheEntretienForm`) : si la tâche a un `second_assigned_to`, pré-remplir `binomeName` avec `Bx — Nom` et permettre de garder la saisie du pourcentage.
+- PDFs (`generateFichePdf`) : afficher `Bx — Nom (XX%)` quand présent.
 
-```sql
-CREATE POLICY "bureau_admin_update_own_display_order" ON public.profiles
-FOR UPDATE TO authenticated
-USING (id = auth.uid() AND is_admin_or_bureau())
-WITH CHECK (id = auth.uid() AND is_admin_or_bureau());
-```
+## 4. Création/édition client
 
-(la policy `own_update` reste, elle bloque déjà `role/company_id/is_active/can_create_devis/worker_level` mais autorise `display_order`.)
+`src/components/clients/CreateEditClientDialog.tsx`
+- **Propriétaire dans fiche locataire** : le champ « Contact locataire » devient bidirectionnel — si la fiche client courante est un locataire, le « contact propriétaire » (renommer `contact_syndic` → label « Propriétaire / Syndic » côté UI, valeur DB inchangée) sera affiché en bas comme contact responsable. Pas de migration : on réutilise `contact_syndic` comme champ « propriétaire ».
+- **Adresse d'intervention → site automatique** : à la création (ou édition si l'adresse change) du client, si `address_intervention` est rempli, insérer/mettre à jour une ligne dans `client_sites` (`address = address_intervention`, label « Adresse principale »). Sans doublon : on cherche d'abord un site existant avec la même adresse.
+- **Équipements à la création** : actuellement le formulaire ne permet d'ajouter des équipements qu'après création (car `client_equipment` exige un `client_id`). Correction : permettre la saisie d'une liste d'équipements temporaire dans le dialog et les insérer en batch **après** l'INSERT du client (deux phases : create client → get id → insert sites + equipments). Réutiliser le composant d'édition d'équipements existant côté `ClientDetail`.
 
-## 2. Refonte de la grille (Jour / Semaine)
+## 5. Échéances légales d'entretien — configurables par le bureau
 
-Nouvelle disposition (ouvriers à gauche, heures en haut) :
+Aujourd'hui la périodicité est saisie manuellement sur chaque entretien. Demande : avoir un référentiel **par entreprise** `(combustible × région) → périodicité légale`.
 
-```text
-            07:00  08:00  09:00  10:00 ...  17:00
-[Avatar] Pierre  ┃░░░░┃    ┃████┃    ┃    ┃ ...
-[Avatar] Marie   ┃    ┃████┃    ┃░░░░┃    ┃ ...
-[Avatar] Lucas   ┃████┃    ┃    ┃    ┃████┃ ...
-```
+Nouvelle table `legal_maintenance_rules` :
+- `company_id uuid`, `energy_type text` (gaz/mazout/pellets/clim/vmc), `region text` (bruxelles/wallonie/flandre), `periodicity text` (mensuel/.../triennal), unique `(company_id, energy_type, region)`.
+- RLS multi-tenant (lecture authenticated tenant + super_admin, écriture admin/bureau du tenant + super_admin) + GRANT.
+- Seed initial avec les valeurs belges usuelles (gaz annuel partout, mazout annuel, etc.).
 
-- 1 ligne fixe par ouvrier (hauteur ~80px), header sticky à gauche pour la colonne ouvriers.
-- 11 colonnes horaires (7h–17h), largeur ~120px, divisées visuellement en 4 quart-d'heure.
-- Header horaire sticky en haut.
-- Tâches positionnées en `absolute` dans la ligne via `left = (heureDébut − 7h) * largeurHeure` et `width = durée * largeurHeure / 60`.
-- Resize horizontal (poignée droite) au lieu de vertical.
-- Drag & drop d'une tâche : déplacement libre entre lignes (ouvrier) et colonnes (heure).
+Interface :
+- Nouvel onglet **« Entretiens légaux »** dans `src/pages/Admin.tsx` (accessible bureau + admin + super_admin) avec une matrice combustible × région éditable.
+- `CreateEditEntretienDialog` : quand l'utilisateur choisit `intervention_type` + (région du client), pré-remplir `periodicity` depuis la règle correspondante. L'utilisateur peut surcharger.
 
-Composants impactés :
-- `src/pages/Planning.tsx` (vue Jour intégrée).
-- `src/components/planning/WeekViewGrid.tsx` (vue Semaine).
-- `src/components/planning/DraggableTaskCard.tsx` (resize → axe X, dimensions horizontales).
+## 6. Portée multi-tenant / rôles bureau
 
-## 3. Réordonner les ouvriers (drag vertical)
+Toutes les nouvelles policies / accès UI doivent vérifier `private.is_admin_or_bureau()` + `company_id = private.get_my_company_id()` pour s'appliquer identiquement à chaque bureau d'entreprise. L'onglet « Entretiens légaux » et la gestion des binômes seront ouverts au rôle `bureau` au même titre qu'`admin`.
 
-- La colonne ouvriers de gauche devient une zone draggable : chaque ligne ouvrier est `draggable` avec un type différent (`workerId`).
-- Drop sur une autre ligne ouvrier → swap des `display_order` entre les deux profils, puis `UPDATE profiles SET display_order = …` pour les lignes affectées.
-- Distinction du payload drag : utiliser `e.dataTransfer.setData("workerId", id)` pour les ouvriers et garder `"taskId"` pour les tâches → pas de conflit.
-- Indicateur visuel : ligne ciblée surlignée + curseur `grab`.
-- Réservé aux rôles admin/bureau (le composant n'est utilisé que par eux).
+## Détails techniques (récap fichiers)
 
-## 4. Sélection multi-créneaux pour créer une tâche
+- Migrations : `legal_maintenance_rules` (+seed) ; `profiles.binome_level text`.
+- Constants : `WORKER_LEVELS` (T0–T20), `BINOME_LEVELS` (B0–B20) + labels.
+- UI Admin : nouvel onglet `LegalRulesTab.tsx`.
+- Planning : refactor `CreateTaskDialog` (ordre champs, fix défaut horaire, Select binôme).
+- Clients : refactor `CreateEditClientDialog` (équipements à la création, site auto, libellé propriétaire).
+- Mobile + PDF : intégration du binôme `Bx — Nom`.
 
-Sur la ligne d'un ouvrier (vues Jour & Semaine) :
-- `onPointerDown` sur un quart d'heure → mémoriser `{ workerId, startMinute }`.
-- `onPointerMove` (bouton enfoncé) → calculer la plage en cours, afficher un overlay bleu translucide qui s'étire horizontalement.
-- `onPointerUp` → calculer `start_time` et `duration_minutes` (multiple de 15, min 15), pré-remplir et ouvrir `CreateTaskDialog` via le state `clickContext` étendu (`{ hour, workerId, durationMinutes }`).
-- Un simple clic (pas de drag) garde le comportement actuel : ouverture du dialog avec durée par défaut 60.
+## Points à confirmer
 
-`CreateTaskDialog` accepte déjà `defaultHour`, `defaultWorkerId` ; on ajoute une prop `defaultDuration` qui initialise `durationMinutes`.
-
-## 5. Vue Mois
-
-Ordre des ouvriers : la vue Mois n'affiche pas de colonnes par ouvrier, mais les libellés des tâches dans chaque case du jour seront simplement triés par `display_order` de l'assigné (cohérence visuelle avec les autres vues). Pas de drag de réordonnancement nécessaire ici.
-
-## 6. Récap fichiers touchés
-
-- `supabase/migrations/<timestamp>_planning_display_order.sql` — colonne + policy.
-- `src/pages/Planning.tsx` — refonte vue Jour, fetch trié `order("display_order")`, gestion drag d'ouvrier, sélection multi-créneaux, prop `defaultDuration`.
-- `src/components/planning/WeekViewGrid.tsx` — même refonte pour la semaine.
-- `src/components/planning/DraggableTaskCard.tsx` — resize horizontal, dimensions et positionnement basés sur l'axe X.
-- `src/components/planning/CreateTaskDialog.tsx` — nouvelle prop `defaultDuration`.
-- `src/components/planning/MonthViewCalendar.tsx` — tri des tâches par `display_order`.
-
-## Notes
-
-- Aucun impact sur les fiches d'intervention, devis, ouvriers mobiles : `display_order` est purement UI bureau.
-- `worker_level` et autres champs sensibles restent verrouillés par la policy `own_update`.
-- L'ordre initial = ordre alphabétique pour rester cohérent avec l'existant.
+- Liste exacte des `(combustible, région) → périodicité` à seed (sinon je mets les valeurs belges standard et tu pourras les ajuster dans l'UI).
+- Ok pour réutiliser la colonne existante `contact_syndic` comme « Propriétaire/Syndic » (pas de nouvelle colonne) ?
+- Ok pour stocker le binôme via `second_assigned_to` (id profil) au lieu d'inventer un table de liens ?

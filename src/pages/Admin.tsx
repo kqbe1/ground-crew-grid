@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
-import { Users, FileText, Plus, Pencil, Trash2, Printer, BarChart3, Settings } from "lucide-react";
+import { Users, FileText, Plus, Pencil, Trash2, Printer, BarChart3, Settings, Scale } from "lucide-react";
 import { toast } from "sonner";
 import CreateEditTemplateDialog from "@/components/admin/CreateEditTemplateDialog";
 import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import { useAuth } from "@/hooks/useAuth";
 import PdfSettingsTab from "@/components/admin/PdfSettingsTab";
 import AdminStatsTab from "@/components/admin/AdminStatsTab";
+import LegalRulesTab from "@/components/admin/LegalRulesTab";
 import LayoutPage from "@/components/layout/LayoutPage";
 
 export default function Admin() {
@@ -48,6 +49,7 @@ export default function Admin() {
             <TabsTrigger value="users" className="gap-1.5"><Users className="w-4 h-4" /> Utilisateurs</TabsTrigger>
           )}
           <TabsTrigger value="templates" className="gap-1.5"><FileText className="w-4 h-4" /> Templates</TabsTrigger>
+          <TabsTrigger value="legal" className="gap-1.5"><Scale className="w-4 h-4" /> Entretiens légaux</TabsTrigger>
           <TabsTrigger value="pdf" className="gap-1.5"><Printer className="w-4 h-4" /> Config PDF</TabsTrigger>
         </TabsList>
 
@@ -101,6 +103,10 @@ export default function Admin() {
 
         <TabsContent value="pdf" className="mt-4">
           <PdfSettingsTab />
+        </TabsContent>
+
+        <TabsContent value="legal" className="mt-4">
+          <LegalRulesTab />
         </TabsContent>
       </Tabs>
 

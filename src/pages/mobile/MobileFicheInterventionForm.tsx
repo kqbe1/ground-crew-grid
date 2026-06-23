@@ -69,7 +69,7 @@ export default function MobileFicheInterventionForm() {
     (async () => {
       const { data: task } = await supabase
         .from("work_tasks")
-        .select("*, clients(name, address_intervention, phone, email, address_billing)")
+        .select("*, clients(name, address_intervention, phone, email, address_billing), second:profiles!work_tasks_second_assigned_to_fkey(full_name, binome_level)")
         .eq("id", taskId)
         .maybeSingle();
       if (task?.clients) {
@@ -81,6 +81,11 @@ export default function MobileFicheInterventionForm() {
           clientPhone: c.phone || "",
           clientEmail: c.email || "",
         }));
+      }
+      const second = (task as any)?.second;
+      if (second?.full_name) {
+        const label = second.binome_level ? `${second.binome_level} — ${second.full_name}` : second.full_name;
+        setSignature((prev) => ({ ...prev, binomeName: label }));
       }
     })();
   }, [taskId]);

@@ -534,6 +534,47 @@ export type Database = {
           },
         ]
       }
+      legal_maintenance_rules: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          energy_type: string
+          id: string
+          notes: string | null
+          periodicity: string
+          region: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          energy_type: string
+          id?: string
+          notes?: string | null
+          periodicity: string
+          region: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          energy_type?: string
+          id?: string
+          notes?: string | null
+          periodicity?: string
+          region?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_maintenance_rules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_schedules: {
         Row: {
           client_id: string
@@ -828,6 +869,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          binome_level: string | null
           can_create_devis: boolean
           company_id: string | null
           created_at: string
@@ -843,6 +885,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          binome_level?: string | null
           can_create_devis?: boolean
           company_id?: string | null
           created_at?: string
@@ -858,6 +901,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          binome_level?: string | null
           can_create_devis?: boolean
           company_id?: string | null
           created_at?: string

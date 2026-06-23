@@ -46,12 +46,14 @@ interface CreateTaskDialogProps {
 export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinute, defaultWorkerId, defaultDuration, onCreated }: CreateTaskDialogProps) {
   const { user } = useAuth();
   const _draft = loadDraft();
-  const [open, setOpen] = useState<boolean>(_draft?.open ?? false);
+  // Si le dialog était ouvert via clic créneau, on ne restaure pas son état "open"
+  const [open, setOpen] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
 
   const [title, setTitle] = useState<string>(_draft?.title ?? "");
   const [interventionType, setInterventionType] = useState<string>(_draft?.interventionType ?? "autre");
   const [assignedTo, setAssignedTo] = useState<string>(_draft?.assignedTo ?? defaultWorkerId ?? "");
+  const [binomeId, setBinomeId] = useState<string>(_draft?.binomeId ?? "");
   const [scheduledDate, setScheduledDate] = useState<string>(_draft?.scheduledDate ?? format(defaultDate, "yyyy-MM-dd"));
   const [startTime, setStartTime] = useState<string>(
     _draft?.startTime ?? (defaultHour !== undefined
@@ -72,6 +74,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
   const [memoSecretariat, setMemoSecretariat] = useState<string>(_draft?.memoSecretariat ?? "");
 
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
+  const [binomes, setBinomes] = useState<{ id: string; full_name: string; binome_level: string }[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string; address_intervention?: string | null }[]>([]);
   const [existingTasks, setExistingTasks] = useState<any[]>([]);
 
@@ -79,11 +82,11 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
   useEffect(() => {
     try {
       sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
-        open, title, interventionType, assignedTo, scheduledDate, startTime, endTime,
+        title, interventionType, assignedTo, binomeId, scheduledDate, startTime, endTime,
         durationMinutes, clientId, description, memoSecretariat,
       }));
     } catch {}
-  }, [open, title, interventionType, assignedTo, scheduledDate, startTime, endTime, durationMinutes, clientId, description, memoSecretariat]);
+  }, [title, interventionType, assignedTo, binomeId, scheduledDate, startTime, endTime, durationMinutes, clientId, description, memoSecretariat]);
 
   useEffect(() => {
     if (!open) return;
@@ -94,6 +97,12 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
       ]);
       setWorkers(w.data ?? []);
       setClients(c.data ?? []);
+      const { data: b } = await supabase
+        .from("profiles")
+        .select("id, full_name, binome_level")
+        .eq("is_active", true)
+        .not("binome_level", "is", null);
+      setBinomes((b ?? []).filter((x: any) => !!x.binome_level));
     };
     fetchData();
   }, [open]);
@@ -116,23 +125,20 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
     return findOverlaps(assignedTo, scheduledDate, startTime, durationMinutes, existingTasks);
   }, [assignedTo, scheduledDate, startTime, durationMinutes, existingTasks]);
 
-  // Reset defaults when dialog opens with new context (only when there's no draft to preserve)
+  // Reset defaults when dialog opens. Le contexte (clic sur un créneau) est toujours
+  // prioritaire sur le brouillon précédent.
   useEffect(() => {
-    if (open && !_draft) {
-      setScheduledDate(format(defaultDate, "yyyy-MM-dd"));
-      const newStart =
-        defaultHour !== undefined
-          ? `${String(defaultHour).padStart(2, "0")}:${String(defaultMinute ?? 0).padStart(2, "0")}`
-          : startTime;
-      if (defaultHour !== undefined) setStartTime(newStart);
-      if (defaultWorkerId) setAssignedTo(defaultWorkerId);
-      if (defaultDuration) {
-        setDurationMinutes(defaultDuration);
-        setEndTime(computeEndTime(newStart, defaultDuration));
-      } else {
-        setEndTime(computeEndTime(newStart, durationMinutes));
-      }
+    if (!open) return;
+    // Toujours appliquer la date du contexte si fournie
+    setScheduledDate(format(defaultDate, "yyyy-MM-dd"));
+    if (defaultHour !== undefined) {
+      const newStart = `${String(defaultHour).padStart(2, "0")}:${String(defaultMinute ?? 0).padStart(2, "0")}`;
+      setStartTime(newStart);
+      const dur = defaultDuration ?? durationMinutes;
+      setDurationMinutes(dur);
+      setEndTime(computeEndTime(newStart, dur));
     }
+    if (defaultWorkerId) setAssignedTo(defaultWorkerId);
   }, [open, defaultDate, defaultHour, defaultMinute, defaultWorkerId, defaultDuration]);
 
   const handleSubmit = async () => {
@@ -145,6 +151,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
       title: title.trim(),
       intervention_type: interventionType as any,
       assigned_to: assignedTo || null,
+      second_assigned_to: binomeId || null,
       scheduled_date: scheduledDate,
       start_time: startTime,
       duration_minutes: durationMinutes,
@@ -163,6 +170,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
     setTitle("");
     setDescription("");
     setMemoSecretariat("");
+    setBinomeId("");
     setOpen(false);
     clearDraft();
     onCreated();
@@ -180,6 +188,11 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
           <DialogTitle>Créer une tâche</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          <div>
+            <Label>Client</Label>
+            <ClientCombobox clients={clients} value={clientId} onChange={setClientId} placeholder="Rechercher un client..." />
+          </div>
+
           <div>
             <Label>Titre *</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Entretien chaudière gaz" />
@@ -208,6 +221,21 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div>
+            <Label>Binôme</Label>
+            <Select value={binomeId || "__none"} onValueChange={(v) => setBinomeId(v === "__none" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Aucun binôme" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none">Aucun binôme</SelectItem>
+                {binomes.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>
+                    {b.binome_level} — {b.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
@@ -239,11 +267,6 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
                 }}
               />
             </div>
-          </div>
-
-          <div>
-            <Label>Client</Label>
-            <ClientCombobox clients={clients} value={clientId} onChange={setClientId} placeholder="Rechercher un client..." />
           </div>
 
           <div>

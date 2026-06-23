@@ -8,8 +8,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
+import { Plus, Trash2 } from "lucide-react";
 
 type Client = Tables<"clients">;
+
+const ENERGY_LABELS: Record<string, string> = {
+  gaz: "Gaz", mazout: "Mazout", pellets: "Pellets", electricite: "Électricité",
+  clim: "Clim", vmc: "VMC", autre: "Autre",
+};
+
+type DraftEquipment = {
+  name: string;
+  brand: string;
+  model: string;
+  energy_type: string;
+};
 
 interface Props {
   open: boolean;
@@ -34,6 +47,8 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
     birthday: "",
     region: "",
   });
+  const [draftEquipments, setDraftEquipments] = useState<DraftEquipment[]>([]);
+  const [newEq, setNewEq] = useState<DraftEquipment>({ name: "", brand: "", model: "", energy_type: "autre" });
 
   useEffect(() => {
     if (client) {
@@ -82,18 +97,62 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
       region: (form.region || null) as any,
     };
 
-    const { error } = client
-      ? await supabase.from("clients").update(payload).eq("id", client.id)
-      : await supabase.from("clients").insert(payload as any);
+    let savedClientId = client?.id ?? null;
+    if (client) {
+      const { error } = await supabase.from("clients").update(payload).eq("id", client.id);
+      if (error) { setLoading(false); toast.error("Erreur : " + error.message); return; }
+    } else {
+      const { data, error } = await supabase.from("clients").insert(payload as any).select("id").single();
+      if (error || !data) { setLoading(false); toast.error("Erreur : " + (error?.message || "création client")); return; }
+      savedClientId = data.id;
+    }
+
+    // Auto-create primary site from address_intervention if not already present
+    let primarySiteId: string | null = null;
+    if (savedClientId && form.address_intervention.trim()) {
+      const addr = form.address_intervention.trim();
+      const { data: existing } = await supabase
+        .from("client_sites").select("id")
+        .eq("client_id", savedClientId).eq("address", addr).maybeSingle();
+      if (existing?.id) {
+        primarySiteId = existing.id;
+      } else {
+        const { count } = await supabase.from("client_sites")
+          .select("id", { count: "exact" }).eq("client_id", savedClientId);
+        const { data: site } = await supabase.from("client_sites").insert({
+          client_id: savedClientId, name: "Adresse principale",
+          address: addr, is_primary: (count ?? 0) === 0,
+        } as any).select("id").single();
+        primarySiteId = site?.id ?? null;
+      }
+    }
+
+    // Insert draft equipments (only used in creation flow)
+    if (savedClientId && draftEquipments.length > 0 && primarySiteId) {
+      const rows = draftEquipments.filter((e) => e.name.trim()).map((e) => ({
+        client_site_id: primarySiteId, name: e.name.trim(),
+        brand: e.brand || null, model: e.model || null,
+        energy_type: e.energy_type as any,
+      }));
+      if (rows.length > 0) {
+        const { error: eqErr } = await supabase.from("client_equipment").insert(rows as any);
+        if (eqErr) toast.error("Équipements : " + eqErr.message);
+      }
+    }
 
     setLoading(false);
-    if (error) {
-      toast.error("Erreur : " + error.message);
-    } else {
-      toast.success(client ? "Client modifié" : "Client créé");
-      onOpenChange(false);
-      onSaved();
-    }
+    toast.success(client ? "Client modifié" : "Client créé");
+    onOpenChange(false);
+    onSaved();
+  };
+
+  const addDraftEquipment = () => {
+    if (!newEq.name.trim()) return;
+    setDraftEquipments((prev) => [...prev, newEq]);
+    setNewEq({ name: "", brand: "", model: "", energy_type: "autre" });
+  };
+  const removeDraftEquipment = (idx: number) => {
+    setDraftEquipments((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const set = (key: string, val: string) => setForm((f) => ({ ...f, [key]: val }));
@@ -148,7 +207,7 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
             <Input value={form.address_billing} onChange={(e) => set("address_billing", e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>Contact syndic</Label>
+            <Label>Propriétaire / Syndic</Label>
             <Input value={form.contact_syndic} onChange={(e) => set("contact_syndic", e.target.value)} />
           </div>
           <div className="space-y-2">
@@ -164,6 +223,44 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
             <Textarea value={form.notes_internal} onChange={(e) => set("notes_internal", e.target.value)} rows={3} />
           </div>
         </div>
+        {!client && (
+          <div className="border-t pt-4 mt-2 space-y-3">
+            <div>
+              <Label className="text-sm font-semibold">Équipements à ajouter (optionnel)</Label>
+              <p className="text-xs text-muted-foreground">Rattachés à l'adresse principale lors de la création.</p>
+            </div>
+            {draftEquipments.length > 0 && (
+              <div className="space-y-1">
+                {draftEquipments.map((eq, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-sm border rounded p-2">
+                    <span className="flex-1">
+                      <strong>{eq.name}</strong>
+                      {(eq.brand || eq.model) && (
+                        <span className="text-muted-foreground"> — {[eq.brand, eq.model].filter(Boolean).join(" ")}</span>
+                      )}
+                      <span className="ml-2 text-xs text-muted-foreground">({ENERGY_LABELS[eq.energy_type]})</span>
+                    </span>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeDraftEquipment(idx)}>
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder="Nom équipement" value={newEq.name} onChange={(e) => setNewEq((s) => ({ ...s, name: e.target.value }))} />
+              <Select value={newEq.energy_type} onValueChange={(v) => setNewEq((s) => ({ ...s, energy_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{Object.entries(ENERGY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+              </Select>
+              <Input placeholder="Marque" value={newEq.brand} onChange={(e) => setNewEq((s) => ({ ...s, brand: e.target.value }))} />
+              <Input placeholder="Modèle" value={newEq.model} onChange={(e) => setNewEq((s) => ({ ...s, model: e.target.value }))} />
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={addDraftEquipment} disabled={!newEq.name.trim()}>
+              <Plus className="w-4 h-4 mr-1" /> Ajouter cet équipement
+            </Button>
+          </div>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
           <Button onClick={handleSubmit} disabled={loading}>
