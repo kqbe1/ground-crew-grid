@@ -50,8 +50,8 @@ export default function MobileFiches() {
       // Reprendre l'édition du brouillon
       navigate(`/mobile/fiche/${s.work_task_id}`);
     } else {
-      // Lecture seule
-      navigate(`/fiches/${s.id}`);
+      // Lecture seule (route mobile pour rester dans le layout ouvrier)
+      navigate(`/mobile/fiches/${s.id}`);
     }
   };
 
