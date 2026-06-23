@@ -3,10 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
+import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin } from "lucide-react";
+import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin, Package, ExternalLink } from "lucide-react";
 import LayoutDetail from "@/components/layout/LayoutDetail";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
@@ -28,6 +28,14 @@ const statusColor: Record<string, string> = {
 
 const ALL_STATUSES = ["termine", "a_replanifier", "piece_a_commander", "sav", "planifie"] as const;
 
+const ORDER_STATUSES = ["demandee", "commandee", "recue", "cloturee"] as const;
+const orderStatusColors: Record<string, string> = {
+  demandee: "bg-order-demandee text-white",
+  commandee: "bg-order-commandee text-white",
+  recue: "bg-order-recue text-white",
+  cloturee: "bg-order-cloturee text-white",
+};
+
 const WORK_STATUS_LABELS: Record<string, string> = {
   termine: "Travail terminé",
   piece_a_commander: "Pièce à commander",
@@ -45,6 +53,7 @@ export default function FicheDetail() {
   const [sheet, setSheet] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
+  const [orders, setOrders] = useState<any[]>([]);
 
   const fetchSheet = useCallback(async () => {
     if (!id) return;
@@ -55,6 +64,16 @@ export default function FicheDetail() {
       .single();
     setSheet(data);
     setLoading(false);
+    if (data?.work_task_id) {
+      const { data: po } = await supabase
+        .from("parts_orders")
+        .select("*, profiles!parts_orders_requested_by_fkey(full_name)")
+        .eq("work_task_id", data.work_task_id)
+        .order("created_at", { ascending: false });
+      setOrders(po ?? []);
+    } else {
+      setOrders([]);
+    }
   }, [id]);
 
   useEffect(() => { fetchSheet(); }, [fetchSheet]);
@@ -73,6 +92,17 @@ export default function FicheDetail() {
     const { error } = await supabase.from("intervention_sheets").update({ final_status: status } as any).eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success(`Statut → ${TASK_STATUS_LABELS[status]}`);
+    fetchSheet();
+  };
+
+  const updateOrderStatus = async (orderId: string, status: string) => {
+    const patch: any = { status };
+    if (status === "commandee") patch.ordered_at = new Date().toISOString();
+    if (status === "recue") patch.received_at = new Date().toISOString();
+    if (status === "cloturee") patch.closed_at = new Date().toISOString();
+    const { error } = await supabase.from("parts_orders").update(patch).eq("id", orderId);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Commande → ${ORDER_STATUS_LABELS[status]}`);
     fetchSheet();
   };
 
@@ -338,6 +368,68 @@ export default function FicheDetail() {
           <div className="py-6 text-center text-muted-foreground">
             <FileSignature className="w-8 h-8 mx-auto mb-2 opacity-50" />
             {sheet.client_absent ? "Client absent — pas de signature" : "Pas encore signé"}
+          </div>
+        )}
+      </section>
+
+      {/* Commentaires internes */}
+      <section className="space-y-3 border-t pt-4">
+        <h2 className="font-semibold text-sm flex items-center gap-2">
+          <Package className="w-4 h-4" /> Commandes de pièces liées ({orders.length})
+        </h2>
+        {orders.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aucune commande liée à cette intervention.</p>
+        ) : (
+          <div className="space-y-2">
+            {orders.map((o) => (
+              <div key={o.id} className="p-3 rounded-lg border space-y-2">
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm flex items-center gap-2">
+                      {o.part_name}
+                      {o.urgency && o.urgency !== "normal" && (
+                        <Badge variant="destructive" className="gap-1 text-xs">
+                          <AlertTriangle className="w-3 h-3" />
+                          {o.urgency === "critique" ? "Critique" : "Urgent"}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Qté: {o.quantity}
+                      {o.part_reference ? ` · Réf: ${o.part_reference}` : ""}
+                      {o.supplier ? ` · ${o.supplier}` : ""}
+                      {o.profiles?.full_name ? ` · Demandée par ${o.profiles.full_name}` : ""}
+                    </div>
+                    {o.notes && (
+                      <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{o.notes}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge className={`${orderStatusColors[o.status]} text-xs`}>
+                      {ORDER_STATUS_LABELS[o.status]}
+                    </Badge>
+                    <Button size="sm" variant="ghost" onClick={() => navigate(`/commandes/${o.id}`)}>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+                {!isReadOnly && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {ORDER_STATUSES.map((s) => (
+                      <Button
+                        key={s}
+                        size="sm"
+                        variant={o.status === s ? "default" : "outline"}
+                        className={o.status === s ? `${orderStatusColors[s]} h-7 text-xs` : "h-7 text-xs"}
+                        onClick={() => updateOrderStatus(o.id, s)}
+                      >
+                        {ORDER_STATUS_LABELS[s]}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </section>
