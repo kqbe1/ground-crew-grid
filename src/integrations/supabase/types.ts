@@ -869,7 +869,6 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
-          binome_level: string | null
           can_create_devis: boolean
           company_id: string | null
           created_at: string
@@ -885,7 +884,6 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
-          binome_level?: string | null
           can_create_devis?: boolean
           company_id?: string | null
           created_at?: string
@@ -901,7 +899,6 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
-          binome_level?: string | null
           can_create_devis?: boolean
           company_id?: string | null
           created_at?: string
@@ -1053,6 +1050,47 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_binomes: {
+        Row: {
+          code: string
+          company_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          kind: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          company_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_binomes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -1217,7 +1255,7 @@ export type Database = {
             foreignKeyName: "work_tasks_binome_id_fkey"
             columns: ["binome_id"]
             isOneToOne: false
-            referencedRelation: "binomes"
+            referencedRelation: "task_binomes"
             referencedColumns: ["id"]
           },
           {
