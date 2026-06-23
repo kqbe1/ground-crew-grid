@@ -61,16 +61,15 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   cloturee: "Clôturée",
 };
 
-export const WORKER_LEVEL_LABELS: Record<string, string> = {
-  T0: "T0",
-  T1: "T1",
-  T2: "T2",
-  T3: "T3",
-  T4: "T4",
-  T5: "T5",
-};
+export const WORKER_LEVELS = Array.from({ length: 21 }, (_, i) => `T${i}`) as readonly string[];
+export const WORKER_LEVEL_LABELS: Record<string, string> = Object.fromEntries(
+  WORKER_LEVELS.map((l) => [l, l])
+);
 
-export const WORKER_LEVELS = ["T0", "T1", "T2", "T3", "T4", "T5"] as const;
+export const BINOME_LEVELS = Array.from({ length: 21 }, (_, i) => `B${i}`) as readonly string[];
+export const BINOME_LEVEL_LABELS: Record<string, string> = Object.fromEntries(
+  BINOME_LEVELS.map((l) => [l, l])
+);
 
 export const ENERGY_TYPE_LABELS: Record<string, string> = {
   gaz: "Gaz",
