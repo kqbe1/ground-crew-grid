@@ -368,7 +368,10 @@ function MonthView({ tasks, currentDate, onSelectDay }: { tasks: Task[]; current
 function TaskCard({ task, navigate }: { task: Task; navigate: (path: string) => void }) {
   return (
     <Card
-      className="animate-slide-in cursor-pointer active:scale-[0.98] transition-transform"
+      className={cn(
+        "animate-slide-in cursor-pointer active:scale-[0.98] transition-transform border-l-4",
+        task.sheet_submitted ? "border-l-status-termine bg-status-termine/5" : "border-l-transparent",
+      )}
       onClick={() => navigate(`/mobile/tache/${task.id}`)}
     >
       <CardContent className="py-3 space-y-2">
@@ -379,9 +382,16 @@ function TaskCard({ task, navigate }: { task: Task; navigate: (path: string) => 
             </div>
             <div className="font-semibold">{task.title}</div>
           </div>
-          <Badge className={cn("text-xs", INTERVENTION_TYPE_COLORS[task.intervention_type])}>
-            {INTERVENTION_TYPE_LABELS[task.intervention_type]}
-          </Badge>
+          <div className="flex flex-col items-end gap-1">
+            <Badge className={cn("text-xs", INTERVENTION_TYPE_COLORS[task.intervention_type])}>
+              {INTERVENTION_TYPE_LABELS[task.intervention_type]}
+            </Badge>
+            {task.sheet_submitted && (
+              <Badge variant="outline" className="text-[10px] gap-1 border-status-termine text-status-termine">
+                <CheckCircle2 className="w-3 h-3" /> Fiche envoyée
+              </Badge>
+            )}
+          </div>
         </div>
 
         {task.description && <div className="text-sm text-muted-foreground">{task.description}</div>}
