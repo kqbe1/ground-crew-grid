@@ -421,8 +421,23 @@ export default function FicheDetail() {
                 {details.map((d) => (
                   <div key={d} className="p-3 rounded-lg border text-sm">
                     <div className="font-medium">{WORK_STATUS_LABELS[d] ?? d}</div>
-                    {notes[d] && (
-                      <p className="mt-1 text-muted-foreground whitespace-pre-wrap">{notes[d]}</p>
+                    {editing ? (
+                      <Textarea
+                        className="mt-2"
+                        rows={2}
+                        value={edit.work_status_notes[d] ?? ""}
+                        onChange={(e) =>
+                          setEdit((p) => ({
+                            ...p,
+                            work_status_notes: { ...p.work_status_notes, [d]: e.target.value },
+                          }))
+                        }
+                        placeholder={`Note pour « ${WORK_STATUS_LABELS[d] ?? d} »...`}
+                      />
+                    ) : (
+                      notes[d] && (
+                        <p className="mt-1 text-muted-foreground whitespace-pre-wrap">{notes[d]}</p>
+                      )
                     )}
                   </div>
                 ))}
@@ -430,8 +445,20 @@ export default function FicheDetail() {
             </div>
           );
         })()}
-        {sheet.status_comment && (
-          <p className="text-sm text-muted-foreground">Commentaire statut : {sheet.status_comment}</p>
+        {(editing || sheet.status_comment) && (
+          <div className="space-y-1">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase">Commentaire statut</h3>
+            {editing ? (
+              <Textarea
+                rows={2}
+                value={edit.status_comment}
+                onChange={(e) => setEdit((p) => ({ ...p, status_comment: e.target.value }))}
+                placeholder="Commentaire général sur le statut"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">{sheet.status_comment}</p>
+            )}
+          </div>
         )}
       </section>
 
