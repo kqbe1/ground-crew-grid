@@ -74,7 +74,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
   const [memoSecretariat, setMemoSecretariat] = useState<string>(_draft?.memoSecretariat ?? "");
 
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
-  const [binomes, setBinomes] = useState<{ id: string; full_name: string; binome_level: string }[]>([]);
+  const [binomes, setBinomes] = useState<{ id: string; name: string; code: string; kind: string }[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string; address_intervention?: string | null }[]>([]);
   const [existingTasks, setExistingTasks] = useState<any[]>([]);
 
@@ -98,11 +98,11 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
       setWorkers(w.data ?? []);
       setClients(c.data ?? []);
       const { data: b } = await supabase
-        .from("profiles")
-        .select("id, full_name, binome_level")
+        .from("task_binomes")
+        .select("id, name, code, kind")
         .eq("is_active", true)
-        .not("binome_level", "is", null);
-      setBinomes((b ?? []).filter((x: any) => !!x.binome_level));
+        .order("code");
+      setBinomes((b ?? []) as any);
     };
     fetchData();
   }, [open]);
@@ -151,7 +151,8 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
       title: title.trim(),
       intervention_type: interventionType as any,
       assigned_to: assignedTo || null,
-      second_assigned_to: binomeId || null,
+      second_assigned_to: null,
+      binome_id: binomeId || null,
       scheduled_date: scheduledDate,
       start_time: startTime,
       duration_minutes: durationMinutes,
@@ -231,7 +232,7 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
                 <SelectItem value="__none">Aucun binôme</SelectItem>
                 {binomes.map((b) => (
                   <SelectItem key={b.id} value={b.id}>
-                    {b.binome_level} — {b.full_name}
+                    {b.code} — {b.name} ({b.kind})
                   </SelectItem>
                 ))}
               </SelectContent>
