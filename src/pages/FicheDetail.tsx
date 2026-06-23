@@ -143,7 +143,7 @@ export default function FicheDetail() {
           {sheet.signature_data && <Badge variant="outline" className="text-[hsl(var(--color-termine))] border-[hsl(var(--color-termine))]"><FileSignature className="w-3 h-3 mr-1" /> Signé</Badge>}
           {sheet.client_absent && <Badge variant="outline" className="text-[hsl(var(--color-replanifier))] border-[hsl(var(--color-replanifier))]"><AlertTriangle className="w-3 h-3 mr-1" /> Client absent</Badge>}
           {sheet.client_present && !sheet.client_absent && <Badge variant="outline" className="text-[hsl(var(--color-termine))] border-[hsl(var(--color-termine))]"><User className="w-3 h-3 mr-1" /> Client présent</Badge>}
-          {sheet.binome_name && <Badge variant="outline"><User className="w-3 h-3 mr-1" /> Binôme: {sheet.binome_name} ({sheet.binome_percentage}%)</Badge>}
+          {sheet.binome_name && <Badge variant="outline"><User className="w-3 h-3 mr-1" /> Binôme: {sheet.binome_name}</Badge>}
       </div>
 
       {/* Type d'entretien */}
