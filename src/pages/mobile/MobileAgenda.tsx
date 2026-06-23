@@ -441,8 +441,11 @@ function TaskCard({ task, navigate }: { task: Task; navigate: (path: string) => 
             className="flex-1"
             onClick={(e) => {
               e.stopPropagation();
-              const addr = task.client_sites?.address || task.clients?.address_intervention;
-              if (addr) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`);
+              const addr = task.client_sites?.address || task.clients?.address_intervention || "";
+              const postal = task.client_sites?.postal_code || task.clients?.postal_code || "";
+              const city = task.client_sites?.city || task.clients?.city || "";
+              const fullAddr = [addr, postal, city].filter(Boolean).join(", ");
+              if (fullAddr) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddr)}`);
             }}
           >
             <MapPin className="w-3.5 h-3.5 mr-1" /> GPS
