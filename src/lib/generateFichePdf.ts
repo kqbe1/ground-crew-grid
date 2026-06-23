@@ -357,7 +357,7 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
     addSection("Technicien");
     addField("Nom :", worker?.full_name || "—");
     if (sheet.binome_name) {
-      addField("Binôme :", `${sheet.binome_name} (${sheet.binome_percentage || 0}%)`);
+      addField("Binôme :", sheet.binome_name);
     }
   }
 
