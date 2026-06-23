@@ -388,7 +388,15 @@ function TaskCard({ task, navigate }: { task: Task; navigate: (path: string) => 
 
         <div className="flex items-center gap-2 text-sm">
           <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="truncate">{task.client_sites?.address || task.clients?.address_intervention}</span>
+          <span className="truncate">
+            {(() => {
+              const addr = task.client_sites?.address || task.clients?.address_intervention || "";
+              const postal = task.client_sites?.postal_code || task.clients?.postal_code || "";
+              const city = task.client_sites?.city || task.clients?.city || "";
+              const locality = [postal, city].filter(Boolean).join(" ");
+              return locality ? `${addr} — ${locality}` : addr;
+            })()}
+          </span>
         </div>
 
         <div className="flex items-center justify-between">
