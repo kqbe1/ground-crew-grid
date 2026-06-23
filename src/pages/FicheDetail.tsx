@@ -253,6 +253,61 @@ export default function FicheDetail() {
           {sheet.binome_name && <Badge variant="outline"><User className="w-3 h-3 mr-1" /> Binôme: {sheet.binome_name}</Badge>}
       </div>
 
+      {/* Binôme & équipe */}
+      {(() => {
+        const taskBinome = task?.binome;
+        const assigned = task?.assigned?.full_name;
+        const second = task?.second?.full_name;
+        if (!taskBinome && !assigned && !second && !sheet.binome_name) return null;
+        return (
+          <section className="space-y-2">
+            <h2 className="font-semibold text-sm flex items-center gap-2">
+              <UsersRound className="w-4 h-4" /> Binôme & équipe
+            </h2>
+            <div className="p-4 rounded-lg border space-y-3">
+              {taskBinome ? (
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="space-y-1">
+                    <div className="text-xs text-muted-foreground uppercase font-semibold">Binôme de la tâche</div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="font-mono">{taskBinome.code}</Badge>
+                      <span className="font-medium">{taskBinome.name}</span>
+                      {taskBinome.kind && (
+                        <Badge variant="outline" className="text-xs">{taskBinome.kind}</Badge>
+                      )}
+                      {!taskBinome.is_active && (
+                        <Badge variant="outline" className="text-xs border-dashed">Inactif</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => navigate(`/admin?tab=binomes&id=${taskBinome.id}`)}>
+                    <ExternalLink className="w-3.5 h-3.5 mr-1" /> Voir le binôme
+                  </Button>
+                </div>
+              ) : sheet.binome_name ? (
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground uppercase font-semibold">Binôme (saisi à la signature)</div>
+                  <div className="font-medium">{sheet.binome_name}</div>
+                </div>
+              ) : null}
+              {(assigned || second) && (
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground uppercase font-semibold">Ouvriers assignés</div>
+                  <div className="flex flex-wrap gap-2">
+                    {assigned && (
+                      <Badge variant="outline" className="gap-1"><User className="w-3 h-3" />{assigned}</Badge>
+                    )}
+                    {second && (
+                      <Badge variant="outline" className="gap-1"><User className="w-3 h-3" />{second}</Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })()}
+
       {/* Type d'entretien */}
       {sheet.entretien_type && (
         <section className="space-y-2">
