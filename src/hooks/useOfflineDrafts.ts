@@ -136,31 +136,47 @@ export function useOfflineDrafts() {
   syncAllRef.current = syncAll;
 
   useEffect(() => {
+    const attemptSync = async (announce: boolean) => {
+      if (!navigator.onLine) return;
+      const all = await getAllDrafts();
+      const pending = all.filter((d) => !d.synced).length;
+      if (pending === 0) return;
+      if (announce) toast.info(`Synchronisation de ${pending} fiche(s) en attente…`);
+      const count = await syncAllRef.current();
+      if (count && count > 0) {
+        toast.success(`${count} fiche(s) synchronisée(s) automatiquement`);
+      }
+    };
+
     const goOnline = () => {
       setIsOnline(true);
-      setTimeout(async () => {
-        const all = await getAllDrafts();
-        const pending = all.filter((d) => !d.synced).length;
-        if (pending === 0) return;
-        toast.info("Connexion rétablie — synchronisation…");
-        const count = await syncAllRef.current();
-        if (count && count > 0) {
-          toast.success(`${count} fiche(s) synchronisée(s) automatiquement`);
-        }
-      }, 1500);
+      setTimeout(() => attemptSync(true), 1500);
     };
     const goOffline = () => {
       setIsOnline(false);
       toast.warning("Connexion perdue — mode hors-ligne activé");
     };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        setIsOnline(navigator.onLine);
+        attemptSync(false);
+      }
+    };
 
     window.addEventListener("online", goOnline);
     window.addEventListener("offline", goOffline);
+    document.addEventListener("visibilitychange", onVisible);
     refreshDrafts();
+    // On mount, try syncing any leftover drafts from a previous session
+    attemptSync(true);
+    // Periodic safety net (mobile browsers sometimes miss the 'online' event)
+    const interval = window.setInterval(() => attemptSync(false), 60_000);
 
     return () => {
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.clearInterval(interval);
     };
   }, [refreshDrafts]);
 
