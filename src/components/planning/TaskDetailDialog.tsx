@@ -190,14 +190,18 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
                     Second ouvrier
                   </p>
                 )}
-                {task.task_binomes && (
-                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold border border-border">
-                      {task.task_binomes.code}
-                    </span>
-                    Binôme · {task.task_binomes.name}
-                  </p>
-                )}
+                {task.binome_id && (() => {
+                  const b = binomes.find((x) => x.id === task.binome_id);
+                  if (!b) return null;
+                  return (
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold border border-border">
+                        {b.code}
+                      </span>
+                      Binôme · {b.name}
+                    </p>
+                  );
+                })()}
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
