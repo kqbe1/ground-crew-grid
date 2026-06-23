@@ -84,7 +84,7 @@ export default function MobileAgenda() {
       const [tasksRes, clientsRes, sheetsRes] = await Promise.all([
         supabase
           .from("work_tasks")
-          .select("*, client_sites(address)")
+          .select("*, client_sites(address, postal_code, city)")
           .eq("assigned_to", user.id)
           .gte("scheduled_date", dateRange.from)
           .lte("scheduled_date", dateRange.to)
