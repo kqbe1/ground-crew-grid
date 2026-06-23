@@ -60,6 +60,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
   const [status, setStatus] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
   const [secondAssignedTo, setSecondAssignedTo] = useState("");
+  const [binomeId, setBinomeId] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(60);
@@ -70,6 +71,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
 
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string; address_intervention?: string | null }[]>([]);
+  const [binomes, setBinomes] = useState<{ id: string; name: string; code: string; kind: string }[]>([]);
 
   useEffect(() => {
     if (!task) return;
@@ -78,6 +80,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
     setStatus(task.status ?? "planifie");
     setAssignedTo(task.assigned_to ?? "");
     setSecondAssignedTo(task.second_assigned_to ?? "");
+    setBinomeId(task.binome_id ?? "");
     setScheduledDate(task.scheduled_date ?? "");
     const st = task.start_time?.slice(0, 5) ?? "08:00";
     const dur = task.duration_minutes ?? 60;
@@ -93,12 +96,14 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
   useEffect(() => {
     if (!task || !canEdit) return;
     const fetchData = async () => {
-      const [w, c] = await Promise.all([
+      const [w, c, b] = await Promise.all([
         supabase.from("profiles").select("id, full_name").eq("is_active", true),
         supabase.from("clients").select("id, name, address_intervention").order("name"),
+        supabase.from("task_binomes").select("id, name, code, kind").eq("is_active", true).order("code"),
       ]);
       setWorkers(w.data ?? []);
       setClients(c.data ?? []);
+      setBinomes((b.data ?? []) as any);
     };
     fetchData();
   }, [task, canEdit]);
@@ -112,6 +117,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
       status: status as any,
       assigned_to: assignedTo || null,
       second_assigned_to: (secondAssignedTo && secondAssignedTo !== "none") ? secondAssignedTo : null,
+      binome_id: binomeId || null,
       scheduled_date: scheduledDate,
       start_time: startTime,
       duration_minutes: durationMinutes,
@@ -181,9 +187,21 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
                     <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold border border-border">
                       {workerLabels[task.second_assigned_to] ?? "T?"}
                     </span>
-                    Binôme
+                    Second ouvrier
                   </p>
                 )}
+                {task.binome_id && (() => {
+                  const b = binomes.find((x) => x.id === task.binome_id);
+                  if (!b) return null;
+                  return (
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold border border-border">
+                        {b.code}
+                      </span>
+                      Binôme · {b.name}
+                    </p>
+                  );
+                })()}
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
@@ -304,6 +322,19 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div>
+              <Label>Binôme</Label>
+              <Select value={binomeId || "__none"} onValueChange={(v) => setBinomeId(v === "__none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Aucun binôme" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">Aucun binôme</SelectItem>
+                  {binomes.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>{b.code} — {b.name} ({b.kind})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
