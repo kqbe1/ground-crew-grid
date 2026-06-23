@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
         .eq("id", caller.id)
         .single();
 
-      if (!callerProfile || !["super_admin", "admin"].includes(callerProfile.role)) {
+      if (!callerProfile || !["super_admin", "admin", "bureau"].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Droits insuffisants" }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -100,6 +100,14 @@ Deno.serve(async (req) => {
       }
       callerRole = callerProfile.role;
       callerCompanyId = callerProfile.company_id;
+
+      // Non-super_admin callers MUST be attached to a company
+      if (callerRole !== "super_admin" && !callerCompanyId) {
+        return new Response(JSON.stringify({ error: "Compte sans entreprise — opération refusée" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const body = await req.json();
@@ -125,6 +133,7 @@ Deno.serve(async (req) => {
     const allowedRoles: Record<string, string[]> = {
       super_admin: ["admin", "bureau", "ouvrier"],
       admin: ["bureau", "ouvrier"],
+      bureau: ["ouvrier"],
     };
 
     if (!allowedRoles[callerRole]?.includes(role)) {
@@ -134,7 +143,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Determine target company
+    // Tenant scoping — Bureau/Admin are STRICTLY limited to their own company_id.
+    // Any attempt to pass a different company_id is rejected.
+    if (callerRole !== "super_admin" && company_id && company_id !== callerCompanyId) {
+      return new Response(JSON.stringify({ error: "Création interdite pour une autre entreprise" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const targetCompanyId = callerRole === "super_admin"
       ? (company_id || callerCompanyId)
       : callerCompanyId;
