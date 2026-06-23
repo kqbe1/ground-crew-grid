@@ -208,7 +208,15 @@ export default function FicheDetail() {
                 {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
                 Enregistrer
               </Button>
-              <Button size="sm" variant="outline" onClick={() => setEditing(false)} disabled={saving}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setEditing(false);
+                  toast.info("Modifications annulées");
+                }}
+                disabled={saving}
+              >
                 <X className="w-4 h-4 mr-1" /> Annuler
               </Button>
             </>
