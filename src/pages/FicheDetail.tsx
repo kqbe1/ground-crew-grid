@@ -3,10 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
+import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin } from "lucide-react";
+import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin, Package, ExternalLink } from "lucide-react";
 import LayoutDetail from "@/components/layout/LayoutDetail";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
@@ -28,6 +28,14 @@ const statusColor: Record<string, string> = {
 
 const ALL_STATUSES = ["termine", "a_replanifier", "piece_a_commander", "sav", "planifie"] as const;
 
+const ORDER_STATUSES = ["demandee", "commandee", "recue", "cloturee"] as const;
+const orderStatusColors: Record<string, string> = {
+  demandee: "bg-order-demandee text-white",
+  commandee: "bg-order-commandee text-white",
+  recue: "bg-order-recue text-white",
+  cloturee: "bg-order-cloturee text-white",
+};
+
 const WORK_STATUS_LABELS: Record<string, string> = {
   termine: "Travail terminé",
   piece_a_commander: "Pièce à commander",
@@ -45,6 +53,7 @@ export default function FicheDetail() {
   const [sheet, setSheet] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
+  const [orders, setOrders] = useState<any[]>([]);
 
   const fetchSheet = useCallback(async () => {
     if (!id) return;
@@ -55,6 +64,16 @@ export default function FicheDetail() {
       .single();
     setSheet(data);
     setLoading(false);
+    if (data?.work_task_id) {
+      const { data: po } = await supabase
+        .from("parts_orders")
+        .select("*, profiles!parts_orders_requested_by_fkey(full_name)")
+        .eq("work_task_id", data.work_task_id)
+        .order("created_at", { ascending: false });
+      setOrders(po ?? []);
+    } else {
+      setOrders([]);
+    }
   }, [id]);
 
   useEffect(() => { fetchSheet(); }, [fetchSheet]);
@@ -73,6 +92,17 @@ export default function FicheDetail() {
     const { error } = await supabase.from("intervention_sheets").update({ final_status: status } as any).eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success(`Statut → ${TASK_STATUS_LABELS[status]}`);
+    fetchSheet();
+  };
+
+  const updateOrderStatus = async (orderId: string, status: string) => {
+    const patch: any = { status };
+    if (status === "commandee") patch.ordered_at = new Date().toISOString();
+    if (status === "recue") patch.received_at = new Date().toISOString();
+    if (status === "cloturee") patch.closed_at = new Date().toISOString();
+    const { error } = await supabase.from("parts_orders").update(patch).eq("id", orderId);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Commande → ${ORDER_STATUS_LABELS[status]}`);
     fetchSheet();
   };
 
