@@ -12,7 +12,7 @@ import { Plus, Search, ShieldAlert, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import CreateUserDialog from "@/components/admin/CreateUserDialog";
 import EditUserDialog from "@/components/admin/EditUserDialog";
-import { WORKER_LEVELS, WORKER_LEVEL_LABELS, BINOME_LEVELS, BINOME_LEVEL_LABELS } from "@/lib/constants";
+import { WORKER_LEVELS, WORKER_LEVEL_LABELS } from "@/lib/constants";
 
 const roleColors: Record<string, string> = {
   super_admin: "badge-role-super_admin",
@@ -72,13 +72,6 @@ export default function AdminUsersTab() {
     await supabase.from("profiles").update({ worker_level: level as any }).eq("id", userId);
     setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, worker_level: level } : u)));
     toast.success("Niveau mis à jour");
-  };
-
-  const updateBinomeLevel = async (userId: string, level: string) => {
-    const value = level === "__none" ? null : level;
-    await supabase.from("profiles").update({ binome_level: value as any }).eq("id", userId);
-    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, binome_level: value } : u)));
-    toast.success("Niveau binôme mis à jour");
   };
 
   const toggleActive = async (userId: string, active: boolean) => {
@@ -157,19 +150,6 @@ export default function AdminUsersTab() {
                         {WORKER_LEVELS.map((lvl) => (
                           <SelectItem key={lvl} value={lvl}>
                             {WORKER_LEVEL_LABELS[lvl]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={u.binome_level || "__none"} onValueChange={(v) => updateBinomeLevel(u.id, v)}>
-                      <SelectTrigger className="w-[110px]">
-                        <SelectValue placeholder="Binôme..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none">— Binôme —</SelectItem>
-                        {BINOME_LEVELS.map((lvl) => (
-                          <SelectItem key={lvl} value={lvl}>
-                            {BINOME_LEVEL_LABELS[lvl]}
                           </SelectItem>
                         ))}
                       </SelectContent>
