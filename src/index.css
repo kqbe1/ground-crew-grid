@@ -174,4 +174,9 @@
   .badge-role-admin { background-color: hsl(var(--color-role-admin)); color: white; }
   .badge-role-bureau { background-color: hsl(var(--color-role-bureau)); color: white; }
   .badge-role-ouvrier { background-color: hsl(var(--color-role-ouvrier)); color: white; }
+
+  /* Sheet status badges */
+  .badge-sheet-draft { background-color: hsl(var(--color-replanifier) / 0.15); color: hsl(var(--color-replanifier)); }
+  .badge-sheet-submitted { background-color: hsl(var(--color-planifie) / 0.12); color: hsl(var(--color-planifie)); }
+  .badge-sheet-completed { background-color: hsl(var(--color-termine) / 0.12); color: hsl(var(--color-termine)); }
 }
