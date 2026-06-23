@@ -15,6 +15,8 @@ import { loadPdfConfigAndLogo, ficheDocumentType } from "@/lib/pdfConfig";
 import { Textarea } from "@/components/ui/textarea";
 import { useSignedUrls } from "@/hooks/useSignedUrl";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/hooks/useAuth";
+import { SheetStatusBadge, computeSheetStatus } from "@/components/shared/SheetStatusBadge";
 
 const statusColor: Record<string, string> = {
   planifie: "bg-[hsl(var(--color-planifie))]",
@@ -29,6 +31,8 @@ const ALL_STATUSES = ["termine", "a_replanifier", "piece_a_commander", "sav", "p
 export default function FicheDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const isReadOnly = role === "ouvrier";
   const [sheet, setSheet] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
@@ -111,7 +115,9 @@ export default function FicheDetail() {
           <Download className="w-4 h-4 mr-1" /> Télécharger
         </Button>
       }
-      toolbar={
+      toolbar={isReadOnly ? (
+        <SheetStatusBadge status={computeSheetStatus(sheet)} />
+      ) : (
         <>
           {ALL_STATUSES.map((s) => (
             <Button key={s} size="sm" variant={sheet.final_status === s ? "default" : "outline"} className={sheet.final_status === s ? `${statusColor[s]} text-white` : ""} onClick={() => updateStatus(s)}>
@@ -134,7 +140,7 @@ export default function FicheDetail() {
             </AlertDialogContent>
           </AlertDialog>
         </>
-      }
+      )}
     >
       {/* Flags */}
       <div className="flex flex-wrap gap-2">
@@ -313,12 +319,14 @@ export default function FicheDetail() {
         {sheet.internal_comment && (
           <div className="p-3 rounded-lg bg-muted text-sm whitespace-pre-wrap">{sheet.internal_comment}</div>
         )}
-        <div className="flex gap-2">
-          <Textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Ajouter un commentaire..." className="flex-1" rows={2} />
-          <Button size="sm" onClick={addComment} disabled={!newComment.trim()}>
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
+        {!isReadOnly && (
+          <div className="flex gap-2">
+            <Textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Ajouter un commentaire..." className="flex-1" rows={2} />
+            <Button size="sm" onClick={addComment} disabled={!newComment.trim()}>
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </section>
 
       {/* Internal photos */}
