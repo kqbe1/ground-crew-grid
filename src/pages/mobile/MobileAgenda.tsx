@@ -409,9 +409,19 @@ function TaskCard({ task, navigate }: { task: Task; navigate: (path: string) => 
             <Badge className={cn("text-xs", INTERVENTION_TYPE_COLORS[task.intervention_type])}>
               {INTERVENTION_TYPE_LABELS[task.intervention_type]}
             </Badge>
-            {task.sheet_submitted && (
-              <Badge variant="outline" className="text-[10px] gap-1 border-status-termine text-status-termine">
-                <CheckCircle2 className="w-3 h-3" /> Fiche envoyée
+            {task.sheet_status === "draft" && (
+              <Badge variant="outline" className="text-[10px] gap-1 badge-sheet-draft">
+                <Pencil className="w-3 h-3" /> Brouillon
+              </Badge>
+            )}
+            {task.sheet_status === "submitted" && (
+              <Badge variant="outline" className="text-[10px] gap-1 badge-sheet-submitted">
+                <Send className="w-3 h-3" /> Envoyé au bureau
+              </Badge>
+            )}
+            {task.sheet_status === "completed" && (
+              <Badge variant="outline" className="text-[10px] gap-1 badge-sheet-completed">
+                <CheckCircle2 className="w-3 h-3" /> Terminé
               </Badge>
             )}
           </div>
