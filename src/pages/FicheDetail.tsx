@@ -28,6 +28,15 @@ const statusColor: Record<string, string> = {
 
 const ALL_STATUSES = ["termine", "a_replanifier", "piece_a_commander", "sav", "planifie"] as const;
 
+const WORK_STATUS_LABELS: Record<string, string> = {
+  termine: "Travail terminé",
+  piece_a_commander: "Pièce à commander",
+  piece_commandee: "Pièce commandée",
+  a_refixer: "À refixer pour autre travail",
+  sav: "SAV",
+  autre: "Autre",
+};
+
 export default function FicheDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -285,9 +294,31 @@ export default function FicheDetail() {
             </div>
           </div>
         </div>
-        {sheet.work_status_detail && (
-          <p className="text-sm text-muted-foreground">Détail statut : {sheet.work_status_detail}</p>
-        )}
+        {(() => {
+          const details: string[] =
+            (Array.isArray(sheet.work_status_details) && sheet.work_status_details.length > 0
+              ? sheet.work_status_details
+              : sheet.work_status_detail
+                ? [sheet.work_status_detail]
+                : []) as string[];
+          const notes = (sheet.work_status_notes ?? {}) as Record<string, string>;
+          if (details.length === 0) return null;
+          return (
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase">Statut du travail</h3>
+              <div className="space-y-2">
+                {details.map((d) => (
+                  <div key={d} className="p-3 rounded-lg border text-sm">
+                    <div className="font-medium">{WORK_STATUS_LABELS[d] ?? d}</div>
+                    {notes[d] && (
+                      <p className="mt-1 text-muted-foreground whitespace-pre-wrap">{notes[d]}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
         {sheet.status_comment && (
           <p className="text-sm text-muted-foreground">Commentaire statut : {sheet.status_comment}</p>
         )}
