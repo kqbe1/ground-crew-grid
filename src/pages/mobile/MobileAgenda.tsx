@@ -93,19 +93,38 @@ export default function MobileAgenda() {
         supabase.rpc("get_my_clients_safe"),
         supabase
           .from("intervention_sheets")
-          .select("work_task_id, is_draft")
-          .eq("worker_id", user.id)
-          .eq("is_draft", false),
+          .select("work_task_id, is_draft, final_status")
+          .eq("worker_id", user.id),
       ]);
       const clientMap = Object.fromEntries(
         (clientsRes.data ?? []).map((c: any) => [c.id, c])
       );
-      const submittedSet = new Set((sheetsRes.data ?? []).map((s: any) => s.work_task_id));
-      const enriched = (tasksRes.data ?? []).map((t: any) => ({
-        ...t,
-        clients: t.client_id ? clientMap[t.client_id] ?? null : null,
-        sheet_submitted: submittedSet.has(t.id),
-      }));
+      const sheetMap = new Map<string, { is_draft: boolean; final_status: string | null }>();
+      (sheetsRes.data ?? []).forEach((s: any) => {
+        sheetMap.set(s.work_task_id, { is_draft: s.is_draft, final_status: s.final_status });
+      });
+      const enriched = (tasksRes.data ?? []).map((t: any) => {
+        const sheet = sheetMap.get(t.id);
+        const hasLocalDraft = hasDraftFor(t.id);
+        let sheet_status: Task["sheet_status"] = null;
+        if (hasLocalDraft) {
+          sheet_status = "draft";
+        } else if (sheet) {
+          if (sheet.is_draft) {
+            sheet_status = "draft";
+          } else if (sheet.final_status === "termine") {
+            sheet_status = "completed";
+          } else {
+            sheet_status = "submitted";
+          }
+        }
+        return {
+          ...t,
+          clients: t.client_id ? clientMap[t.client_id] ?? null : null,
+          sheet_submitted: sheet ? !sheet.is_draft : false,
+          sheet_status,
+        };
+      });
       setTasks(enriched as Task[]);
     };
     fetchTasks();
