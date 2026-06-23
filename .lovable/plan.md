@@ -1,64 +1,72 @@
-# Lot de modifications — Bureau / Admin / Planning / Fiches
+## Modifications mobiles ouvrier
 
-## 1. Formulaire création de tâche (Planning)
+### 1. Récap mémos secrétariat (top de l'agenda mobile)
+- Nouveau composant `MemosSecretariatPanel` placé en haut de `MobileAgenda.tsx`.
+- Charge les `work_tasks` du jour assignées à l'ouvrier connecté ayant un `memo_secretariat` non vide.
+- Affichage : bandeau repliable (ouvert par défaut s'il y a au moins 1 mémo), avec icône cloche + compteur. Chaque ligne = heure + titre tâche + mémo, cliquable pour ouvrir le détail.
 
-`src/components/planning/CreateTaskDialog.tsx`
-- Réordonner les champs : **Client** placé en premier (au-dessus de Titre).
-- Bug horaire lors du clic sur un créneau : le brouillon `sessionStorage` (`create_task_draft_v1`) restaure l'ancien `startTime` et ignore le `defaultHour/defaultMinute` reçu. Correction : quand le dialog s'ouvre via un clic créneau, on force `startTime/scheduledDate/duration/assignedTo` à partir des `default*` props (priorité contexte > draft). Le draft reste utilisé uniquement si le dialog est ouvert via le bouton « Nouvelle tâche ».
+### 2. Fiches d'intervention / entretien — Heures & Statut
+- **Multi-sélection libre** des statuts (cases au lieu de boutons radio). Stocké sous forme de tableau dans une nouvelle colonne `work_status_details text[]` (l'ancienne `work_status_detail` reste pour compat, peuplée avec le premier statut).
+- **Suppression** du champ libre « Commentaire éventuel » global.
+- **Note par statut** : dès qu'un statut est coché, un input texte court apparaît sous celui-ci pour saisir une note spécifique. Stocké dans `work_status_notes jsonb` (`{ termine: "…", sav: "…" }`).
+- Le `final_status` envoyé à la tâche prend la priorité : `piece_a_commander` > `sav` > `a_replanifier` > `termine` > `planifie`.
 
-## 2. Niveaux techniciens T0 → T20
+### 3. Suppression « Demander une pièce » dans la fiche d'intervention
+- Retirer le bouton/section dans le flow de `MobileFicheInterventionForm` (et entretien si présent). La demande de pièces reste accessible depuis `MobilePieces`.
 
-- `src/lib/constants.ts` : étendre `WORKER_LEVELS` et `WORKER_LEVEL_LABELS` jusque T20.
-- Aucun changement de schéma : `worker_level` est déjà du texte libre.
-- Vérifier que `CreateUserDialog` et `EditUserDialog` affichent bien la liste complète (scroll Select déjà géré).
+### 4. Photo dans la demande de pièce
+- Dans le formulaire de création de demande de pièce (page `MobilePieces` / dialog `CreateOrderDialog` côté mobile), ajouter le composant `PhotoCapture` existant. Upload vers `intervention-photos` bucket, persistance dans `parts_orders.photos text[]` (nouvelle colonne).
 
-## 3. Binômes B0 → B20 (dropdown dans la création de tâche + fiches)
+### 5. Coordonnées d'intervention supprimées du mobile
+- Retirer le step `CoordinatesStep` des deux flows mobiles (intervention + entretien). `TOTAL_STEPS` passe de 9 → 8 (intervention) et ajusté entretien.
+- Le PDF (`generateFichePdf.ts`) continue de lire les coordonnées : fallback sur `clients` / `client_sites` quand `client_*_override` est null (déjà partiellement le cas). Vérifier que toutes les sections « Coordonnées intervention » et « Facturation » lisent client+site quand pas d'override.
+- Nettoyage : champs `client_*_override` et `billing_*` restent en base pour les fiches existantes.
 
-Constat : la table `binomes` existe mais n'est pas utilisée. Les fiches d'intervention stockent juste `binome_name` (texte libre) et `binome_percentage`. La demande = une nomenclature **B0…B20** réutilisable et liée à un nom (ex. « stagiaire Pierre »).
+### 6. Brouillons de fiche — UX & libellé
+- Le draft localStorage existe déjà (`fiche_draft:*`). Ajout :
+  - Sur la liste des tâches mobile (`MobileAgenda` + détail tâche), un badge **« Brouillon »** orange si un draft existe pour cette `task_id`.
+  - À l'ouverture d'une tâche avec draft existant, toast « Brouillon repris ».
+  - Bouton « Supprimer le brouillon » dans le header du formulaire mobile.
+- Aucune persistance serveur supplémentaire (déjà géré offline via `useOfflineDrafts`).
 
-Approche minimale, alignée sur les techniciens :
-- Ajouter une colonne `binome_level` (text) sur `profiles` pour permettre d'assigner un label B0…B20 à un utilisateur (en plus de `worker_level`). Optionnel par utilisateur.
-- `src/lib/constants.ts` : `BINOME_LEVELS = ["B0".."B20"]` + labels.
-- Admin → onglet Utilisateurs : dans `CreateUserDialog` / `EditUserDialog`, ajouter un champ « Niveau binôme » (Select B0–B20 ou vide).
-- `CreateTaskDialog` : nouveau Select « Binôme » listant les profils ayant un `binome_level` non nul, affichés `B3 — Pierre`. Stocke l'id dans `work_tasks.second_assigned_to` (colonne déjà existante).
-- Fiches mobiles (`MobileFicheInterventionForm` + `MobileFicheEntretienForm`) : si la tâche a un `second_assigned_to`, pré-remplir `binomeName` avec `Bx — Nom` et permettre de garder la saisie du pourcentage.
-- PDFs (`generateFichePdf`) : afficher `Bx — Nom (XX%)` quand présent.
+### 7. Visuel tâches terminées (bande verte)
+- Dans `MobileAgenda` et toutes les cartes tâche mobile : si `final_status === 'termine'` ET fiche envoyée (`intervention_sheets` lié, `is_draft=false`), ajouter une **bande verte 4px à gauche** (`border-l-4 border-green-500`) et un check icône.
+- Étendre aussi à la liste desktop des tâches pour cohérence.
 
-## 4. Création/édition client
+### 8. Verrou édition fiche après envoi
+- Côté UI : si une fiche envoyée existe pour la tâche, le mobile (ouvrier) affiche en lecture seule. Pas de bouton « modifier ».
+- Côté RLS : restreindre `UPDATE` sur `intervention_sheets` quand `is_draft = false` aux rôles `admin` et `bureau` uniquement. L'ouvrier garde `UPDATE` tant que `is_draft = true`.
 
-`src/components/clients/CreateEditClientDialog.tsx`
-- **Propriétaire dans fiche locataire** : le champ « Contact locataire » devient bidirectionnel — si la fiche client courante est un locataire, le « contact propriétaire » (renommer `contact_syndic` → label « Propriétaire / Syndic » côté UI, valeur DB inchangée) sera affiché en bas comme contact responsable. Pas de migration : on réutilise `contact_syndic` comme champ « propriétaire ».
-- **Adresse d'intervention → site automatique** : à la création (ou édition si l'adresse change) du client, si `address_intervention` est rempli, insérer/mettre à jour une ligne dans `client_sites` (`address = address_intervention`, label « Adresse principale »). Sans doublon : on cherche d'abord un site existant avec la même adresse.
-- **Équipements à la création** : actuellement le formulaire ne permet d'ajouter des équipements qu'après création (car `client_equipment` exige un `client_id`). Correction : permettre la saisie d'une liste d'équipements temporaire dans le dialog et les insérer en batch **après** l'INSERT du client (deux phases : create client → get id → insert sites + equipments). Réutiliser le composant d'édition d'équipements existant côté `ClientDetail`.
+---
 
-## 5. Échéances légales d'entretien — configurables par le bureau
+### Modifications base de données
 
-Aujourd'hui la périodicité est saisie manuellement sur chaque entretien. Demande : avoir un référentiel **par entreprise** `(combustible × région) → périodicité légale`.
+```sql
+-- 1. Multi-statuts + notes par statut
+ALTER TABLE intervention_sheets
+  ADD COLUMN work_status_details text[],
+  ADD COLUMN work_status_notes jsonb DEFAULT '{}'::jsonb;
 
-Nouvelle table `legal_maintenance_rules` :
-- `company_id uuid`, `energy_type text` (gaz/mazout/pellets/clim/vmc), `region text` (bruxelles/wallonie/flandre), `periodicity text` (mensuel/.../triennal), unique `(company_id, energy_type, region)`.
-- RLS multi-tenant (lecture authenticated tenant + super_admin, écriture admin/bureau du tenant + super_admin) + GRANT.
-- Seed initial avec les valeurs belges usuelles (gaz annuel partout, mazout annuel, etc.).
+-- 2. Photos sur les demandes de pièces
+ALTER TABLE parts_orders ADD COLUMN photos text[];
 
-Interface :
-- Nouvel onglet **« Entretiens légaux »** dans `src/pages/Admin.tsx` (accessible bureau + admin + super_admin) avec une matrice combustible × région éditable.
-- `CreateEditEntretienDialog` : quand l'utilisateur choisit `intervention_type` + (région du client), pré-remplir `periodicity` depuis la règle correspondante. L'utilisateur peut surcharger.
+-- 3. Verrou édition fiches envoyées
+DROP POLICY "<update existing>" ON intervention_sheets;
+CREATE POLICY "Ouvrier édite ses brouillons"
+  ON intervention_sheets FOR UPDATE TO authenticated
+  USING (worker_id = auth.uid() AND is_draft = true)
+  WITH CHECK (worker_id = auth.uid() AND is_draft = true);
+CREATE POLICY "Bureau/Admin éditent toutes les fiches"
+  ON intervention_sheets FOR UPDATE TO authenticated
+  USING (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'bureau'))
+  WITH CHECK (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'bureau'));
+```
 
-## 6. Portée multi-tenant / rôles bureau
-
-Toutes les nouvelles policies / accès UI doivent vérifier `private.is_admin_or_bureau()` + `company_id = private.get_my_company_id()` pour s'appliquer identiquement à chaque bureau d'entreprise. L'onglet « Entretiens légaux » et la gestion des binômes seront ouverts au rôle `bureau` au même titre qu'`admin`.
-
-## Détails techniques (récap fichiers)
-
-- Migrations : `legal_maintenance_rules` (+seed) ; `profiles.binome_level text`.
-- Constants : `WORKER_LEVELS` (T0–T20), `BINOME_LEVELS` (B0–B20) + labels.
-- UI Admin : nouvel onglet `LegalRulesTab.tsx`.
-- Planning : refactor `CreateTaskDialog` (ordre champs, fix défaut horaire, Select binôme).
-- Clients : refactor `CreateEditClientDialog` (équipements à la création, site auto, libellé propriétaire).
-- Mobile + PDF : intégration du binôme `Bx — Nom`.
-
-## Points à confirmer
-
-- Liste exacte des `(combustible, région) → périodicité` à seed (sinon je mets les valeurs belges standard et tu pourras les ajuster dans l'UI).
-- Ok pour réutiliser la colonne existante `contact_syndic` comme « Propriétaire/Syndic » (pas de nouvelle colonne) ?
-- Ok pour stocker le binôme via `second_assigned_to` (id profil) au lieu d'inventer un table de liens ?
+### Fichiers principaux touchés
+- `src/pages/mobile/MobileAgenda.tsx` (+ nouveau `MemosSecretariatPanel.tsx`, bande verte, badge brouillon)
+- `src/pages/mobile/MobileFicheInterventionForm.tsx` + `MobileFicheEntretienForm.tsx` (suppr step coordonnées, suppr « demander pièce »)
+- `src/components/mobile/steps/HoursStatusStep.tsx` (multi-select + notes par statut)
+- `src/pages/mobile/MobilePieces.tsx` (PhotoCapture)
+- `src/lib/generateFichePdf.ts` (fallback coordonnées client/site)
+- `src/components/planning/DraggableTaskCard.tsx` + listes tâches (bande verte)
+- Migration SQL ci-dessus
