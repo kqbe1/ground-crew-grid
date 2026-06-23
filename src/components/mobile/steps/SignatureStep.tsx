@@ -1,7 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, UserX } from "lucide-react";
 import SignatureCanvas from "@/components/mobile/SignatureCanvas";
 
@@ -45,19 +44,6 @@ export default function SignatureStep({ data, onChange }: Props) {
             placeholder="Nom du binôme (optionnel)"
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Pourcentage binôme</Label>
-          <Select value={String(data.binomePercentage)} onValueChange={(v) => set("binomePercentage", parseInt(v))}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: 11 }, (_, i) => i * 10).map((pct) => (
-                <SelectItem key={pct} value={String(pct)}>{pct}%</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
