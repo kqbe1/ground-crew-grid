@@ -105,6 +105,7 @@ const App = () => (
                 <Route path="tache/:id" element={<MobileTaskDetail />} />
                 <Route path="fiche/:taskId" element={<MobileFicheRouter />} />
                 <Route path="fiches" element={<MobileFiches />} />
+                <Route path="fiches/:id" element={<FicheDetail />} />
                 <Route path="pieces" element={<MobilePieces />} />
                 <Route path="profil" element={<MobileProfil />} />
                 <Route path="devis/nouveau" element={<MobileDevisForm />} />
