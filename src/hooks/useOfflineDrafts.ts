@@ -18,6 +18,14 @@ export interface OfflineDraft {
   created_at: string;
 }
 
+export type DraftSyncState = "pending" | "syncing" | "synced" | "error";
+
+export interface DraftStatus {
+  state: DraftSyncState;
+  error?: string;
+  updated_at: string;
+}
+
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -84,18 +92,27 @@ async function uploadPayloadMedia(payload: Record<string, any>, workerId: string
   return p;
 }
 
-async function syncDraft(draft: OfflineDraft): Promise<boolean> {
-  const uploaded = await uploadPayloadMedia(draft.payload, draft.worker_id);
-
-  const { error } = await supabase.from("intervention_sheets").insert(uploaded as any);
-
-  if (!error) {
-    await supabase.from("work_tasks").update({ status: draft.final_status as any }).eq("id", draft.work_task_id);
+async function syncDraft(draft: OfflineDraft): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const uploaded = await uploadPayloadMedia(draft.payload, draft.worker_id);
+    const { error } = await supabase.from("intervention_sheets").insert(uploaded as any);
+    if (error) {
+      console.error("Sync draft error:", error);
+      return { ok: false, error: error.message };
+    }
+    const { error: taskErr } = await supabase
+      .from("work_tasks")
+      .update({ status: draft.final_status as any })
+      .eq("id", draft.work_task_id);
+    if (taskErr) {
+      console.error("Sync task status error:", taskErr);
+    }
     await deleteDraft(draft.id);
-    return true;
+    return { ok: true };
+  } catch (err: any) {
+    console.error("Sync draft exception:", err);
+    return { ok: false, error: err?.message ?? "Erreur inconnue" };
   }
-  console.error("Sync draft error:", error);
-  return false;
 }
 
 export function useOfflineDrafts() {
@@ -103,6 +120,11 @@ export function useOfflineDrafts() {
   const [syncing, setSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingCount, setPendingCount] = useState(0);
+  const [statusMap, setStatusMap] = useState<Record<string, DraftStatus>>({});
+
+  const setDraftStatus = useCallback((id: string, status: DraftStatus) => {
+    setStatusMap((prev) => ({ ...prev, [id]: status }));
+  }, []);
 
   const refreshDrafts = useCallback(async () => {
     try {
@@ -110,6 +132,20 @@ export function useOfflineDrafts() {
       const unsynced = all.filter((d) => !d.synced);
       setDrafts(all);
       setPendingCount(unsynced.length);
+      // Initialize "pending" status for any draft without a tracked state
+      setStatusMap((prev) => {
+        const next = { ...prev };
+        for (const d of unsynced) {
+          if (!next[d.id] || next[d.id].state === "synced") {
+            next[d.id] = { state: "pending", updated_at: new Date().toISOString() };
+          }
+        }
+        // Drop status entries for drafts that no longer exist
+        for (const id of Object.keys(next)) {
+          if (!all.find((d) => d.id === id)) delete next[id];
+        }
+        return next;
+      });
     } catch {
       // IndexedDB might not be available
     }
@@ -124,12 +160,45 @@ export function useOfflineDrafts() {
     setSyncing(true);
     let syncedCount = 0;
     for (const draft of unsynced) {
-      const ok = await syncDraft(draft);
-      if (ok) syncedCount++;
+      setDraftStatus(draft.id, { state: "syncing", updated_at: new Date().toISOString() });
+      const result = await syncDraft(draft);
+      if (result.ok) {
+        setDraftStatus(draft.id, { state: "synced", updated_at: new Date().toISOString() });
+        syncedCount++;
+      } else {
+        setDraftStatus(draft.id, { state: "error", error: result.error, updated_at: new Date().toISOString() });
+      }
     }
     setSyncing(false);
     await refreshDrafts();
     return syncedCount;
+  }, [refreshDrafts, setDraftStatus]);
+
+  const retryDraft = useCallback(async (id: string) => {
+    if (!navigator.onLine) {
+      toast.error("Pas de connexion réseau");
+      return false;
+    }
+    const all = await getAllDrafts();
+    const draft = all.find((d) => d.id === id);
+    if (!draft) return false;
+    setDraftStatus(id, { state: "syncing", updated_at: new Date().toISOString() });
+    const result = await syncDraft(draft);
+    if (result.ok) {
+      setDraftStatus(id, { state: "synced", updated_at: new Date().toISOString() });
+      toast.success("Fiche synchronisée");
+    } else {
+      setDraftStatus(id, { state: "error", error: result.error, updated_at: new Date().toISOString() });
+      toast.error(result.error ?? "Échec de la synchronisation");
+    }
+    await refreshDrafts();
+    return result.ok;
+  }, [refreshDrafts, setDraftStatus]);
+
+  const discardDraft = useCallback(async (id: string) => {
+    await deleteDraft(id);
+    await refreshDrafts();
+    toast.info("Brouillon supprimé");
   }, [refreshDrafts]);
 
   const syncAllRef = useRef(syncAll);
@@ -188,20 +257,24 @@ export function useOfflineDrafts() {
       created_at: new Date().toISOString(),
     };
     await saveDraft(fullDraft);
+    setDraftStatus(fullDraft.id, { state: "pending", updated_at: new Date().toISOString() });
 
     if (navigator.onLine) {
-      const ok = await syncDraft(fullDraft);
-      if (!ok) {
+      setDraftStatus(fullDraft.id, { state: "syncing", updated_at: new Date().toISOString() });
+      const result = await syncDraft(fullDraft);
+      if (!result.ok) {
+        setDraftStatus(fullDraft.id, { state: "error", error: result.error, updated_at: new Date().toISOString() });
         await refreshDrafts();
-        return { synced: false };
+        return { synced: false, error: result.error };
       }
+      setDraftStatus(fullDraft.id, { state: "synced", updated_at: new Date().toISOString() });
       await refreshDrafts();
       return { synced: true };
     }
 
     await refreshDrafts();
     return { synced: false };
-  }, [refreshDrafts]);
+  }, [refreshDrafts, setDraftStatus]);
 
-  return { drafts, pendingCount, syncing, isOnline, save, syncAll, refreshDrafts };
+  return { drafts, pendingCount, syncing, isOnline, save, syncAll, refreshDrafts, statusMap, retryDraft, discardDraft };
 }

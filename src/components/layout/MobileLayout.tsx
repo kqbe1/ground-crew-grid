@@ -1,11 +1,13 @@
 import { Outlet, Navigate, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Calendar, ClipboardList, Package, User, WifiOff, RefreshCw, FileText } from "lucide-react";
+import { Calendar, ClipboardList, Package, User, WifiOff, RefreshCw, FileText, AlertCircle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOfflineDrafts } from "@/hooks/useOfflineDrafts";
 import { toast } from "sonner";
 import MobileTaskNotifications from "@/components/mobile/MobileTaskNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import OfflineSyncSheet from "@/components/mobile/OfflineSyncSheet";
+import { useState } from "react";
 
 const baseMobileNav = [
   { to: "/mobile", icon: Calendar, label: "Agenda" },
@@ -16,7 +18,10 @@ const baseMobileNav = [
 export default function MobileLayout() {
   const { session, loading, role, profile } = useAuth();
   usePushNotifications();
-  const { isOnline, pendingCount, syncing, syncAll } = useOfflineDrafts();
+  const { isOnline, pendingCount, syncing, syncAll, drafts, statusMap, retryDraft, discardDraft } = useOfflineDrafts();
+  const [syncSheetOpen, setSyncSheetOpen] = useState(false);
+
+  const errorCount = drafts.filter((d) => !d.synced && statusMap[d.id]?.state === "error").length;
 
   const showDevis = role === "admin" || (role === "ouvrier" && profile?.can_create_devis);
   
@@ -53,16 +58,24 @@ export default function MobileLayout() {
     <div className="flex flex-col h-screen bg-background">
       <MobileTaskNotifications />
       {(!isOnline || pendingCount > 0) && (
-        <div
+        <button
+          onClick={() => setSyncSheetOpen(true)}
           className={cn(
-            "flex items-center justify-between px-4 py-2 text-xs font-medium",
-            !isOnline
+            "flex items-center justify-between px-4 py-2 text-xs font-medium w-full text-left transition-opacity active:opacity-70",
+            errorCount > 0
+              ? "bg-destructive/15 text-destructive"
+              : !isOnline
               ? "bg-[hsl(var(--color-replanifier))]/15 text-[hsl(var(--color-replanifier))]"
               : "bg-[hsl(var(--color-commandee))]/15 text-[hsl(var(--color-commandee))]"
           )}
         >
           <div className="flex items-center gap-1.5">
-            {!isOnline ? (
+            {errorCount > 0 ? (
+              <>
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span>{errorCount} fiche(s) en erreur · toucher pour voir</span>
+              </>
+            ) : !isOnline ? (
               <>
                 <WifiOff className="w-3.5 h-3.5" />
                 <span>Hors ligne{pendingCount > 0 ? ` · ${pendingCount} fiche(s) en attente` : ""}</span>
@@ -70,17 +83,25 @@ export default function MobileLayout() {
             ) : (
               <>
                 <RefreshCw className={cn("w-3.5 h-3.5", syncing && "animate-spin")} />
-                <span>{syncing ? "Synchronisation..." : `${pendingCount} fiche(s) en attente`}</span>
+                <span>{syncing ? "Synchronisation…" : `${pendingCount} fiche(s) en attente`}</span>
               </>
             )}
           </div>
-          {isOnline && pendingCount > 0 && !syncing && (
-            <button onClick={handleManualSync} className="underline text-xs font-semibold">
-              Synchroniser
-            </button>
-          )}
-        </div>
+          <ChevronRight className="w-3.5 h-3.5 opacity-70" />
+        </button>
       )}
+
+      <OfflineSyncSheet
+        open={syncSheetOpen}
+        onOpenChange={setSyncSheetOpen}
+        drafts={drafts}
+        statusMap={statusMap}
+        isOnline={isOnline}
+        syncing={syncing}
+        onSyncAll={handleManualSync}
+        onRetry={retryDraft}
+        onDiscard={discardDraft}
+      />
 
       <main className="flex-1 overflow-y-auto pb-16">
         <Outlet />
@@ -101,7 +122,12 @@ export default function MobileLayout() {
             <item.icon className="w-5 h-5" />
             <span>{item.label}</span>
             {item.to === "/mobile/fiches" && pendingCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive rounded-full text-[9px] text-destructive-foreground flex items-center justify-center font-bold animate-pulse">
+              <span className={cn(
+                "absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full text-[9px] flex items-center justify-center font-bold",
+                errorCount > 0
+                  ? "bg-destructive text-destructive-foreground animate-pulse"
+                  : "bg-[hsl(var(--color-commandee))] text-white"
+              )}>
                 {pendingCount}
               </span>
             )}
