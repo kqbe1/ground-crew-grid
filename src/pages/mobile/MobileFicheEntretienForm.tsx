@@ -71,7 +71,7 @@ export default function MobileFicheEntretienForm() {
     (async () => {
       const { data: task } = await supabase
         .from("work_tasks")
-        .select("*, clients(name, address_intervention, phone, email), second:profiles!work_tasks_second_assigned_to_fkey(full_name, binome_level)")
+        .select("*, clients(name, address_intervention, phone, email), binome:task_binomes!work_tasks_binome_id_fkey(name, code, kind)")
         .eq("id", taskId)
         .maybeSingle();
       if (task?.clients) {
@@ -84,10 +84,9 @@ export default function MobileFicheEntretienForm() {
           clientEmail: c.email || "",
         }));
       }
-      const second = (task as any)?.second;
-      if (second?.full_name) {
-        const label = second.binome_level ? `${second.binome_level} — ${second.full_name}` : second.full_name;
-        setSignature((prev) => ({ ...prev, binomeName: label }));
+      const binome = (task as any)?.binome;
+      if (binome?.name) {
+        setSignature((prev) => ({ ...prev, binomeName: `${binome.code} — ${binome.name}` }));
       }
     })();
   }, [taskId]);
