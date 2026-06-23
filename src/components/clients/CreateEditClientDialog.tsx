@@ -47,6 +47,8 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
     birthday: "",
     region: "",
   });
+  const [draftEquipments, setDraftEquipments] = useState<DraftEquipment[]>([]);
+  const [newEq, setNewEq] = useState<DraftEquipment>({ name: "", brand: "", model: "", energy_type: "autre" });
 
   useEffect(() => {
     if (client) {
