@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin, Package, ExternalLink, Pencil, X, Save } from "lucide-react";
+import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin, Package, ExternalLink, Pencil, X, Save, UsersRound } from "lucide-react";
 import LayoutDetail from "@/components/layout/LayoutDetail";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
@@ -68,7 +68,7 @@ export default function FicheDetail() {
     if (!id) return;
     const { data } = await supabase
       .from("intervention_sheets")
-      .select("*, work_tasks(title, intervention_type, scheduled_date, start_time, duration_minutes, clients(name, email, phone, address_intervention), client_sites(name, address)), profiles!intervention_sheets_worker_id_fkey(full_name)")
+      .select("*, work_tasks(title, intervention_type, scheduled_date, start_time, duration_minutes, clients(name, email, phone, address_intervention), client_sites(name, address), binome:task_binomes!work_tasks_binome_id_fkey(id, name, code, kind, is_active), assigned:profiles!work_tasks_assigned_to_fkey(full_name), second:profiles!work_tasks_second_assigned_to_fkey(full_name)), profiles!intervention_sheets_worker_id_fkey(full_name)")
       .eq("id", id)
       .single();
     setSheet(data);
