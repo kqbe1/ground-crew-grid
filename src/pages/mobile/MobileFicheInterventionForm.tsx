@@ -72,11 +72,10 @@ export default function MobileFicheInterventionForm() {
         .maybeSingle();
       if (existing) setReadOnly(true);
     })();
-    // Ne pas écraser les valeurs déjà saisies par l'utilisateur (brouillon restauré)
-    if (loadDraft(taskId)) {
-      toast.info("Brouillon repris");
-      return;
-    }
+    const draftLoaded = loadDraft(taskId);
+    if (draftLoaded) toast.info("Brouillon repris");
+    // Toujours récupérer le binôme de la tâche — pré-remplit la signature
+    // si le champ est encore vide (nouvelle fiche OU brouillon créé avant l'ajout).
     (async () => {
       const { data: task } = await supabase
         .from("work_tasks")
@@ -85,7 +84,11 @@ export default function MobileFicheInterventionForm() {
         .maybeSingle();
       const binome = (task as any)?.binome;
       if (binome?.name) {
-        setSignature((prev) => ({ ...prev, binomeName: `${binome.code} — ${binome.name}` }));
+        setSignature((prev) =>
+          prev.binomeName?.trim()
+            ? prev
+            : { ...prev, binomeName: `${binome.code} — ${binome.name}` },
+        );
       }
     })();
   }, [taskId]);
