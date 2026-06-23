@@ -256,6 +256,7 @@ export type Database = {
           id: string
           name: string
           notes_internal: string | null
+          owner_client_id: string | null
           phone: string | null
           phone_secondary: string | null
           region: Database["public"]["Enums"]["client_region"] | null
@@ -274,6 +275,7 @@ export type Database = {
           id?: string
           name: string
           notes_internal?: string | null
+          owner_client_id?: string | null
           phone?: string | null
           phone_secondary?: string | null
           region?: Database["public"]["Enums"]["client_region"] | null
@@ -292,6 +294,7 @@ export type Database = {
           id?: string
           name?: string
           notes_internal?: string | null
+          owner_client_id?: string | null
           phone?: string | null
           phone_secondary?: string | null
           region?: Database["public"]["Enums"]["client_region"] | null
@@ -304,6 +307,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_owner_client_id_fkey"
+            columns: ["owner_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
