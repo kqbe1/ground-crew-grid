@@ -223,6 +223,44 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
             <Textarea value={form.notes_internal} onChange={(e) => set("notes_internal", e.target.value)} rows={3} />
           </div>
         </div>
+        {!client && (
+          <div className="border-t pt-4 mt-2 space-y-3">
+            <div>
+              <Label className="text-sm font-semibold">Équipements à ajouter (optionnel)</Label>
+              <p className="text-xs text-muted-foreground">Rattachés à l'adresse principale lors de la création.</p>
+            </div>
+            {draftEquipments.length > 0 && (
+              <div className="space-y-1">
+                {draftEquipments.map((eq, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-sm border rounded p-2">
+                    <span className="flex-1">
+                      <strong>{eq.name}</strong>
+                      {(eq.brand || eq.model) && (
+                        <span className="text-muted-foreground"> — {[eq.brand, eq.model].filter(Boolean).join(" ")}</span>
+                      )}
+                      <span className="ml-2 text-xs text-muted-foreground">({ENERGY_LABELS[eq.energy_type]})</span>
+                    </span>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeDraftEquipment(idx)}>
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder="Nom équipement" value={newEq.name} onChange={(e) => setNewEq((s) => ({ ...s, name: e.target.value }))} />
+              <Select value={newEq.energy_type} onValueChange={(v) => setNewEq((s) => ({ ...s, energy_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{Object.entries(ENERGY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+              </Select>
+              <Input placeholder="Marque" value={newEq.brand} onChange={(e) => setNewEq((s) => ({ ...s, brand: e.target.value }))} />
+              <Input placeholder="Modèle" value={newEq.model} onChange={(e) => setNewEq((s) => ({ ...s, model: e.target.value }))} />
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={addDraftEquipment} disabled={!newEq.name.trim()}>
+              <Plus className="w-4 h-4 mr-1" /> Ajouter cet équipement
+            </Button>
+          </div>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
           <Button onClick={handleSubmit} disabled={loading}>
