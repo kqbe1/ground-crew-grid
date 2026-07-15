@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { useState, useCallback } from "react";
 import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
 import { loadPdfConfigAndLogo, ficheDocumentType } from "@/lib/pdfConfig";
+import { sendFicheToAG } from "@/lib/sendEmailAG";
+import { Send } from "lucide-react";
 
 interface FicheDetailDialogProps {
   sheet: any;
@@ -21,6 +23,7 @@ interface FicheDetailDialogProps {
 
 export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated }: FicheDetailDialogProps) {
   const [sending, setSending] = useState(false);
+  const [sendingAG, setSendingAG] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loadingPdf, setLoadingPdf] = useState(false);
 
@@ -84,6 +87,19 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
       toast.error("Erreur lors de la préparation de l'email");
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleSendAG = async () => {
+    setSendingAG(true);
+    try {
+      await sendFicheToAG(sheet);
+      toast.success("Fiche envoyée à info@agchauffage.be");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erreur lors de l'envoi de l'email");
+    } finally {
+      setSendingAG(false);
     }
   };
 
@@ -278,6 +294,10 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
           >
             <Download className="w-4 h-4 mr-1" />
             Télécharger PDF
+          </Button>
+          <Button onClick={handleSendAG} disabled={sendingAG} variant="outline" size="sm">
+            <Send className="w-4 h-4 mr-1" />
+            {sendingAG ? "Envoi..." : "Envoyer à AG Chauffage"}
           </Button>
           {!sheet.sent_to_client && (
             <Button onClick={handleSendEmail} disabled={sending} size="sm">

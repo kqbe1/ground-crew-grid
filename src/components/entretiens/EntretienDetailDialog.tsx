@@ -6,8 +6,11 @@ import { Separator } from "@/components/ui/separator";
 import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS } from "@/lib/constants";
 import { format, differenceInDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Wrench, MapPin, Calendar, AlertTriangle, Pencil, User } from "lucide-react";
+import { Wrench, MapPin, Calendar, AlertTriangle, Pencil, User, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { toast } from "sonner";
+import { sendEntretienReminderToAG } from "@/lib/sendEmailAG";
 
 interface Props {
   open: boolean;
@@ -17,6 +20,7 @@ interface Props {
 }
 
 export default function EntretienDetailDialog({ open, onOpenChange, schedule, onEdit }: Props) {
+  const [sending, setSending] = useState(false);
   if (!schedule) return null;
 
   const daysUntilDue = schedule.next_due_date
@@ -33,6 +37,19 @@ export default function EntretienDetailDialog({ open, onOpenChange, schedule, on
   };
 
   const legalAlert = schedule.legal_alert_years;
+
+  const handleSendAG = async () => {
+    setSending(true);
+    try {
+      await sendEntretienReminderToAG(schedule);
+      toast.success("Rappel envoyé à info@agchauffage.be");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de l'envoi de l'email");
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -125,6 +142,14 @@ export default function EntretienDetailDialog({ open, onOpenChange, schedule, on
             </Card>
           </>
         )}
+
+        <Separator />
+        <div className="flex justify-end">
+          <Button onClick={handleSendAG} disabled={sending} size="sm">
+            <Send className="w-4 h-4 mr-1" />
+            {sending ? "Envoi..." : "Envoyer à AG Chauffage"}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
