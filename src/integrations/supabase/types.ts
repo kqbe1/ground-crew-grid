@@ -456,6 +456,53 @@ export type Database = {
         }
         Relationships: []
       }
+      email_settings: {
+        Row: {
+          company_id: string | null
+          contact_email: string
+          contact_phone: string
+          created_at: string
+          footer_text: string
+          id: string
+          intro_text: string
+          subject: string
+          template_key: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          contact_email?: string
+          contact_phone?: string
+          created_at?: string
+          footer_text?: string
+          id?: string
+          intro_text: string
+          subject: string
+          template_key: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          contact_email?: string
+          contact_phone?: string
+          created_at?: string
+          footer_text?: string
+          id?: string
+          intro_text?: string
+          subject?: string
+          template_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_unsubscribe_tokens: {
         Row: {
           created_at: string
