@@ -5,12 +5,17 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS } from "@/lib/constants";
 
-const AG_EMAIL = "info@agchauffage.be";
-
 /**
- * Generates the fiche PDF, uploads it to storage, and sends it to AG Chauffage.
+ * Generates the fiche PDF, uploads it to storage, and sends it to the client's email.
+ * Throws if the client has no email address.
  */
 export async function sendFicheToAG(sheet: any): Promise<void> {
+  const task = sheet.work_tasks;
+  const clientEmail = task?.clients?.email;
+  if (!clientEmail) {
+    throw new Error("Ce client n'a pas d'adresse email");
+  }
+
   const { pdfCfg, logoDataUrl } = await loadPdfConfigAndLogo(ficheDocumentType(sheet));
   const doc = generateFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
   const blob = doc.output("blob");
@@ -26,7 +31,6 @@ export async function sendFicheToAG(sheet: any): Promise<void> {
   const { data: pub } = supabase.storage.from("company-assets").getPublicUrl(filePath);
   const pdfUrl = pub.publicUrl;
 
-  const task = sheet.work_tasks;
   const worker = sheet.profiles;
   const interventionDate = sheet.created_at
     ? format(new Date(sheet.created_at), "dd/MM/yyyy", { locale: fr })
@@ -35,7 +39,7 @@ export async function sendFicheToAG(sheet: any): Promise<void> {
   const { error } = await supabase.functions.invoke("send-transactional-email", {
     body: {
       templateName: "fiche-intervention",
-      recipientEmail: AG_EMAIL,
+      recipientEmail: clientEmail,
       idempotencyKey: `fiche-${sheet.id}`,
       templateData: {
         clientName: task?.clients?.name || "—",
@@ -50,15 +54,23 @@ export async function sendFicheToAG(sheet: any): Promise<void> {
     },
   });
   if (error) throw error;
+
+  // Mark sheet as sent to client
+  await supabase.from("intervention_sheets").update({ sent_to_client: true }).eq("id", sheet.id);
 }
 
 /**
- * Sends an "entretien à planifier" reminder to AG Chauffage.
+ * Sends an "entretien à planifier" reminder to the client to schedule a rendezvous.
+ * Throws if the client has no email address.
  */
 export async function sendEntretienReminderToAG(schedule: any): Promise<void> {
   const client = schedule.clients || {};
-  const site = schedule.client_sites || {};
   const equipment = schedule.client_equipment || {};
+  const clientEmail = client.email;
+  if (!clientEmail) {
+    throw new Error("Ce client n'a pas d'adresse email");
+  }
+
   const dueDate = schedule.next_due_date
     ? format(new Date(schedule.next_due_date), "dd/MM/yyyy", { locale: fr })
     : "";
@@ -66,19 +78,16 @@ export async function sendEntretienReminderToAG(schedule: any): Promise<void> {
   const { error } = await supabase.functions.invoke("send-transactional-email", {
     body: {
       templateName: "rappel-entretien",
-      recipientEmail: AG_EMAIL,
+      recipientEmail: clientEmail,
       idempotencyKey: `entretien-${schedule.id}-${schedule.next_due_date ?? ""}`,
       templateData: {
         clientName: client.name || "—",
-        clientPhone: client.phone || "",
-        clientEmail: client.email || "",
-        clientAddress: site.address || client.address_intervention || "",
-        clientCity: [client.postal_code, client.city].filter(Boolean).join(" "),
         equipmentName: [equipment.name, equipment.brand, equipment.model].filter(Boolean).join(" "),
         energyType: equipment.energy_type || "",
         interventionType: INTERVENTION_TYPE_LABELS[schedule.intervention_type] || schedule.intervention_type || "Entretien",
         dueDate,
-        notes: schedule.notes || "",
+        contactPhone: "",
+        contactEmail: "info@agchauffage.be",
       },
     },
   });

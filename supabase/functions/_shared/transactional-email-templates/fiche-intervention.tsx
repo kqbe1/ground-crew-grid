@@ -37,17 +37,16 @@ const Email = ({
 }: Props) => (
   <Html lang="fr" dir="ltr">
     <Head />
-    <Preview>Fiche d'intervention — {clientName} {interventionDate}</Preview>
+    <Preview>Votre fiche d'intervention AG Chauffage</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Fiche d'intervention</Heading>
-        <Text style={text}>Bonjour,</Text>
+        <Heading style={h1}>Votre fiche d'intervention</Heading>
+        <Text style={text}>Bonjour {clientName},</Text>
         <Text style={text}>
-          Une fiche d'intervention a été clôturée et vous est transmise pour suivi.
+          Suite à notre intervention, veuillez trouver ci-dessous le récapitulatif ainsi que la fiche d'intervention en pièce jointe (lien PDF).
         </Text>
 
         <Section style={card}>
-          <Text style={row}><strong>Client&nbsp;:</strong> {clientName}{clientCity ? ` — ${clientCity}` : ''}</Text>
           <Text style={row}><strong>Intervention&nbsp;:</strong> {taskTitle}</Text>
           {interventionDate && <Text style={row}><strong>Date&nbsp;:</strong> {interventionDate}</Text>}
           {workerName && <Text style={row}><strong>Technicien&nbsp;:</strong> {workerName}</Text>}
@@ -71,7 +70,10 @@ const Email = ({
         )}
 
         <Hr style={hr} />
-        <Text style={footer}>AG Chauffage — Fiche transmise automatiquement.</Text>
+        <Text style={footer}>
+          Merci de votre confiance,<br />
+          <strong>AG Chauffage</strong> — info@agchauffage.be
+        </Text>
       </Container>
     </Body>
   </Html>
@@ -80,9 +82,8 @@ const Email = ({
 export const template = {
   component: Email,
   subject: (data: Props) =>
-    `Fiche d'intervention — ${data?.clientName ?? 'Client'} ${data?.interventionDate ?? ''}`.trim(),
-  displayName: "Fiche d'intervention",
-  to: 'info@agchauffage.be',
+    `Votre fiche d'intervention AG Chauffage${data?.interventionDate ? ` — ${data.interventionDate}` : ''}`,
+  displayName: "Fiche d'intervention (client)",
   previewData: {
     clientName: 'Dupont Jean',
     clientCity: 'Namur',
