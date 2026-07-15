@@ -39,6 +39,7 @@ const MobileProfil = lazy(() => import("@/pages/mobile/MobileProfil"));
 const MobileDevisForm = lazy(() => import("@/pages/mobile/MobileDevisForm"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Install = lazy(() => import("@/pages/Install"));
+const Unsubscribe = lazy(() => import("@/pages/Unsubscribe"));
 
 // SuperAdmin pages
 const SuperAdminDashboard = lazy(() => import("@/pages/super-admin/SuperAdminDashboard"));
@@ -66,6 +67,7 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/install" element={<Install />} />
+              <Route path="/unsubscribe" element={<Unsubscribe />} />
 
               {/* SuperAdmin */}
               <Route path="/super-admin" element={<SuperAdminLayout />}>
