@@ -91,13 +91,18 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
   };
 
   const handleSendAG = async () => {
+    if (!task?.clients?.email) {
+      toast.error("Ce client n'a pas d'adresse email");
+      return;
+    }
     setSendingAG(true);
     try {
       await sendFicheToAG(sheet);
-      toast.success("Fiche envoyée à info@agchauffage.be");
+      toast.success(`Fiche envoyée à ${task.clients.email}`);
+      onUpdated();
     } catch (err: any) {
       console.error(err);
-      toast.error("Erreur lors de l'envoi de l'email");
+      toast.error(err?.message || "Erreur lors de l'envoi de l'email");
     } finally {
       setSendingAG(false);
     }
@@ -295,14 +300,14 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
             <Download className="w-4 h-4 mr-1" />
             Télécharger PDF
           </Button>
-          <Button onClick={handleSendAG} disabled={sendingAG} variant="outline" size="sm">
-            <Send className="w-4 h-4 mr-1" />
-            {sendingAG ? "Envoi..." : "Envoyer à AG Chauffage"}
-          </Button>
           {!sheet.sent_to_client && (
-            <Button onClick={handleSendEmail} disabled={sending} size="sm">
-              <Mail className="w-4 h-4 mr-1" />
-              {sending ? "Préparation..." : "Envoyer par email"}
+            <Button
+              onClick={handleSendAG}
+              disabled={sendingAG || !task?.clients?.email}
+              size="sm"
+            >
+              <Send className="w-4 h-4 mr-1" />
+              {sendingAG ? "Envoi..." : "Envoyer au client"}
             </Button>
           )}
         </div>
