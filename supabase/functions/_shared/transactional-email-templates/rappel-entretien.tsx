@@ -15,65 +15,53 @@ import type { TemplateEntry } from './registry.ts'
 
 interface Props {
   clientName?: string
-  clientPhone?: string
-  clientEmail?: string
-  clientAddress?: string
-  clientCity?: string
   equipmentName?: string
   energyType?: string
   interventionType?: string
   dueDate?: string
-  notes?: string
+  contactPhone?: string
+  contactEmail?: string
 }
 
 const Email = ({
   clientName = 'Client',
-  clientPhone = '',
-  clientEmail = '',
-  clientAddress = '',
-  clientCity = '',
   equipmentName = '',
   energyType = '',
   interventionType = 'Entretien',
   dueDate = '',
-  notes = '',
+  contactPhone = '',
+  contactEmail = 'info@agchauffage.be',
 }: Props) => (
   <Html lang="fr" dir="ltr">
     <Head />
-    <Preview>Entretien à planifier — {clientName}</Preview>
+    <Preview>Il est temps de planifier votre entretien</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Entretien à planifier</Heading>
-        <Text style={text}>Bonjour,</Text>
+        <Heading style={h1}>Votre entretien annuel</Heading>
+        <Text style={text}>Bonjour {clientName},</Text>
         <Text style={text}>
-          Un entretien doit être planifié pour le client ci-dessous.
+          Nous vous contactons pour convenir d'une date pour votre prochain entretien.
+          Merci de nous répondre à cet email ou de nous téléphoner afin de fixer un rendez-vous.
         </Text>
-
-        <Section style={card}>
-          <Text style={row}><strong>Client&nbsp;:</strong> {clientName}</Text>
-          {(clientAddress || clientCity) && (
-            <Text style={row}><strong>Adresse&nbsp;:</strong> {[clientAddress, clientCity].filter(Boolean).join(', ')}</Text>
-          )}
-          {clientPhone && <Text style={row}><strong>Téléphone&nbsp;:</strong> {clientPhone}</Text>}
-          {clientEmail && <Text style={row}><strong>Email&nbsp;:</strong> {clientEmail}</Text>}
-        </Section>
 
         <Section style={card}>
           <Text style={row}><strong>Type&nbsp;:</strong> {interventionType}</Text>
           {equipmentName && <Text style={row}><strong>Équipement&nbsp;:</strong> {equipmentName}</Text>}
           {energyType && <Text style={row}><strong>Énergie&nbsp;:</strong> {energyType}</Text>}
-          {dueDate && <Text style={row}><strong>Échéance&nbsp;:</strong> {dueDate}</Text>}
+          {dueDate && <Text style={row}><strong>Échéance conseillée&nbsp;:</strong> {dueDate}</Text>}
         </Section>
 
-        {notes && (
-          <Section style={card}>
-            <Text style={label}>Notes</Text>
-            <Text style={{ ...text, whiteSpace: 'pre-wrap' }}>{notes}</Text>
-          </Section>
-        )}
+        <Section style={card}>
+          <Text style={label}>Nous contacter</Text>
+          {contactPhone && <Text style={row}>📞 {contactPhone}</Text>}
+          <Text style={row}>✉️ {contactEmail}</Text>
+        </Section>
 
         <Hr style={hr} />
-        <Text style={footer}>AG Chauffage — Rappel transmis automatiquement.</Text>
+        <Text style={footer}>
+          Merci de votre confiance,<br />
+          <strong>AG Chauffage</strong>
+        </Text>
       </Container>
     </Body>
   </Html>
@@ -82,20 +70,16 @@ const Email = ({
 export const template = {
   component: Email,
   subject: (data: Props) =>
-    `Entretien à planifier — ${data?.clientName ?? 'Client'}`,
-  displayName: "Rappel d'entretien à planifier",
-  to: 'info@agchauffage.be',
+    `Votre entretien AG Chauffage — planifions un rendez-vous`,
+  displayName: "Rappel d'entretien (client)",
   previewData: {
     clientName: 'Dupont Jean',
-    clientPhone: '0475 12 34 56',
-    clientEmail: 'jean@example.com',
-    clientAddress: 'Rue de la Paix 12',
-    clientCity: '5000 Namur',
     equipmentName: 'Chaudière Vaillant',
     energyType: 'Gaz',
     interventionType: 'Entretien annuel',
     dueDate: '15/09/2026',
-    notes: 'Contrat annuel — client à recontacter.',
+    contactPhone: '+32 4 000 00 00',
+    contactEmail: 'info@agchauffage.be',
   },
 } satisfies TemplateEntry
 
