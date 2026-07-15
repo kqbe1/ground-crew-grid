@@ -5,6 +5,15 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS } from "@/lib/constants";
 
+async function loadSettings(templateKey: "fiche-intervention" | "rappel-entretien") {
+  const { data } = await supabase
+    .from("email_settings")
+    .select("subject, intro_text, footer_text, contact_phone, contact_email")
+    .eq("template_key", templateKey)
+    .maybeSingle();
+  return data;
+}
+
 /**
  * Generates the fiche PDF, uploads it to storage, and sends it to the client's email.
  * Throws if the client has no email address.
@@ -15,6 +24,8 @@ export async function sendFicheToAG(sheet: any): Promise<void> {
   if (!clientEmail) {
     throw new Error("Ce client n'a pas d'adresse email");
   }
+
+  const settings = await loadSettings("fiche-intervention");
 
   const { pdfCfg, logoDataUrl } = await loadPdfConfigAndLogo(ficheDocumentType(sheet));
   const doc = generateFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
@@ -50,6 +61,9 @@ export async function sendFicheToAG(sheet: any): Promise<void> {
         finalStatus: sheet.final_status ? TASK_STATUS_LABELS[sheet.final_status] : "",
         description: sheet.description || "",
         pdfUrl,
+        customSubject: settings?.subject || "",
+        introText: settings?.intro_text || undefined,
+        footerText: settings?.footer_text || undefined,
       },
     },
   });
@@ -71,6 +85,8 @@ export async function sendEntretienReminderToAG(schedule: any): Promise<void> {
     throw new Error("Ce client n'a pas d'adresse email");
   }
 
+  const settings = await loadSettings("rappel-entretien");
+
   const dueDate = schedule.next_due_date
     ? format(new Date(schedule.next_due_date), "dd/MM/yyyy", { locale: fr })
     : "";
@@ -86,8 +102,11 @@ export async function sendEntretienReminderToAG(schedule: any): Promise<void> {
         energyType: equipment.energy_type || "",
         interventionType: INTERVENTION_TYPE_LABELS[schedule.intervention_type] || schedule.intervention_type || "Entretien",
         dueDate,
-        contactPhone: "",
-        contactEmail: "info@agchauffage.be",
+        contactPhone: settings?.contact_phone || "",
+        contactEmail: settings?.contact_email || "info@agchauffage.be",
+        customSubject: settings?.subject || "",
+        introText: settings?.intro_text || undefined,
+        footerText: settings?.footer_text || undefined,
       },
     },
   });

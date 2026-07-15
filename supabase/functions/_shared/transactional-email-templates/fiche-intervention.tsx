@@ -23,6 +23,9 @@ interface Props {
   finalStatus?: string
   description?: string
   pdfUrl?: string
+  customSubject?: string
+  introText?: string
+  footerText?: string
 }
 
 const Email = ({
@@ -34,6 +37,8 @@ const Email = ({
   finalStatus = '',
   description = '',
   pdfUrl = '',
+  introText = "Suite à notre intervention, veuillez trouver ci-dessous le récapitulatif ainsi que la fiche d'intervention en pièce jointe (lien PDF).",
+  footerText = 'Merci de votre confiance,\nAG Chauffage',
 }: Props) => (
   <Html lang="fr" dir="ltr">
     <Head />
@@ -42,9 +47,7 @@ const Email = ({
       <Container style={container}>
         <Heading style={h1}>Votre fiche d'intervention</Heading>
         <Text style={text}>Bonjour {clientName},</Text>
-        <Text style={text}>
-          Suite à notre intervention, veuillez trouver ci-dessous le récapitulatif ainsi que la fiche d'intervention en pièce jointe (lien PDF).
-        </Text>
+        <Text style={{ ...text, whiteSpace: 'pre-wrap' }}>{introText}</Text>
 
         <Section style={card}>
           <Text style={row}><strong>Intervention&nbsp;:</strong> {taskTitle}</Text>
@@ -70,10 +73,7 @@ const Email = ({
         )}
 
         <Hr style={hr} />
-        <Text style={footer}>
-          Merci de votre confiance,<br />
-          <strong>AG Chauffage</strong> — info@agchauffage.be
-        </Text>
+        <Text style={{ ...footer, whiteSpace: 'pre-wrap' }}>{footerText}</Text>
       </Container>
     </Body>
   </Html>
@@ -82,6 +82,7 @@ const Email = ({
 export const template = {
   component: Email,
   subject: (data: Props) =>
+    data?.customSubject?.trim() ||
     `Votre fiche d'intervention AG Chauffage${data?.interventionDate ? ` — ${data.interventionDate}` : ''}`,
   displayName: "Fiche d'intervention (client)",
   previewData: {

@@ -21,6 +21,9 @@ interface Props {
   dueDate?: string
   contactPhone?: string
   contactEmail?: string
+  customSubject?: string
+  introText?: string
+  footerText?: string
 }
 
 const Email = ({
@@ -31,6 +34,8 @@ const Email = ({
   dueDate = '',
   contactPhone = '',
   contactEmail = 'info@agchauffage.be',
+  introText = "Nous vous contactons pour convenir d'une date pour votre prochain entretien. Merci de nous répondre à cet email ou de nous téléphoner afin de fixer un rendez-vous.",
+  footerText = 'Merci de votre confiance,\nAG Chauffage',
 }: Props) => (
   <Html lang="fr" dir="ltr">
     <Head />
@@ -39,10 +44,7 @@ const Email = ({
       <Container style={container}>
         <Heading style={h1}>Votre entretien annuel</Heading>
         <Text style={text}>Bonjour {clientName},</Text>
-        <Text style={text}>
-          Nous vous contactons pour convenir d'une date pour votre prochain entretien.
-          Merci de nous répondre à cet email ou de nous téléphoner afin de fixer un rendez-vous.
-        </Text>
+        <Text style={{ ...text, whiteSpace: 'pre-wrap' }}>{introText}</Text>
 
         <Section style={card}>
           <Text style={row}><strong>Type&nbsp;:</strong> {interventionType}</Text>
@@ -58,10 +60,7 @@ const Email = ({
         </Section>
 
         <Hr style={hr} />
-        <Text style={footer}>
-          Merci de votre confiance,<br />
-          <strong>AG Chauffage</strong>
-        </Text>
+        <Text style={{ ...footer, whiteSpace: 'pre-wrap' }}>{footerText}</Text>
       </Container>
     </Body>
   </Html>
@@ -70,6 +69,7 @@ const Email = ({
 export const template = {
   component: Email,
   subject: (data: Props) =>
+    data?.customSubject?.trim() ||
     `Votre entretien AG Chauffage — planifions un rendez-vous`,
   displayName: "Rappel d'entretien (client)",
   previewData: {
