@@ -2,7 +2,9 @@ import { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Camera, Image as ImageIcon, X, Loader2 } from "lucide-react";
+import { Camera, Image as ImageIcon, X, Loader2, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface NameplateData {
   brand: string;
@@ -78,20 +80,61 @@ export default function NameplateStep({ data, onChange, photos, onPhotosChange }
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const [compressing, setCompressing] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const set = (key: keyof NameplateData, value: string) => onChange({ ...data, [key]: value });
 
-  const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const analyzeImage = async (imageDataUrl: string) => {
+    setAnalyzing(true);
+    try {
+      const { data: res, error } = await supabase.functions.invoke("analyze-nameplate", {
+        body: { imageDataUrl },
+      });
+      if (error) throw error;
+      const extracted = (res?.data ?? {}) as Partial<NameplateData>;
+      // Merge: only fill empty fields to avoid overwriting user edits
+      const merged: NameplateData = { ...data };
+      let filled = 0;
+      for (const { key } of FIELDS) {
+        const val = (extracted[key] ?? "").toString().trim();
+        if (val && !merged[key]) { merged[key] = val; filled++; }
+      }
+      onChange(merged);
+      if (filled > 0) toast.success(`${filled} champ${filled > 1 ? "s" : ""} rempli${filled > 1 ? "s" : ""} par IA`);
+      else toast.info("Aucune information détectée sur la plaque");
+    } catch (err) {
+      console.error(err);
+      toast.error("Analyse IA échouée");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>, fromCamera: boolean) => {
     const files = e.target.files;
     if (!files) return;
     setCompressing(true);
     const newPhotos = [...photos];
+    const compressed: string[] = [];
     for (const file of Array.from(files)) {
-      try { newPhotos.push(await compressImage(file)); } catch {}
+      try {
+        const c = await compressImage(file);
+        newPhotos.push(c);
+        compressed.push(c);
+      } catch {}
     }
     onPhotosChange(newPhotos);
     setCompressing(false);
     e.target.value = "";
+    // Auto-analyse the first captured/added photo
+    if (compressed.length > 0 && fromCamera) {
+      analyzeImage(compressed[0]);
+    }
+  };
+
+  const handleAnalyzeExisting = () => {
+    if (photos.length === 0) return;
+    analyzeImage(photos[photos.length - 1]);
   };
 
   return (
@@ -103,12 +146,12 @@ export default function NameplateStep({ data, onChange, photos, onPhotosChange }
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFiles} />
-        <input ref={galleryRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
-        <Button variant="outline" className="h-12" onClick={() => cameraRef.current?.click()} disabled={compressing}>
+        <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handleFiles(e, true)} />
+        <input ref={galleryRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleFiles(e, false)} />
+        <Button variant="outline" className="h-12" onClick={() => cameraRef.current?.click()} disabled={compressing || analyzing}>
           <Camera className="w-4 h-4 mr-1.5" /> Appareil photo
         </Button>
-        <Button variant="outline" className="h-12" onClick={() => galleryRef.current?.click()} disabled={compressing}>
+        <Button variant="outline" className="h-12" onClick={() => galleryRef.current?.click()} disabled={compressing || analyzing}>
           <ImageIcon className="w-4 h-4 mr-1.5" /> Galerie
         </Button>
       </div>
@@ -117,6 +160,19 @@ export default function NameplateStep({ data, onChange, photos, onPhotosChange }
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="w-4 h-4 animate-spin" /> Compression...
         </div>
+      )}
+
+      {analyzing && (
+        <div className="flex items-center gap-2 text-sm text-primary">
+          <Loader2 className="w-4 h-4 animate-spin" /> Analyse IA de la plaque en cours...
+        </div>
+      )}
+
+      {photos.length > 0 && !analyzing && (
+        <Button type="button" variant="secondary" size="sm" className="w-full"
+          onClick={handleAnalyzeExisting} disabled={compressing || analyzing}>
+          <Sparkles className="w-4 h-4 mr-1.5" /> Analyser la dernière photo avec l'IA
+        </Button>
       )}
 
       {photos.length > 0 && (
