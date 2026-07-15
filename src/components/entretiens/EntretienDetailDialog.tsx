@@ -39,13 +39,18 @@ export default function EntretienDetailDialog({ open, onOpenChange, schedule, on
   const legalAlert = schedule.legal_alert_years;
 
   const handleSendAG = async () => {
+    const clientEmail = schedule.clients?.email;
+    if (!clientEmail) {
+      toast.error("Ce client n'a pas d'adresse email");
+      return;
+    }
     setSending(true);
     try {
       await sendEntretienReminderToAG(schedule);
-      toast.success("Rappel envoyé à info@agchauffage.be");
+      toast.success(`Rappel envoyé à ${clientEmail}`);
     } catch (err) {
       console.error(err);
-      toast.error("Erreur lors de l'envoi de l'email");
+      toast.error((err as Error)?.message || "Erreur lors de l'envoi de l'email");
     } finally {
       setSending(false);
     }
@@ -145,9 +150,9 @@ export default function EntretienDetailDialog({ open, onOpenChange, schedule, on
 
         <Separator />
         <div className="flex justify-end">
-          <Button onClick={handleSendAG} disabled={sending} size="sm">
+          <Button onClick={handleSendAG} disabled={sending || !schedule.clients?.email} size="sm">
             <Send className="w-4 h-4 mr-1" />
-            {sending ? "Envoi..." : "Envoyer à AG Chauffage"}
+            {sending ? "Envoi..." : "Proposer un RDV au client"}
           </Button>
         </div>
       </DialogContent>
