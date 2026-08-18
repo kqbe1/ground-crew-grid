@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { loadLegalPeriodicityByEnergy } from "@/lib/legalRules";
 import { toast } from "sonner";
 import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS } from "@/lib/constants";
+import { WorkerMultiSelectField } from "@/components/forms/WorkerMultiSelect";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Schedule = Tables<"maintenance_schedules">;
@@ -34,7 +36,8 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
   const [sites, setSites] = useState<any[]>([]);
   const [equipment, setEquipment] = useState<any[]>([]);
   const [legalRules, setLegalRules] = useState<Record<string, string>>({});
-  const [clientRegion, setClientRegion] = useState<string | null>(null);
+  const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
+  const [assignees, setAssignees] = useState<string[]>([]);
   const [form, setForm] = useState({
     client_id: "",
     client_site_id: "",
@@ -50,13 +53,16 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
 
   useEffect(() => {
     if (!open) return;
-    supabase.from("clients").select("id, name, region").order("name").then(({ data }) => setClients(data ?? []));
-    supabase.from("legal_maintenance_rules" as any).select("energy_type, region, periodicity")
-      .then(({ data }) => {
-        const map: Record<string, string> = {};
-        (data ?? []).forEach((r: any) => { map[`${r.energy_type}|${r.region}`] = r.periodicity; });
-        setLegalRules(map);
-      });
+    supabase.from("clients").select("id, name").order("name").then(({ data }) => setClients(data ?? []));
+    loadLegalPeriodicityByEnergy().then(setLegalRules);
+    supabase.from("profiles").select("id, full_name").eq("is_active", true).order("display_order")
+      .then(({ data }) => setWorkers(data ?? []));
+    if (schedule) {
+      supabase.from("maintenance_schedule_assignees" as any).select("user_id").eq("maintenance_schedule_id", schedule.id)
+        .then(({ data }) => setAssignees(((data ?? []) as any[]).map((r) => r.user_id)));
+    } else {
+      setAssignees([]);
+    }
     if (schedule) {
       setForm({
         client_id: schedule.client_id,
@@ -76,7 +82,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
   }, [open, schedule]);
 
   useEffect(() => {
-    if (!form.client_id) { setSites([]); setEquipment([]); setClientRegion(null); return; }
+    if (!form.client_id) { setSites([]); setEquipment([]); return; }
     supabase
       .from("client_sites")
       .select("id, name, address, is_primary")
@@ -93,8 +99,6 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
           return primary ? { ...f, client_site_id: primary.id } : { ...f, client_site_id: "" };
         });
       });
-    const c = clients.find((c) => c.id === form.client_id);
-    setClientRegion(c?.region ?? null);
   }, [form.client_id]);
 
   useEffect(() => {
@@ -110,14 +114,14 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
     });
   }, [form.client_site_id]);
 
-  // Auto-fill periodicity from legal rules when type or region changes (only for new entretiens)
+  // Auto-fill periodicity from the internally configured legal rules (new entretiens only)
   useEffect(() => {
     if (schedule) return;
     const energy = TYPE_TO_ENERGY[form.intervention_type];
-    if (!energy || !clientRegion) return;
-    const rule = legalRules[`${energy}|${clientRegion}`];
+    if (!energy) return;
+    const rule = legalRules[energy];
     if (rule) setForm((f) => ({ ...f, periodicity: rule }));
-  }, [form.intervention_type, clientRegion, legalRules, schedule]);
+  }, [form.intervention_type, legalRules, schedule]);
 
   const handleSubmit = async () => {
     if (!form.client_id || !form.next_due_date) { toast.error("Client et prochaine échéance obligatoires"); return; }
@@ -134,9 +138,17 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
       notes: form.notes || null,
       status: form.status,
     };
-    const { error } = schedule
-      ? await supabase.from("maintenance_schedules").update(payload).eq("id", schedule.id)
-      : await supabase.from("maintenance_schedules").insert(payload as any);
+    const { data: saved, error } = schedule
+      ? await supabase.from("maintenance_schedules").update(payload).eq("id", schedule.id).select("id").single()
+      : await supabase.from("maintenance_schedules").insert(payload as any).select("id").single();
+    if (!error && saved?.id) {
+      await supabase.from("maintenance_schedule_assignees" as any).delete().eq("maintenance_schedule_id", saved.id);
+      if (assignees.length > 0) {
+        await supabase.from("maintenance_schedule_assignees" as any).insert(
+          assignees.map((uid) => ({ maintenance_schedule_id: saved.id, user_id: uid })),
+        );
+      }
+    }
     setLoading(false);
     if (error) toast.error(error.message);
     else { toast.success(schedule ? "Entretien modifié" : "Entretien créé"); onOpenChange(false); onSaved(); }
@@ -179,6 +191,8 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
               </Select>
             </div>
           )}
+          <WorkerMultiSelectField label="Ouvriers assignés" workers={workers} value={assignees} onChange={setAssignees} />
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Type d'entretien *</Label>

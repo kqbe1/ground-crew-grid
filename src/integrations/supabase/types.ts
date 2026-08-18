@@ -267,7 +267,6 @@ export type Database = {
           phone: string | null
           phone_secondary: string | null
           postal_code: string | null
-          region: Database["public"]["Enums"]["client_region"] | null
           syndic_keys_codes: string | null
           updated_at: string
         }
@@ -288,7 +287,6 @@ export type Database = {
           phone?: string | null
           phone_secondary?: string | null
           postal_code?: string | null
-          region?: Database["public"]["Enums"]["client_region"] | null
           syndic_keys_codes?: string | null
           updated_at?: string
         }
@@ -309,7 +307,6 @@ export type Database = {
           phone?: string | null
           phone_secondary?: string | null
           postal_code?: string | null
-          region?: Database["public"]["Enums"]["client_region"] | null
           syndic_keys_codes?: string | null
           updated_at?: string
         }
@@ -458,6 +455,7 @@ export type Database = {
       }
       email_settings: {
         Row: {
+          auto_reminder_enabled: boolean
           company_id: string | null
           contact_email: string
           contact_phone: string
@@ -465,11 +463,13 @@ export type Database = {
           footer_text: string
           id: string
           intro_text: string
+          reminder_days_before: number
           subject: string
           template_key: string
           updated_at: string
         }
         Insert: {
+          auto_reminder_enabled?: boolean
           company_id?: string | null
           contact_email?: string
           contact_phone?: string
@@ -477,11 +477,13 @@ export type Database = {
           footer_text?: string
           id?: string
           intro_text: string
+          reminder_days_before?: number
           subject: string
           template_key: string
           updated_at?: string
         }
         Update: {
+          auto_reminder_enabled?: boolean
           company_id?: string | null
           contact_email?: string
           contact_phone?: string
@@ -489,6 +491,7 @@ export type Database = {
           footer_text?: string
           id?: string
           intro_text?: string
+          reminder_days_before?: number
           subject?: string
           template_key?: string
           updated_at?: string
@@ -737,6 +740,52 @@ export type Database = {
           },
         ]
       }
+      maintenance_schedule_assignees: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          maintenance_schedule_id: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          maintenance_schedule_id: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          maintenance_schedule_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_schedule_assignees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_schedule_assignees_maintenance_schedule_id_fkey"
+            columns: ["maintenance_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_schedule_assignees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_schedules: {
         Row: {
           client_id: string
@@ -751,6 +800,8 @@ export type Database = {
           next_due_date: string
           notes: string | null
           periodicity: Database["public"]["Enums"]["maintenance_periodicity"]
+          reminder_sent_at: string | null
+          reminder_sent_for_date: string | null
           status: string
           updated_at: string
         }
@@ -767,6 +818,8 @@ export type Database = {
           next_due_date: string
           notes?: string | null
           periodicity?: Database["public"]["Enums"]["maintenance_periodicity"]
+          reminder_sent_at?: string | null
+          reminder_sent_for_date?: string | null
           status?: string
           updated_at?: string
         }
@@ -783,6 +836,8 @@ export type Database = {
           next_due_date?: string
           notes?: string | null
           periodicity?: Database["public"]["Enums"]["maintenance_periodicity"]
+          reminder_sent_at?: string | null
+          reminder_sent_for_date?: string | null
           status?: string
           updated_at?: string
         }
@@ -1359,6 +1414,52 @@ export type Database = {
         }
         Relationships: []
       }
+      work_task_assignees: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          user_id: string
+          work_task_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+          work_task_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+          work_task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_task_assignees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_task_assignees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_task_assignees_work_task_id_fkey"
+            columns: ["work_task_id"]
+            isOneToOne: false
+            referencedRelation: "work_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_tasks: {
         Row: {
           assigned_to: string | null
@@ -1581,7 +1682,6 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "ouvrier" | "super_admin" | "bureau"
-      client_region: "bruxelles" | "wallonie" | "flandre"
       energy_type:
         | "gaz"
         | "mazout"
@@ -1759,7 +1859,6 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "ouvrier", "super_admin", "bureau"],
-      client_region: ["bruxelles", "wallonie", "flandre"],
       energy_type: [
         "gaz",
         "mazout",

@@ -77,7 +77,7 @@ export default function TacheDetail() {
     if (!id) return;
     const { data } = await supabase
       .from("work_tasks")
-      .select("*, clients(name, address_intervention, phone, email), profiles!work_tasks_assigned_to_fkey(full_name), client_sites(address), task_binomes!work_tasks_binome_id_fkey(name, code, kind)")
+      .select("*, clients(name, address_intervention, postal_code, city, phone, phone_secondary, email, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal, owner:clients!clients_owner_client_id_fkey(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)), profiles!work_tasks_assigned_to_fkey(full_name), client_sites(address), task_binomes!work_tasks_binome_id_fkey(name, code, kind)")
       .eq("id", id)
       .single();
     setTask(data);
@@ -290,8 +290,19 @@ export default function TacheDetail() {
                 {task.clients.address_intervention && <p className="text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" /> {task.clients.address_intervention}</p>}
                 {task.client_sites?.address && <p className="text-muted-foreground">Site : {task.client_sites.address}</p>}
                 {task.clients.phone && <p className="text-muted-foreground">📞 {task.clients.phone}</p>}
+                {task.clients.phone_secondary && <p className="text-muted-foreground">📞 {task.clients.phone_secondary}</p>}
                 {task.clients.email && <p className="text-muted-foreground">✉️ {task.clients.email}</p>}
+                {task.clients.contact_locataire && <p className="text-muted-foreground">Locataire : {task.clients.contact_locataire}</p>}
+                {task.clients.contact_syndic && <p className="text-muted-foreground">Syndic : {task.clients.contact_syndic}</p>}
               </div>
+              {task.clients.owner && (
+                <div className="p-4 rounded-lg border text-sm space-y-1">
+                  <p className="font-medium">Propriétaire</p>
+                  <p>{task.clients.owner.name}</p>
+                  {task.clients.owner.phone && <p className="text-muted-foreground">📞 {task.clients.owner.phone}</p>}
+                  {task.clients.owner.phone_secondary && <p className="text-muted-foreground">📞 {task.clients.owner.phone_secondary}</p>}
+                </div>
+              )}
             </section>
           )}
 

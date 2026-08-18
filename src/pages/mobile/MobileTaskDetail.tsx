@@ -30,7 +30,7 @@ export default function MobileTaskDetail() {
         // Fetch full client info including syndic/locataire/keys/notes
         const { data: clientData } = await supabase
           .from("clients")
-          .select("id, name, phone, phone_secondary, email, address_intervention, postal_code, city, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal")
+          .select("id, name, phone, phone_secondary, email, address_intervention, postal_code, city, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal, owner:clients!clients_owner_client_id_fkey(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)")
           .eq("id", data.client_id)
           .maybeSingle();
         setTask({ ...data, clients: clientData ?? null });
@@ -151,6 +151,27 @@ export default function MobileTaskDetail() {
       </Card>
 
       {/* Client extra info (syndic, locataire, clés, notes) */}
+      {task.clients?.owner && (
+        <Card>
+          <CardContent className="py-3 space-y-2">
+            <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+              <UserRound className="w-3 h-3" /> Propriétaire
+            </div>
+            <div className="font-medium">{task.clients.owner.name}</div>
+            {task.clients.owner.phone && (
+              <a href={`tel:${task.clients.owner.phone}`} className="flex items-center gap-2 text-sm text-primary">
+                <Phone className="w-3.5 h-3.5" /> {task.clients.owner.phone}
+              </a>
+            )}
+            {task.clients.owner.phone_secondary && (
+              <a href={`tel:${task.clients.owner.phone_secondary}`} className="flex items-center gap-2 text-sm text-primary">
+                <Phone className="w-3.5 h-3.5" /> {task.clients.owner.phone_secondary}
+              </a>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {hasClientExtras && (
         <Card>
           <CardContent className="py-3 space-y-3">

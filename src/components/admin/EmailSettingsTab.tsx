@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +19,8 @@ interface Settings {
   footer_text: string;
   contact_phone: string;
   contact_email: string;
+  auto_reminder_enabled?: boolean;
+  reminder_days_before?: number;
 }
 
 const DEFAULTS: Record<TemplateKey, Settings> = {
@@ -36,6 +39,8 @@ const DEFAULTS: Record<TemplateKey, Settings> = {
     footer_text: "Merci de votre confiance,\nAG Chauffage",
     contact_phone: "",
     contact_email: "info@agchauffage.be",
+    auto_reminder_enabled: true,
+    reminder_days_before: 30,
   },
 };
 
@@ -59,7 +64,7 @@ function TemplateEditor({ templateKey }: { templateKey: TemplateKey }) {
       setLoading(true);
       const { data } = await supabase
         .from("email_settings")
-        .select("subject, intro_text, footer_text, contact_phone, contact_email")
+        .select("subject, intro_text, footer_text, contact_phone, contact_email, auto_reminder_enabled, reminder_days_before")
         .eq("template_key", templateKey)
         .maybeSingle();
       if (data) setValues(data as Settings);
@@ -89,7 +94,13 @@ function TemplateEditor({ templateKey }: { templateKey: TemplateKey }) {
           footer_text: parsed.data.footer_text || DEFAULTS[templateKey].footer_text,
           contact_phone: parsed.data.contact_phone || "",
           contact_email: parsed.data.contact_email || "info@agchauffage.be",
-        },
+          ...(isRappel
+            ? {
+                auto_reminder_enabled: values.auto_reminder_enabled ?? true,
+                reminder_days_before: values.reminder_days_before ?? 30,
+              }
+            : {}),
+        } as any,
         { onConflict: "company_id,template_key" },
       );
     setSaving(false);
@@ -176,6 +187,38 @@ function TemplateEditor({ templateKey }: { templateKey: TemplateKey }) {
               maxLength={255}
               onChange={(e) => setValues({ ...values, contact_email: e.target.value })}
               placeholder="info@agchauffage.be"
+            />
+          </div>
+        </div>
+      )}
+
+      {isRappel && (
+        <div className="space-y-3 border-t pt-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label htmlFor="auto_reminder">Envoi automatique aux clients</Label>
+              <p className="text-xs text-muted-foreground">
+                Un email est envoyé automatiquement si le client a une adresse email. Sinon, seule
+                l'alerte « Attention ce mois-ci » apparaît dans l'app.
+              </p>
+            </div>
+            <Switch
+              id="auto_reminder"
+              checked={values.auto_reminder_enabled ?? true}
+              onCheckedChange={(v) => setValues({ ...values, auto_reminder_enabled: v })}
+            />
+          </div>
+          <div className="space-y-1.5 max-w-[220px]">
+            <Label htmlFor="days_before">Envoyer combien de jours avant l'échéance ?</Label>
+            <Input
+              id="days_before"
+              type="number"
+              min={1}
+              max={365}
+              value={values.reminder_days_before ?? 30}
+              onChange={(e) =>
+                setValues({ ...values, reminder_days_before: Math.max(1, Math.min(365, Number(e.target.value) || 1)) })
+              }
             />
           </div>
         </div>

@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import CreateFollowUpTaskDialog from "@/components/commandes/CreateFollowUpTaskDialog";
+import ClientInfoCard, { CLIENT_FULL_SELECT } from "@/components/shared/ClientInfoCard";
 
 const statusColors: Record<string, string> = {
   demandee: "bg-order-demandee text-white",
@@ -33,7 +34,7 @@ export default function CommandeDetail() {
     if (!id) return;
     const { data } = await supabase
       .from("parts_orders")
-      .select("*, clients(name), work_tasks(title), profiles!parts_orders_requested_by_fkey(full_name)")
+      .select(`*, clients(${CLIENT_FULL_SELECT}), work_tasks(title), profiles!parts_orders_requested_by_fkey(full_name)`)
       .eq("id", id)
       .single();
     setOrder(data);
@@ -182,12 +183,6 @@ export default function CommandeDetail() {
             <span>{order.supplier}</span>
           </div>
         )}
-        {order.clients?.name && (
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Client</span>
-            <span>{order.clients.name}</span>
-          </div>
-        )}
         {order.work_tasks?.title && (
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Travail lié</span>
@@ -218,6 +213,12 @@ export default function CommandeDetail() {
           </Card>
         )}
       </div>
+
+      {order.clients && (
+        <div className="space-y-3">
+          <ClientInfoCard client={order.clients} />
+        </div>
+      )}
 
       <CreateFollowUpTaskDialog
         open={showFollowUp}

@@ -36,6 +36,7 @@ const MobileFicheRouter = lazy(() => import("@/pages/mobile/MobileFicheRouter"))
 const MobileFiches = lazy(() => import("@/pages/mobile/MobileFiches"));
 const MobilePieces = lazy(() => import("@/pages/mobile/MobilePieces"));
 const MobileProfil = lazy(() => import("@/pages/mobile/MobileProfil"));
+const MobileNouvelleFiche = lazy(() => import("@/pages/mobile/MobileNouvelleFiche"));
 const MobileDevisForm = lazy(() => import("@/pages/mobile/MobileDevisForm"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Install = lazy(() => import("@/pages/Install"));
@@ -105,6 +106,7 @@ const App = () => (
               <Route path="/mobile" element={<MobileLayout />}>
                 <Route index element={<MobileAgenda />} />
                 <Route path="tache/:id" element={<MobileTaskDetail />} />
+                <Route path="fiche/nouvelle" element={<MobileNouvelleFiche />} />
                 <Route path="fiche/:taskId" element={<MobileFicheRouter />} />
                 <Route path="fiches" element={<MobileFiches />} />
                 <Route path="fiches/:id" element={<FicheDetail />} />

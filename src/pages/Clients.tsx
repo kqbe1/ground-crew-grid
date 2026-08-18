@@ -42,8 +42,8 @@ export default function Clients() {
   }, [clients, search]);
 
   const exportCsv = () => {
-    const headers = ["Nom","Email","Téléphone","Tél. secondaire","Adresse intervention","Coordonnées facturation","Contact syndic","Contact locataire","Clés/codes syndic","Notes internes","Région","Anniversaire"];
-    const rows = clients.map((c) => [c.name, c.email ?? "", c.phone ?? "", c.phone_secondary ?? "", c.address_intervention ?? "", c.address_billing ?? "", c.contact_syndic ?? "", c.contact_locataire ?? "", c.syndic_keys_codes ?? "", c.notes_internal ?? "", c.region ?? "", c.birthday ?? ""]);
+    const headers = ["Nom","Email","Téléphone","Tél. secondaire","Adresse intervention","Coordonnées facturation","Contact syndic","Contact locataire","Clés/codes syndic","Notes internes","Anniversaire"];
+    const rows = clients.map((c) => [c.name, c.email ?? "", c.phone ?? "", c.phone_secondary ?? "", c.address_intervention ?? "", c.address_billing ?? "", c.contact_syndic ?? "", c.contact_locataire ?? "", c.syndic_keys_codes ?? "", c.notes_internal ?? "", c.birthday ?? ""]);
     const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
     const csv = [headers.map(escape).join(";"), ...rows.map((r) => r.map(escape).join(";"))].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -81,7 +81,6 @@ export default function Clients() {
                 <TableHead>Téléphone</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Adresse intervention</TableHead>
-                <TableHead>Région</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -91,10 +90,9 @@ export default function Clients() {
                   <TableCell>{client.phone && <span className="flex items-center gap-1.5 text-muted-foreground"><Phone className="w-3.5 h-3.5" /> {client.phone}</span>}</TableCell>
                   <TableCell>{client.email && <span className="flex items-center gap-1.5 text-muted-foreground"><Mail className="w-3.5 h-3.5" /> {client.email}</span>}</TableCell>
                   <TableCell>{client.address_intervention && <span className="flex items-center gap-1.5 text-muted-foreground"><MapPin className="w-3.5 h-3.5" /> <span className="truncate max-w-[250px] inline-block">{client.address_intervention}</span></span>}</TableCell>
-                  <TableCell className="text-muted-foreground capitalize">{client.region ?? "—"}</TableCell>
                 </TableRow>
               ))}
-              {filteredClients.length === 0 && <TableRow><TableCell colSpan={5} className="py-12 text-center text-muted-foreground">Aucun client trouvé</TableCell></TableRow>}
+              {filteredClients.length === 0 && <TableRow><TableCell colSpan={4} className="py-12 text-center text-muted-foreground">Aucun client trouvé</TableCell></TableRow>}
             </TableBody>
           </Table>
         </div>
