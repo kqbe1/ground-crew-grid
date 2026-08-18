@@ -528,6 +528,7 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
   if (cfg.show_photos_after) {
     addPhotos(sheet.photos_after, "Photos après intervention");
   }
+  addPhotos(sheet.photos_nameplate, "Photos plaque signalétique");
 
   // ═══════════════════════════ SIGNATURE ═══════════════════════════
   if (cfg.show_signature) {
