@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Save, Mail } from "lucide-react";
+import { Loader2, Save, Mail, FileText, CalendarClock } from "lucide-react";
 import { z } from "zod";
 
 type TemplateKey = "fiche-intervention" | "rappel-entretien";
@@ -58,6 +58,10 @@ function TemplateEditor({ templateKey }: { templateKey: TemplateKey }) {
   const [saving, setSaving] = useState(false);
 
   const isRappel = templateKey === "rappel-entretien";
+
+  const description = isRappel
+    ? "Email automatique proposé au client pour convenir d'une date pour son prochain entretien (envoyé avant l'échéance)."
+    : "Email envoyé manuellement au client avec le récapitulatif et le PDF de la fiche d'intervention.";
 
   useEffect(() => {
     (async () => {
@@ -122,6 +126,10 @@ function TemplateEditor({ templateKey }: { templateKey: TemplateKey }) {
 
   return (
     <div className="space-y-4">
+      <div className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground flex gap-2">
+        {isRappel ? <CalendarClock className="w-4 h-4 mt-0.5 shrink-0" /> : <FileText className="w-4 h-4 mt-0.5 shrink-0" />}
+        <span>{description}</span>
+      </div>
       <div className="space-y-1.5">
         <Label htmlFor="subject">
           Objet de l'email <span className="text-destructive">*</span>
@@ -247,9 +255,13 @@ export default function EmailSettingsTab() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="fiche-intervention">
-          <TabsList>
-            <TabsTrigger value="fiche-intervention">Fiche d'intervention</TabsTrigger>
-            <TabsTrigger value="rappel-entretien">Rappel d'entretien</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-auto">
+            <TabsTrigger value="fiche-intervention" className="gap-1.5 py-2">
+              <FileText className="w-4 h-4" /> Fiche d'intervention
+            </TabsTrigger>
+            <TabsTrigger value="rappel-entretien" className="gap-1.5 py-2">
+              <CalendarClock className="w-4 h-4" /> Rappel d'entretien (automatique)
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="fiche-intervention" className="mt-4">
             <TemplateEditor templateKey="fiche-intervention" />
