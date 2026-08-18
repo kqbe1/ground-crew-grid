@@ -20,6 +20,9 @@ export interface OfflineDraft {
 
 export type DraftSyncState = "pending" | "syncing" | "synced" | "error";
 
+/** Garde anti-concurrence : un même brouillon ne peut pas être synchronisé deux fois en parallèle. */
+const inFlight = new Set<string>();
+
 export interface DraftStatus {
   state: DraftSyncState;
   error?: string;
