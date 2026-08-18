@@ -41,6 +41,22 @@ export default function MobileLayout() {
 
   if (!session) return <Navigate to="/auth" replace />;
 
+  // /mobile est réservé aux ouvriers actifs (les comptes désactivés sont déconnectés par useAuth).
+  if (role === "super_admin") return <Navigate to="/super-admin" replace />;
+  if (role === "admin" || role === "bureau") return <Navigate to="/" replace />;
+  if (role !== "ouvrier") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <div className="text-center space-y-3 max-w-md">
+          <h2 className="text-xl font-bold">Accès non autorisé</h2>
+          <p className="text-muted-foreground">
+            Aucun rôle ouvrier actif n'est associé à ce compte. Contactez votre administrateur.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const handleManualSync = async () => {
     if (!isOnline) {
       toast.error("Pas de connexion réseau");
