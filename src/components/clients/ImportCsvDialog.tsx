@@ -25,7 +25,6 @@ const CLIENT_FIELDS = [
   { key: "contact_locataire", label: "Contact locataire" },
   { key: "syndic_keys_codes", label: "Clés / codes syndic" },
   { key: "notes_internal", label: "Notes internes" },
-  { key: "region", label: "Région" },
   { key: "birthday", label: "Date anniversaire" },
 ] as const;
 
@@ -68,7 +67,6 @@ function autoMap(csvHeaders: string[]): Record<number, string> {
     contact_locataire: ["locataire", "contact locataire", "contact_locataire"],
     syndic_keys_codes: ["clés", "codes", "keys", "syndic_keys_codes"],
     notes_internal: ["notes", "remarques", "commentaires", "notes_internal"],
-    region: ["région", "region"],
     birthday: ["anniversaire", "birthday", "date naissance"],
   };
 
@@ -86,7 +84,6 @@ function autoMap(csvHeaders: string[]): Record<number, string> {
   return mapping;
 }
 
-const VALID_REGIONS = ["bruxelles", "wallonie", "flandre"];
 
 export default function ImportCsvDialog({ open, onOpenChange, onImported }: ImportCsvDialogProps) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -151,12 +148,7 @@ export default function ImportCsvDialog({ open, onOpenChange, onImported }: Impo
       const record: Record<string, string | null> = {};
       for (const [colStr, field] of Object.entries(mapping)) {
         const val = row[Number(colStr)]?.trim() || null;
-        if (field === "region" && val) {
-          const norm = val.toLowerCase().trim();
-          record[field] = VALID_REGIONS.includes(norm) ? norm : null;
-        } else {
-          record[field] = val;
-        }
+        record[field] = val;
       }
       if (!record.name) { skipped++; continue; }
 

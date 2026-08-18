@@ -124,7 +124,7 @@ export default function ClientDetail() {
   return (
     <LayoutDetail
       title={client.name}
-      subtitle={client.address_intervention || client.region || ""}
+      subtitle={client.address_intervention || ""}
       actions={
         <>
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>

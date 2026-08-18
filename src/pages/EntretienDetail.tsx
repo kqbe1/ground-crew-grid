@@ -37,7 +37,7 @@ export default function EntretienDetail() {
     const { data } = await supabase
       .from("maintenance_schedules")
       .select(
-        "*, clients(id, name, email, phone, phone_secondary, address_intervention, address_billing, postal_code, city, region, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal), client_sites(name, address, postal_code, city, notes), client_equipment(name, brand, model, energy_type, maintenance_periodicity, last_maintenance_date, next_maintenance_date, notes)"
+        "*, clients(id, name, email, phone, phone_secondary, address_intervention, address_billing, postal_code, city, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal), client_sites(name, address, postal_code, city, notes), client_equipment(name, brand, model, energy_type, maintenance_periodicity, last_maintenance_date, next_maintenance_date, notes)"
       )
       .eq("id", id)
       .single();
@@ -119,7 +119,6 @@ export default function EntretienDetail() {
           <Row label="Adresse d'intervention" value={client.address_intervention} />
           <Row label="Code postal / Ville" value={[client.postal_code, client.city].filter(Boolean).join(" ")} />
           <Row label="Adresse de facturation" value={client.address_billing} />
-          <Row label="Région" value={client.region} />
           <Row label="Contact syndic" value={client.contact_syndic} />
           <Row label="Contact locataire" value={client.contact_locataire} />
           <Row label="Clés / codes" value={client.syndic_keys_codes} />
