@@ -255,9 +255,13 @@ export default function EmailSettingsTab() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="fiche-intervention">
-          <TabsList>
-            <TabsTrigger value="fiche-intervention">Fiche d'intervention</TabsTrigger>
-            <TabsTrigger value="rappel-entretien">Rappel d'entretien</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-auto">
+            <TabsTrigger value="fiche-intervention" className="gap-1.5 py-2">
+              <FileText className="w-4 h-4" /> Fiche d'intervention
+            </TabsTrigger>
+            <TabsTrigger value="rappel-entretien" className="gap-1.5 py-2">
+              <CalendarClock className="w-4 h-4" /> Rappel d'entretien (automatique)
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="fiche-intervention" className="mt-4">
             <TemplateEditor templateKey="fiche-intervention" />
