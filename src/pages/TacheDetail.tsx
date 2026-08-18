@@ -12,10 +12,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useWorkerLabels } from "@/hooks/useWorkerLabels";
 import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
 import ClientCombobox from "@/components/forms/ClientCombobox";
-import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
+import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Loader2, Trash2, Pencil, Clock, User, Calendar, MapPin } from "lucide-react";
+import { Loader2, Trash2, Pencil, Clock, User, Calendar, MapPin, Package, AlertTriangle, ExternalLink } from "lucide-react";
 import LayoutDetail from "@/components/layout/LayoutDetail";
 import { toast } from "sonner";
 
@@ -28,6 +28,13 @@ const statusColor: Record<string, string> = {
 };
 
 const ALL_STATUSES = ["termine", "a_replanifier", "piece_a_commander", "sav", "planifie"] as const;
+
+const orderStatusColors: Record<string, string> = {
+  demandee: "bg-order-demandee text-white",
+  commandee: "bg-order-commandee text-white",
+  recue: "bg-order-recue text-white",
+  cloturee: "bg-order-cloturee text-white",
+};
 
 const SIMPLIFIED_INTERVENTION_LABELS: Record<string, string> = {
   depannage: "Dépannage", entretien: "Entretien", installation: "Installation",
@@ -51,6 +58,7 @@ export default function TacheDetail() {
   const canEdit = role === "admin" || role === "bureau" || role === "super_admin";
 
   const [task, setTask] = useState<any>(null);
+  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -81,6 +89,16 @@ export default function TacheDetail() {
       .eq("id", id)
       .maybeSingle();
     setTask(data);
+    if (data) {
+      const { data: po } = await supabase
+        .from("parts_orders")
+        .select("*, profiles!parts_orders_requested_by_fkey(full_name)")
+        .eq("work_task_id", data.id)
+        .order("created_at", { ascending: false });
+      setOrders(po ?? []);
+    } else {
+      setOrders([]);
+    }
     if (data) {
       setTitle(data.title ?? "");
       setInterventionType(data.intervention_type ?? "autre");
