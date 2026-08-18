@@ -5,11 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { ShieldAlert, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { differenceInDays } from "date-fns";
+import { loadLegalPeriodicityByEnergy, periodicityLabel } from "@/lib/legalRules";
 
 interface LegalAlert {
   clientId: string;
   clientName: string;
-  region: string | null;
   equipmentName: string;
   energyType: string;
   nextDueDate: string;
@@ -17,14 +17,10 @@ interface LegalAlert {
   daysUntilDue: number;
 }
 
-const ENERGY_LEGAL_RULES: Record<string, (region: string | null) => { periodicity: string; label: string } | null> = {
-  mazout: () => ({ periodicity: "annuel", label: "Annuel (toutes régions)" }),
-  pellets: () => ({ periodicity: "annuel", label: "Annuel (toutes régions)" }),
-  gaz: (region) => {
-    if (region === "bruxelles") return { periodicity: "bisannuel", label: "Biennal (Bruxelles)" };
-    if (region === "wallonie") return { periodicity: "triennal", label: "Triennal (Wallonie)" };
-    return { periodicity: "annuel", label: "Annuel (défaut)" };
-  },
+const DEFAULT_PERIODICITY: Record<string, string> = {
+  mazout: "annuel",
+  pellets: "annuel",
+  gaz: "annuel",
 };
 
 export default function LegalAlertsPanel() {
@@ -35,9 +31,10 @@ export default function LegalAlertsPanel() {
   useEffect(() => {
     const fetchAlerts = async () => {
       // Fetch equipment with their sites and clients
+      const legalRules = await loadLegalPeriodicityByEnergy();
       const { data: equipment } = await supabase
         .from("client_equipment")
-        .select("id, name, energy_type, next_maintenance_date, maintenance_periodicity, client_sites(id, client_id, clients(id, name, region))");
+        .select("id, name, energy_type, next_maintenance_date, maintenance_periodicity, client_sites(id, client_id, clients(id, name))");
 
       if (!equipment) { setLoading(false); return; }
 
@@ -45,15 +42,14 @@ export default function LegalAlertsPanel() {
       const alertList: LegalAlert[] = [];
 
       for (const eq of equipment) {
-        const rule = ENERGY_LEGAL_RULES[eq.energy_type];
-        if (!rule) continue;
+        const periodicity = legalRules[eq.energy_type] ?? DEFAULT_PERIODICITY[eq.energy_type];
+        if (!periodicity) continue;
 
         const site = eq.client_sites as any;
         if (!site?.clients) continue;
 
         const client = site.clients;
-        const legalRule = rule(client.region);
-        if (!legalRule) continue;
+        const legalLabel = periodicityLabel(periodicity);
 
         // Check if next_maintenance_date exists and if it's approaching or overdue
         if (!eq.next_maintenance_date) {
@@ -61,11 +57,10 @@ export default function LegalAlertsPanel() {
           alertList.push({
             clientId: client.id,
             clientName: client.name,
-            region: client.region,
             equipmentName: eq.name,
             energyType: eq.energy_type,
             nextDueDate: "",
-            requiredPeriodicity: legalRule.label,
+            requiredPeriodicity: legalLabel,
             daysUntilDue: -999, // overdue
           });
           continue;
@@ -79,11 +74,10 @@ export default function LegalAlertsPanel() {
           alertList.push({
             clientId: client.id,
             clientName: client.name,
-            region: client.region,
             equipmentName: eq.name,
             energyType: eq.energy_type,
             nextDueDate: eq.next_maintenance_date,
-            requiredPeriodicity: legalRule.label,
+            requiredPeriodicity: legalLabel,
             daysUntilDue: days,
           });
         }
