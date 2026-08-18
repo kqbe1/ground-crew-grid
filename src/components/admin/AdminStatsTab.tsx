@@ -57,19 +57,12 @@ export default function AdminStatsTab() {
 
     schedules.forEach((s) => {
       if (!s.next_due_date) return;
-      const periodMonths = PERIODICITY_MONTHS[s.periodicity] || 12;
-      let nextDate = new Date(s.next_due_date);
-      for (let i = 0; i < 200; i++) {
-        const yr = getYear(nextDate);
-        if (yr > currentYear + 3) break;
-        const proj = result.find((p) => p.year === yr);
-        if (proj) {
-          proj.byType[s.intervention_type] = (proj.byType[s.intervention_type] || 0) + 1;
-          proj.total++;
-        }
-        nextDate = new Date(nextDate);
-        nextDate.setMonth(nextDate.getMonth() + periodMonths);
-      }
+      occurrencesInYears(s.next_due_date, s.periodicity, currentYear, currentYear + 3).forEach((d) => {
+        const proj = result.find((p) => p.year === getYear(d));
+        if (!proj) return;
+        proj.byType[s.intervention_type] = (proj.byType[s.intervention_type] || 0) + 1;
+        proj.total++;
+      });
     });
     return result;
   }, [schedules, currentYear]);
