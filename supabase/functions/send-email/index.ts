@@ -19,6 +19,7 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
   const resendKey = Deno.env.get('RESEND_API_KEY')
+  console.log('[send-email debug] SUPABASE_SERVICE_ROLE_KEY available:', !!serviceKey, 'length:', serviceKey?.length ?? 0)
   if (!supabaseUrl || !serviceKey) return json({ error: 'Server configuration error' }, 500)
   if (!resendKey) return json({ error: 'RESEND_API_KEY is not configured' }, 500)
 
@@ -52,7 +53,14 @@ Deno.serve(async (req) => {
 
   // --- Resolve the company server-side (never trust a client-supplied company_id) ---
   const authHeader = req.headers.get('Authorization') ?? ''
+  console.log('[send-email debug] Authorization present:', authHeader.length > 0)
+  console.log('[send-email debug] authHeader length:', authHeader.length)
   const bearer = authHeader.replace(/^Bearer\s+/i, '')
+  const bearerPrefix = bearer.slice(0, 12)
+  const serviceKeyPrefix = serviceKey.slice(0, 12)
+  console.log('[send-email debug] bearer length:', bearer.length, 'serviceKey length:', serviceKey.length)
+  console.log('[send-email debug] bearer prefix:', bearerPrefix, 'serviceKey prefix:', serviceKeyPrefix)
+  console.log('[send-email debug] bearer === serviceKey:', bearer === serviceKey)
   const isServiceCall = bearer === serviceKey
 
   let companyId: string | null = null
