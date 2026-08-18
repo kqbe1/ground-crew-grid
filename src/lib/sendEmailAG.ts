@@ -48,7 +48,21 @@ export async function sendFicheToAG(
 
   // Upload to public company-assets bucket
   const id = crypto.randomUUID();
-  const filePath = `email-attachments/${id}.pdf`;
+  let companyId: string | null = sheet.company_id ?? null;
+  if (!companyId) {
+    const { data: auth } = await supabase.auth.getUser();
+    if (auth?.user) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", auth.user.id)
+        .maybeSingle();
+      companyId = prof?.company_id ?? null;
+    }
+  }
+  if (!companyId) throw new Error("Entreprise introuvable pour l'envoi");
+  // Storage RLS requires the first folder to be the company id
+  const filePath = `${companyId}/email-attachments/${id}.pdf`;
   const { error: upErr } = await supabase.storage
     .from("company-assets")
     .upload(filePath, blob, { contentType: "application/pdf", upsert: false });
