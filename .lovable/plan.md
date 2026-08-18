@@ -1,72 +1,33 @@
-## Modifications mobiles ouvrier
+# Agenda mobile ouvrier — simplification et alertes fiches
 
-### 1. Récap mémos secrétariat (top de l'agenda mobile)
-- Nouveau composant `MemosSecretariatPanel` placé en haut de `MobileAgenda.tsx`.
-- Charge les `work_tasks` du jour assignées à l'ouvrier connecté ayant un `memo_secretariat` non vide.
-- Affichage : bandeau repliable (ouvert par défaut s'il y a au moins 1 mémo), avec icône cloche + compteur. Chaque ligne = heure + titre tâche + mémo, cliquable pour ouvrir le détail.
+## 1. Agenda jour uniquement
+- Suppression des onglets "jour / semaine / mois" et des vues Semaine et Mois dans l'agenda mobile.
+- Seule la vue Jour reste, avec navigation jour précédent / jour suivant.
 
-### 2. Fiches d'intervention / entretien — Heures & Statut
-- **Multi-sélection libre** des statuts (cases au lieu de boutons radio). Stocké sous forme de tableau dans une nouvelle colonne `work_status_details text[]` (l'ancienne `work_status_detail` reste pour compat, peuplée avec le premier statut).
-- **Suppression** du champ libre « Commentaire éventuel » global.
-- **Note par statut** : dès qu'un statut est coché, un input texte court apparaît sous celui-ci pour saisir une note spécifique. Stocké dans `work_status_notes jsonb` (`{ termine: "…", sav: "…" }`).
-- Le `final_status` envoyé à la tâche prend la priorité : `piece_a_commander` > `sav` > `a_replanifier` > `termine` > `planifie`.
+## 2. En-tête compact
+- Jour et date affichés sur une seule ligne horizontale (ex. "Mardi 18 août 2026") entre les flèches de navigation, pour gagner de la hauteur d'écran.
 
-### 3. Suppression « Demander une pièce » dans la fiche d'intervention
-- Retirer le bouton/section dans le flow de `MobileFicheInterventionForm` (et entretien si présent). La demande de pièces reste accessible depuis `MobilePieces`.
+## 3. Bandeau rouge "Fiches à envoyer"
+- Nouveau panneau rouge repliable placé au-dessus du panneau Mémos secrétariat.
+- Contenu : toutes les tâches passées de l'ouvrier (tout l'historique, jusqu'à hier inclus) dont la fiche d'intervention/entretien n'est pas envoyée (aucune fiche, ou fiche encore en brouillon local/serveur).
+- Chaque ligne : date, heure, titre, client ; clic → ouvre la tâche.
+- Panneau masqué s'il n'y a rien en retard.
+- Fiabilisation du statut "envoyé" : le statut de fiche est recalculé à chaque affichage à partir de la base (et du brouillon local) pour qu'une fiche envoyée reste marquée comme telle après navigation ou rafraîchissement.
 
-### 4. Photo dans la demande de pièce
-- Dans le formulaire de création de demande de pièce (page `MobilePieces` / dialog `CreateOrderDialog` côté mobile), ajouter le composant `PhotoCapture` existant. Upload vers `intervention-photos` bucket, persistance dans `parts_orders.photos text[]` (nouvelle colonne).
+## 4. Marqueur rouge sur la carte de tâche
+- Nouveau badge rouge "Fiche à envoyer", au même format que les badges existants (Brouillon / Envoyé au bureau / Terminé), avec bordure gauche rouge sur la carte.
+- Affiché sur les tâches dont la date est passée et dont la fiche n'est pas envoyée.
 
-### 5. Coordonnées d'intervention supprimées du mobile
-- Retirer le step `CoordinatesStep` des deux flows mobiles (intervention + entretien). `TOTAL_STEPS` passe de 9 → 8 (intervention) et ajusté entretien.
-- Le PDF (`generateFichePdf.ts`) continue de lire les coordonnées : fallback sur `clients` / `client_sites` quand `client_*_override` est null (déjà partiellement le cas). Vérifier que toutes les sections « Coordonnées intervention » et « Facturation » lisent client+site quand pas d'override.
-- Nettoyage : champs `client_*_override` et `billing_*` restent en base pour les fiches existantes.
+## 5. Détail de la tâche
+- Vérification et complétion des infos utiles : téléphone (bouton Appeler déjà présent), email client, adresse complète avec code postal et ville, mémo secrétariat, matériel, contacts syndic/locataire, clés/codes, notes internes.
 
-### 6. Brouillons de fiche — UX & libellé
-- Le draft localStorage existe déjà (`fiche_draft:*`). Ajout :
-  - Sur la liste des tâches mobile (`MobileAgenda` + détail tâche), un badge **« Brouillon »** orange si un draft existe pour cette `task_id`.
-  - À l'ouverture d'une tâche avec draft existant, toast « Brouillon repris ».
-  - Bouton « Supprimer le brouillon » dans le header du formulaire mobile.
-- Aucune persistance serveur supplémentaire (déjà géré offline via `useOfflineDrafts`).
+## 6. Mémos repliés par défaut
+- Le panneau Mémos secrétariat s'ouvre fermé ; le nouveau panneau rouge est également fermé par défaut (compteur visible dans l'en-tête).
 
-### 7. Visuel tâches terminées (bande verte)
-- Dans `MobileAgenda` et toutes les cartes tâche mobile : si `final_status === 'termine'` ET fiche envoyée (`intervention_sheets` lié, `is_draft=false`), ajouter une **bande verte 4px à gauche** (`border-l-4 border-green-500`) et un check icône.
-- Étendre aussi à la liste desktop des tâches pour cohérence.
-
-### 8. Verrou édition fiche après envoi
-- Côté UI : si une fiche envoyée existe pour la tâche, le mobile (ouvrier) affiche en lecture seule. Pas de bouton « modifier ».
-- Côté RLS : restreindre `UPDATE` sur `intervention_sheets` quand `is_draft = false` aux rôles `admin` et `bureau` uniquement. L'ouvrier garde `UPDATE` tant que `is_draft = true`.
-
----
-
-### Modifications base de données
-
-```sql
--- 1. Multi-statuts + notes par statut
-ALTER TABLE intervention_sheets
-  ADD COLUMN work_status_details text[],
-  ADD COLUMN work_status_notes jsonb DEFAULT '{}'::jsonb;
-
--- 2. Photos sur les demandes de pièces
-ALTER TABLE parts_orders ADD COLUMN photos text[];
-
--- 3. Verrou édition fiches envoyées
-DROP POLICY "<update existing>" ON intervention_sheets;
-CREATE POLICY "Ouvrier édite ses brouillons"
-  ON intervention_sheets FOR UPDATE TO authenticated
-  USING (worker_id = auth.uid() AND is_draft = true)
-  WITH CHECK (worker_id = auth.uid() AND is_draft = true);
-CREATE POLICY "Bureau/Admin éditent toutes les fiches"
-  ON intervention_sheets FOR UPDATE TO authenticated
-  USING (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'bureau'))
-  WITH CHECK (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'bureau'));
-```
-
-### Fichiers principaux touchés
-- `src/pages/mobile/MobileAgenda.tsx` (+ nouveau `MemosSecretariatPanel.tsx`, bande verte, badge brouillon)
-- `src/pages/mobile/MobileFicheInterventionForm.tsx` + `MobileFicheEntretienForm.tsx` (suppr step coordonnées, suppr « demander pièce »)
-- `src/components/mobile/steps/HoursStatusStep.tsx` (multi-select + notes par statut)
-- `src/pages/mobile/MobilePieces.tsx` (PhotoCapture)
-- `src/lib/generateFichePdf.ts` (fallback coordonnées client/site)
-- `src/components/planning/DraggableTaskCard.tsx` + listes tâches (bande verte)
-- Migration SQL ci-dessus
+## Détails techniques
+- `src/pages/mobile/MobileAgenda.tsx` : suppression de `ViewMode`, `WeekView`, `MonthView` et de la persistance de vue ; requête limitée au jour affiché + requête séparée des tâches passées non clôturées (fiche manquante ou `is_draft = true`) pour alimenter le bandeau rouge.
+- Nouveau composant `src/components/mobile/FichesEnRetardPanel.tsx`, calqué sur `MemosSecretariatPanel`, en style destructif.
+- `MemosSecretariatPanel.tsx` : état initial replié.
+- Badge rouge : nouvelle classe `badge-sheet-late` dans `src/index.css`, alignée sur les classes `badge-sheet-*` existantes.
+- `src/pages/mobile/MobileTaskDetail.tsx` : ajout de `postal_code`, `city` (client et site) et de l'email dans la requête et l'affichage.
+- Aucun changement de base de données.
