@@ -634,6 +634,8 @@ export default function FicheDetail() {
       {/* Internal photos */}
       {/* Photos internes */}
       <PhotoGrid photos={internalPhotos} label="Photos internes" />
+
+      <SendFicheDialog sheet={sheet} open={sendOpen} onOpenChange={setSendOpen} onSent={fetchSheet} />
     </LayoutDetail>
   );
 }
