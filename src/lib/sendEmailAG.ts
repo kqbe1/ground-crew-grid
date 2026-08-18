@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { generateFichePdf, PdfConfig } from "@/lib/generateFichePdf";
-import { loadPdfConfigAndLogo, ficheDocumentType } from "@/lib/pdfConfig";
+import { loadPdfConfigAndLogo, ficheDocumentType, withPdfPhotos } from "@/lib/pdfConfig";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS } from "@/lib/constants";
@@ -32,7 +32,7 @@ export async function sendFicheToAG(
 
   const { pdfCfg, logoDataUrl } = await loadPdfConfigAndLogo(ficheDocumentType(sheet));
   const mergedCfg = { ...((pdfCfg as Partial<PdfConfig>) || {}), ...(overrides || {}) };
-  const doc = generateFichePdf(sheet, mergedCfg, logoDataUrl);
+  const doc = generateFichePdf(await withPdfPhotos(sheet), mergedCfg, logoDataUrl);
   const blob = doc.output("blob");
 
   // Upload to public company-assets bucket

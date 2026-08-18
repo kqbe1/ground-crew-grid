@@ -7,7 +7,7 @@ import { Send, Loader2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { generateFichePdf, PdfConfig } from "@/lib/generateFichePdf";
-import { loadPdfConfigAndLogo, ficheDocumentType } from "@/lib/pdfConfig";
+import { loadPdfConfigAndLogo, ficheDocumentType, withPdfPhotos } from "@/lib/pdfConfig";
 import { sendFicheToAG } from "@/lib/sendEmailAG";
 
 type FieldKey =
@@ -80,7 +80,7 @@ export default function SendFicheDialog({ sheet, open, onOpenChange, onSent }: P
     try {
       const { pdfCfg, logoDataUrl } = await loadPdfConfigAndLogo(ficheDocumentType(sheet));
       const doc = generateFichePdf(
-        sheet,
+        await withPdfPhotos(sheet),
         { ...((pdfCfg as Partial<PdfConfig>) || {}), ...values },
         logoDataUrl,
       );

@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { generateFichePdf } from "@/lib/generateFichePdf";
 import { generateDevisPdf } from "@/lib/generateDevisPdf";
 import type { UnifiedFiche } from "@/components/dashboard/bureau/types";
-import { fetchLogoDataUrl, ficheDocumentType } from "@/lib/pdfConfig";
+import { fetchLogoDataUrl, ficheDocumentType, withPdfPhotos } from "@/lib/pdfConfig";
 
 export async function downloadFichesZip(fiches: UnifiedFiche[]) {
   if (fiches.length === 0) return;
@@ -60,7 +60,7 @@ export async function downloadFichesZip(fiches: UnifiedFiche[]) {
       try {
         const config = getConfig(ficheDocumentType(sheet));
         const logoDataUrl = await getLogo(config?.logo_url);
-        const doc = generateFichePdf(sheet, config, logoDataUrl);
+        const doc = generateFichePdf(await withPdfPhotos(sheet), config, logoDataUrl);
         const pdfBlob = doc.output("arraybuffer");
         const clientName = sheet.work_tasks?.clients?.name ?? "inconnu";
         const safeName = clientName.replace(/[^a-zA-Z0-9àâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇ _-]/g, "").substring(0, 40);

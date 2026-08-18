@@ -11,7 +11,7 @@ import LayoutDetail from "@/components/layout/LayoutDetail";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
 import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
-import { loadPdfConfigAndLogo, ficheDocumentType } from "@/lib/pdfConfig";
+import { loadPdfConfigAndLogo, ficheDocumentType, withPdfPhotos } from "@/lib/pdfConfig";
 import { Textarea } from "@/components/ui/textarea";
 import { useSignedUrls } from "@/hooks/useSignedUrl";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -203,7 +203,8 @@ export default function FicheDetail() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={async () => {
             const { pdfCfg, logoDataUrl } = await loadPdfConfig();
-            downloadFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
+            const sheetWithPhotos = await withPdfPhotos(sheet);
+            downloadFichePdf(sheetWithPhotos, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
           }}>
             <Download className="w-4 h-4 mr-1" /> Télécharger
           </Button>

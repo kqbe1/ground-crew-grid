@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
 import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
-import { loadPdfConfigAndLogo, ficheDocumentType } from "@/lib/pdfConfig";
+import { loadPdfConfigAndLogo, ficheDocumentType, withPdfPhotos } from "@/lib/pdfConfig";
 import { sendFicheToAG } from "@/lib/sendEmailAG";
 import { Send } from "lucide-react";
 import SendFicheDialog from "@/components/fiches/SendFicheDialog";
@@ -38,7 +38,7 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
     setLoadingPdf(true);
     try {
       const { pdfCfg, logoDataUrl } = await loadPdfConfig();
-      const doc = generateFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
+      const doc = generateFichePdf(await withPdfPhotos(sheet), pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
       const blob = doc.output("blob");
       setPdfUrl(URL.createObjectURL(blob));
     } catch {
@@ -70,7 +70,7 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
     try {
       // 1. Generate & download the PDF
       const { pdfCfg, logoDataUrl } = await loadPdfConfigAndLogo(ficheDocumentType(sheet));
-      downloadFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
+      downloadFichePdf(await withPdfPhotos(sheet), pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
 
       // 2. Open mailto with pre-filled subject & body
       const clientName = task.clients?.name || "Client";
@@ -294,7 +294,7 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
           <Button
             onClick={async () => {
               const { pdfCfg, logoDataUrl } = await loadPdfConfig();
-              downloadFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
+              downloadFichePdf(await withPdfPhotos(sheet), pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
             }}
             variant="outline"
             size="sm"
