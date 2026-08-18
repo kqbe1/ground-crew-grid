@@ -96,7 +96,7 @@ export default function Commandes() {
                 {order.urgency !== "normal" && (
                   <Badge variant="destructive" className="gap-1 text-xs"><AlertTriangle className="w-3 h-3" />{order.urgency === "critique" ? "Critique" : "Urgent"}</Badge>
                 )}
-                <SheetStatusBadge status={sheetStatus} />
+                <SheetStatusBadge status={sheetStatus} showSubmitted={false} />
                 <Badge className={cn(statusColors[order.status], "text-xs")}>{ORDER_STATUS_LABELS[order.status]}</Badge>
                 <span className="text-xs text-muted-foreground">{format(new Date(order.created_at), "d MMM", { locale: fr })}</span>
               </div>

@@ -151,7 +151,7 @@ export default function Fiches() {
                   {sheet.sent_to_client && <div className="p-1 rounded bg-[hsl(var(--color-termine))]/10" title="Envoyé"><Mail className="w-3.5 h-3.5 text-[hsl(var(--color-termine))]" /></div>}
                   {sheet.signature_data && <div className="p-1 rounded bg-[hsl(var(--color-termine))]/10" title="Signé"><FileSignature className="w-3.5 h-3.5 text-[hsl(var(--color-termine))]" /></div>}
                   {(sheet.photos_before?.length > 0 || sheet.photos_after?.length > 0) && <div className="p-1 rounded bg-primary/10" title="Photos"><Camera className="w-3.5 h-3.5 text-primary" /></div>}
-                  <SheetStatusBadge status={sheetStatus} />
+                  <SheetStatusBadge status={sheetStatus} showSubmitted={false} />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">{format(new Date(sheet.created_at), "d MMM yyyy", { locale: fr })}</span>
                 </div>
               </CardContent>
