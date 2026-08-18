@@ -132,11 +132,18 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
     doc.setFontSize(9);
     doc.setTextColor(80);
     doc.text(label, margin + indent + 2, y);
+    const labelW = doc.getTextWidth(label);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(30);
-    const labelW = doc.getTextWidth(label);
-    doc.text(value || "—", margin + indent + labelW + 4, y);
+    const valueX = margin + indent + labelW + 4;
+    const lines = doc.splitTextToSize(String(value || "—"), contentW - (valueX - margin) - 2);
+    doc.text(lines[0], valueX, y);
     y += 5.5;
+    for (const extra of lines.slice(1)) {
+      checkPage(5);
+      doc.text(extra, margin + indent + 6, y);
+      y += 4.5;
+    }
   };
 
   const addFieldRow = (pairs: [string, string][]) => {
@@ -148,9 +155,10 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
       doc.setFontSize(9);
       doc.setTextColor(80);
       doc.text(label, x, y);
+      const lw = doc.getTextWidth(label);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(30);
-      doc.text(value || "—", x + doc.getTextWidth(label) + 3, y);
+      doc.text(value || "—", x + lw + 3, y);
     });
     y += 5.5;
   };
