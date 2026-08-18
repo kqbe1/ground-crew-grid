@@ -260,6 +260,19 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
 
   addField("Titre :", task?.title || "—");
 
+  if (task?.scheduled_date) {
+    addField("Date planifiée :", format(new Date(task.scheduled_date), "d MMMM yyyy", { locale: fr }));
+  }
+  if (task?.description) {
+    addField("Travail demandé :", task.description);
+  }
+  const siteLabel = [task?.client_sites?.name, task?.client_sites?.address].filter(Boolean).join(" — ");
+  if (siteLabel) addField("Site :", siteLabel);
+  const equipLabel = [task?.client_equipment?.name, task?.client_equipment?.brand, task?.client_equipment?.model]
+    .filter(Boolean)
+    .join(" ");
+  if (equipLabel) addField("Équipement :", equipLabel);
+
   if (cfg.show_intervention_type) {
     const typeLabel = task?.intervention_type ? INTERVENTION_TYPE_LABELS[task.intervention_type] || task.intervention_type : "—";
     addField("Type :", typeLabel);
@@ -355,9 +368,14 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
   // ═══════════════════════════ WORKER ═══════════════════════════
   if (cfg.show_worker_info) {
     addSection("Technicien");
-    addField("Nom :", worker?.full_name || "—");
+    addField("Nom :", worker?.full_name || task?.assigned?.full_name || "—");
+    if (task?.second?.full_name) {
+      addField("Second technicien :", task.second.full_name);
+    }
     if (sheet.binome_name) {
       addField("Binôme :", sheet.binome_name);
+    } else if (task?.binome) {
+      addField("Binôme :", [task.binome.code, task.binome.name].filter(Boolean).join(" — "));
     }
   }
 
@@ -368,6 +386,13 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
       ["Arrivée :", sheet.arrival_time ? format(new Date(sheet.arrival_time), "HH:mm") : "—"],
       ["Départ :", sheet.departure_time ? format(new Date(sheet.departure_time), "HH:mm") : "—"],
     ]);
+    if (sheet.arrival_time && sheet.departure_time) {
+      const mins = Math.max(
+        0,
+        Math.round((new Date(sheet.departure_time).getTime() - new Date(sheet.arrival_time).getTime()) / 60000),
+      );
+      addField("Durée :", `${Math.floor(mins / 60)}h${String(mins % 60).padStart(2, "0")}`);
+    }
   }
 
   // ═══════════════════════════ OBSERVATIONS ═══════════════════════════
@@ -400,21 +425,8 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
     y += 2;
   }
 
-  // ═══════════════════════════ SUPPLIES ═══════════════════════════
-  if (sheet.supplies_description) {
-    addSection("Fournitures utilisées");
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(30);
-    const lines = doc.splitTextToSize(sheet.supplies_description, contentW - 4);
-    for (const line of lines) {
-      checkPage(5);
-      doc.text(line, margin + 2, y);
-      y += 4.5;
-    }
-    y += 2;
-  }
-
+  // Note: les achats/fournitures et les commentaires internes ne figurent
+  // volontairement pas sur le document destiné au client.
   // ═══════════════════════════ NAMEPLATE ═══════════════════════════
   if (sheet.nameplate_data && typeof sheet.nameplate_data === "object") {
     const np = sheet.nameplate_data as Record<string, string>;
