@@ -8,7 +8,7 @@ import { PERIODICITY_LABELS, ENERGY_TYPE_LABELS } from "@/lib/constants";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-const ENERGIES = ["gaz", "mazout", "pellets", "clim", "vmc"] as const;
+const ENERGIES = ["gaz", "mazout", "pellets", "clim", "vmc", "boiler"] as const;
 const REGIONS = [
   { key: "bruxelles", label: "Bruxelles" },
   { key: "wallonie", label: "Wallonie" },
