@@ -60,11 +60,13 @@ Deno.serve(async (req) => {
     const equipment: any = s.client_equipment ?? {}
     if (!client?.email) { skipped++; continue } // notification in-app only (alertes légales)
 
-    const res = await fetch(`${url}/functions/v1/send-transactional-email`, {
+    const res = await fetch(`${url}/functions/v1/send-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
       body: JSON.stringify({
         templateName: 'rappel-entretien',
+        emailType: 'rappel-entretien',
+        companyId: s.company_id,
         recipientEmail: client.email,
         idempotencyKey: `entretien-auto-${s.id}-${s.next_due_date}`,
         templateData: {
