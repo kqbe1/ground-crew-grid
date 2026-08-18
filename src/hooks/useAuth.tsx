@@ -103,9 +103,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (error) {
-      // Profile fetch failed — sign the user out rather than trust client-side fallbacks.
-      await supabase.auth.signOut();
-      resetAuthState();
+      // Erreur réseau/transitoire : on NE déconnecte PAS l'utilisateur.
+      // La session reste active, les données profil seront re-synchronisées plus tard.
+      console.warn("[auth] Échec de récupération du profil, session conservée:", error);
       return;
     }
 
@@ -214,8 +214,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    // Garde la session vivante après une longue inactivité ou une coupure réseau :
+    // au retour de l'onglet / de la connexion, on relance le rafraîchissement du token.
+    const revive = () => {
+      if (!isActive || document.visibilityState !== "visible") return;
+      supabase.auth.startAutoRefresh?.();
+      void supabase.auth.getSession();
+    };
+    document.addEventListener("visibilitychange", revive);
+    window.addEventListener("online", revive);
+    window.addEventListener("focus", revive);
+
     return () => {
       isActive = false;
+      document.removeEventListener("visibilitychange", revive);
+      window.removeEventListener("online", revive);
+      window.removeEventListener("focus", revive);
       subscription.unsubscribe();
     };
   }, []);
