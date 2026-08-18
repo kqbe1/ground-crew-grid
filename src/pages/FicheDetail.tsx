@@ -11,7 +11,7 @@ import LayoutDetail from "@/components/layout/LayoutDetail";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
 import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFichePdf";
-import { loadPdfConfigAndLogo, ficheDocumentType } from "@/lib/pdfConfig";
+import { loadPdfConfigAndLogo, ficheDocumentType, withPdfPhotos } from "@/lib/pdfConfig";
 import { Textarea } from "@/components/ui/textarea";
 import { useSignedUrls } from "@/hooks/useSignedUrl";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -76,7 +76,7 @@ export default function FicheDetail() {
     if (!id) return;
     const { data } = await supabase
       .from("intervention_sheets")
-      .select("*, work_tasks(title, intervention_type, scheduled_date, start_time, duration_minutes, clients(name, email, phone, phone_secondary, address_intervention, postal_code, city, contact_locataire, contact_syndic, owner:owner_client_id(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)), client_sites(name, address), binome:task_binomes!work_tasks_binome_id_fkey(id, name, code, kind, is_active), assigned:profiles!work_tasks_assigned_to_fkey(full_name), second:profiles!work_tasks_second_assigned_to_fkey(full_name)), profiles!intervention_sheets_worker_id_fkey(full_name)")
+      .select("*, work_tasks(title, description, intervention_type, scheduled_date, start_time, duration_minutes, client_equipment(name, brand, model), clients(name, email, phone, phone_secondary, address_intervention, postal_code, city, contact_locataire, contact_syndic, owner:owner_client_id(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)), client_sites(name, address), binome:task_binomes!work_tasks_binome_id_fkey(id, name, code, kind, is_active), assigned:profiles!work_tasks_assigned_to_fkey(full_name), second:profiles!work_tasks_second_assigned_to_fkey(full_name)), profiles!intervention_sheets_worker_id_fkey(full_name)")
       .eq("id", id)
       .maybeSingle();
     setSheet(data);
@@ -203,7 +203,8 @@ export default function FicheDetail() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={async () => {
             const { pdfCfg, logoDataUrl } = await loadPdfConfig();
-            downloadFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
+            const sheetWithPhotos = await withPdfPhotos(sheet);
+            downloadFichePdf(sheetWithPhotos, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
           }}>
             <Download className="w-4 h-4 mr-1" /> Télécharger
           </Button>

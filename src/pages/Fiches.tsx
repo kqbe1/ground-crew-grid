@@ -42,7 +42,7 @@ export default function Fiches() {
   const fetchSheets = async () => {
     const { data } = await supabase
       .from("intervention_sheets")
-      .select("*, work_tasks(title, intervention_type, clients(name, email)), profiles!intervention_sheets_worker_id_fkey(full_name)")
+      .select("*, work_tasks(title, description, intervention_type, scheduled_date, start_time, duration_minutes, client_equipment(name, brand, model), clients(name, email, phone, phone_secondary, address_intervention, postal_code, city), client_sites(name, address), binome:task_binomes!work_tasks_binome_id_fkey(id, name, code), assigned:profiles!work_tasks_assigned_to_fkey(full_name), second:profiles!work_tasks_second_assigned_to_fkey(full_name)), profiles!intervention_sheets_worker_id_fkey(full_name)")
       .order("created_at", { ascending: false });
     setSheets(data ?? []);
   };
