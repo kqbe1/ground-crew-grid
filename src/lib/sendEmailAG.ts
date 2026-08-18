@@ -18,7 +18,10 @@ async function loadSettings(templateKey: "fiche-intervention" | "rappel-entretie
  * Generates the fiche PDF, uploads it to storage, and sends it to the client's email.
  * Throws if the client has no email address.
  */
-export async function sendFicheToAG(sheet: any): Promise<void> {
+export async function sendFicheToAG(
+  sheet: any,
+  overrides?: Partial<PdfConfig>,
+): Promise<void> {
   const task = sheet.work_tasks;
   const clientEmail = task?.clients?.email;
   if (!clientEmail) {
@@ -28,7 +31,8 @@ export async function sendFicheToAG(sheet: any): Promise<void> {
   const settings = await loadSettings("fiche-intervention");
 
   const { pdfCfg, logoDataUrl } = await loadPdfConfigAndLogo(ficheDocumentType(sheet));
-  const doc = generateFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
+  const mergedCfg = { ...((pdfCfg as Partial<PdfConfig>) || {}), ...(overrides || {}) };
+  const doc = generateFichePdf(sheet, mergedCfg, logoDataUrl);
   const blob = doc.output("blob");
 
   // Upload to public company-assets bucket
@@ -51,7 +55,7 @@ export async function sendFicheToAG(sheet: any): Promise<void> {
     body: {
       templateName: "fiche-intervention",
       recipientEmail: clientEmail,
-      idempotencyKey: `fiche-${sheet.id}`,
+      idempotencyKey: `fiche-${sheet.id}-${Date.now()}`,
       templateData: {
         clientName: task?.clients?.name || "—",
         clientCity: task?.clients?.city || "",
