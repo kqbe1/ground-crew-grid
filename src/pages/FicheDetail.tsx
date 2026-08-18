@@ -128,7 +128,10 @@ export default function FicheDetail() {
       toast.error("Code de confirmation incorrect");
       return;
     }
-    const { error } = await supabase.from("intervention_sheets").delete().eq("id", id!);
+    const { error } = await supabase.rpc("delete_intervention_sheet", {
+      p_sheet_id: id!,
+      p_confirmation_code: deleteCode.trim().toUpperCase(),
+    });
     if (error) { toast.error(error.message); return; }
     toast.success("Fiche supprimée");
     setDeleteOpen(false);

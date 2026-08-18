@@ -46,7 +46,7 @@ export async function sendFicheToAG(
   const doc = generateFichePdf(await withPdfPhotos(sheet), mergedCfg, logoDataUrl);
   const blob = doc.output("blob");
 
-  // Upload to public company-assets bucket
+  // Upload to the private fiche-pdfs bucket (never public)
   const id = crypto.randomUUID();
   let companyId: string | null = sheet.company_id ?? null;
   if (!companyId) {
@@ -62,14 +62,18 @@ export async function sendFicheToAG(
   }
   if (!companyId) throw new Error("Entreprise introuvable pour l'envoi");
   // Storage RLS requires the first folder to be the company id
-  const filePath = `${companyId}/email-attachments/${id}.pdf`;
+  const filePath = `${companyId}/${id}.pdf`;
   const { error: upErr } = await supabase.storage
-    .from("company-assets")
+    .from("fiche-pdfs")
     .upload(filePath, blob, { contentType: "application/pdf", upsert: false });
   if (upErr) throw upErr;
 
-  const { data: pub } = supabase.storage.from("company-assets").getPublicUrl(filePath);
-  const pdfUrl = pub.publicUrl;
+  // Signed URL valid 90 days so the client can open the PDF from the email
+  const { data: signed, error: signErr } = await supabase.storage
+    .from("fiche-pdfs")
+    .createSignedUrl(filePath, 60 * 60 * 24 * 90);
+  if (signErr || !signed?.signedUrl) throw signErr ?? new Error("Impossible de générer le lien du PDF");
+  const pdfUrl = signed.signedUrl;
 
   const worker = sheet.profiles;
   const interventionDate = sheet.created_at
