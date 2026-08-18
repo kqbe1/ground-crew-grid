@@ -54,7 +54,7 @@ export default function DossierDetail() {
     if (!id) return;
     setLoading(true);
 
-    const { data: clientData } = await supabase.from("clients").select("*").eq("id", id).single();
+    const { data: clientData } = await supabase.from("clients").select("*").eq("id", id).maybeSingle();
     setClient(clientData);
 
     if (!clientData) { setLoading(false); return; }

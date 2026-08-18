@@ -79,7 +79,7 @@ export default function TacheDetail() {
       .from("work_tasks")
       .select("*, clients(name, address_intervention, postal_code, city, phone, phone_secondary, email, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal, owner:owner_client_id(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)), profiles!work_tasks_assigned_to_fkey(full_name), client_sites(address), task_binomes!work_tasks_binome_id_fkey(name, code, kind)")
       .eq("id", id)
-      .single();
+      .maybeSingle();
     setTask(data);
     if (data) {
       setTitle(data.title ?? "");
