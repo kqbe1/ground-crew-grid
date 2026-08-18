@@ -14,15 +14,12 @@ import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS } from "@/lib/constants";
 import { Wrench, Calendar, TrendingUp, Plus, AlertTriangle, Search, Filter, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { occurrencesInYears, parseDueDate } from "@/lib/recurrence";
 import CreateEditEntretienDialog from "@/components/entretiens/CreateEditEntretienDialog";
 import type { Tables } from "@/integrations/supabase/types";
 import LayoutPage from "@/components/layout/LayoutPage";
 
 type Schedule = Tables<"maintenance_schedules">;
-
-const PERIODICITY_MONTHS: Record<string, number> = {
-  mensuel: 1, trimestriel: 3, semestriel: 6, annuel: 12, bisannuel: 24, triennal: 36,
-};
 
 const ENTRETIEN_TYPES = Object.entries(INTERVENTION_TYPE_LABELS).filter(([k]) => k.startsWith("entretien_"));
 
@@ -80,22 +77,7 @@ export default function Entretiens() {
     let count = 0;
     schedules.forEach((s) => {
       if (s.status !== "actif" || !s.next_due_date) return;
-      const periodMonths = PERIODICITY_MONTHS[s.periodicity] || 12;
-      let nextDate = new Date(s.next_due_date);
-      // Walk backwards to find if there's an occurrence this year
-      while (getYear(nextDate) > currentYear) {
-        nextDate.setMonth(nextDate.getMonth() - periodMonths);
-      }
-      // Walk forward
-      while (getYear(nextDate) < currentYear) {
-        nextDate.setMonth(nextDate.getMonth() + periodMonths);
-      }
-      // Count occurrences in current year
-      while (getYear(nextDate) === currentYear) {
-        count++;
-        nextDate = new Date(nextDate);
-        nextDate.setMonth(nextDate.getMonth() + periodMonths);
-      }
+      count += occurrencesInYears(s.next_due_date, s.periodicity, currentYear, currentYear).length;
     });
     return count;
   }, [schedules, currentYear]);
@@ -107,19 +89,10 @@ export default function Entretiens() {
 
     schedules.forEach((s) => {
       if (s.status !== "actif" || !s.next_due_date) return;
-      const periodMonths = PERIODICITY_MONTHS[s.periodicity] || 12;
-      let nextDate = new Date(s.next_due_date);
-
-      // Walk to the right range
-      while (getYear(nextDate) > currentYear) nextDate.setMonth(nextDate.getMonth() - periodMonths);
-      while (getYear(nextDate) < currentYear) nextDate.setMonth(nextDate.getMonth() + periodMonths);
-
-      while (getYear(nextDate) === currentYear) {
-        const m = getMonth(nextDate);
+      occurrencesInYears(s.next_due_date, s.periodicity, currentYear, currentYear).forEach((d) => {
+        const m = getMonth(d);
         months[m][s.intervention_type] = (months[m][s.intervention_type] || 0) + 1;
-        nextDate = new Date(nextDate);
-        nextDate.setMonth(nextDate.getMonth() + periodMonths);
-      }
+      });
     });
     return months;
   }, [schedules, currentYear]);
@@ -137,20 +110,12 @@ export default function Entretiens() {
 
     schedules.forEach((s) => {
       if (s.status !== "actif" || !s.next_due_date) return;
-      const periodMonths = PERIODICITY_MONTHS[s.periodicity] || 12;
-      let nextDate = new Date(s.next_due_date);
-
-      for (let i = 0; i < 200; i++) {
-        const yr = getYear(nextDate);
-        if (yr > currentYear + 3) break;
-        const proj = result.find((p) => p.year === yr);
-        if (proj) {
-          proj.byType[s.intervention_type] = (proj.byType[s.intervention_type] || 0) + 1;
-          proj.total++;
-        }
-        nextDate = new Date(nextDate);
-        nextDate.setMonth(nextDate.getMonth() + periodMonths);
-      }
+      occurrencesInYears(s.next_due_date, s.periodicity, currentYear, currentYear + 3).forEach((d) => {
+        const proj = result.find((p) => p.year === getYear(d));
+        if (!proj) return;
+        proj.byType[s.intervention_type] = (proj.byType[s.intervention_type] || 0) + 1;
+        proj.total++;
+      });
     });
 
     return result;
@@ -159,15 +124,18 @@ export default function Entretiens() {
   // Legal alerts
   const legalAlerts = useMemo(() => {
     return schedules.filter((s) => {
-      if (!s.legal_alert_years || !s.next_due_date) return false;
-      const days = differenceInDays(new Date(s.next_due_date), new Date());
+      if (!s.legal_alert_years || !s.next_due_date || s.status !== "actif") return false;
+      const due = parseDueDate(s.next_due_date);
+      if (!due) return false;
+      const days = differenceInDays(due, new Date());
       return days < 0 || days <= 90;
     });
   }, [schedules]);
 
   const getDueUrgency = (nextDate: string | null) => {
-    if (!nextDate) return "";
-    const days = differenceInDays(new Date(nextDate), new Date());
+    const due = parseDueDate(nextDate);
+    if (!due) return "";
+    const days = differenceInDays(due, new Date());
     if (days < 0) return "border-l-4 border-l-destructive";
     if (days <= 30) return "border-l-4 border-l-orange-400";
     return "";
