@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { loadLegalPeriodicityByEnergy } from "@/lib/legalRules";
 import { toast } from "sonner";
 import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS } from "@/lib/constants";
-import { WorkerMultiSelectField } from "@/components/forms/WorkerMultiSelect";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Schedule = Tables<"maintenance_schedules">;
@@ -36,8 +35,6 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
   const [sites, setSites] = useState<any[]>([]);
   const [equipment, setEquipment] = useState<any[]>([]);
   const [legalRules, setLegalRules] = useState<Record<string, string>>({});
-  const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
-  const [assignees, setAssignees] = useState<string[]>([]);
   const [binomes, setBinomes] = useState<{ id: string; name: string; code: string }[]>([]);
   const [binomeId, setBinomeId] = useState<string>("");
   const [form, setForm] = useState({
@@ -57,17 +54,9 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
     if (!open) return;
     supabase.from("clients").select("id, name").order("name").then(({ data }) => setClients(data ?? []));
     loadLegalPeriodicityByEnergy().then(setLegalRules);
-    supabase.from("profiles").select("id, full_name").eq("is_active", true).order("display_order")
-      .then(({ data }) => setWorkers(data ?? []));
     supabase.from("task_binomes").select("id, name, code").eq("is_active", true).order("code")
       .then(({ data }) => setBinomes((data ?? []) as any));
     setBinomeId((schedule as any)?.binome_id ?? "");
-    if (schedule) {
-      supabase.from("maintenance_schedule_assignees" as any).select("user_id").eq("maintenance_schedule_id", schedule.id)
-        .then(({ data }) => setAssignees(((data ?? []) as any[]).map((r) => r.user_id)));
-    } else {
-      setAssignees([]);
-    }
     if (schedule) {
       setForm({
         client_id: schedule.client_id,
@@ -144,17 +133,9 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
       status: form.status,
       binome_id: binomeId || null,
     };
-    const { data: saved, error } = schedule
+    const { error } = schedule
       ? await supabase.from("maintenance_schedules").update(payload).eq("id", schedule.id).select("id").single()
       : await supabase.from("maintenance_schedules").insert(payload as any).select("id").single();
-    if (!error && saved?.id) {
-      await supabase.from("maintenance_schedule_assignees" as any).delete().eq("maintenance_schedule_id", saved.id);
-      if (assignees.length > 0) {
-        await supabase.from("maintenance_schedule_assignees" as any).insert(
-          assignees.map((uid) => ({ maintenance_schedule_id: saved.id, user_id: uid })),
-        );
-      }
-    }
     setLoading(false);
     if (error) toast.error(error.message);
     else { toast.success(schedule ? "Entretien modifié" : "Entretien créé"); onOpenChange(false); onSaved(); }
@@ -197,8 +178,6 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
               </Select>
             </div>
           )}
-          <WorkerMultiSelectField label="Ouvriers assignés" workers={workers} value={assignees} onChange={setAssignees} />
-
           <div className="space-y-2">
             <Label>Binôme</Label>
             <Select value={binomeId || "__none"} onValueChange={(v) => setBinomeId(v === "__none" ? "" : v)}>
