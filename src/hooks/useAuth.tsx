@@ -214,8 +214,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    // Garde la session vivante après une longue inactivité ou une coupure réseau :
+    // au retour de l'onglet / de la connexion, on relance le rafraîchissement du token.
+    const revive = () => {
+      if (!isActive || document.visibilityState !== "visible") return;
+      supabase.auth.startAutoRefresh?.();
+      void supabase.auth.getSession();
+    };
+    document.addEventListener("visibilitychange", revive);
+    window.addEventListener("online", revive);
+    window.addEventListener("focus", revive);
+
     return () => {
       isActive = false;
+      document.removeEventListener("visibilitychange", revive);
+      window.removeEventListener("online", revive);
+      window.removeEventListener("focus", revive);
       subscription.unsubscribe();
     };
   }, []);
