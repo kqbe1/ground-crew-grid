@@ -1,4 +1,4 @@
-import { addMonths, getYear, parseISO } from "date-fns";
+import { addMonths, getMonth, getYear, parseISO } from "date-fns";
 
 export const PERIODICITY_MONTHS: Record<string, number> = {
   mensuel: 1, trimestriel: 3, semestriel: 6, annuel: 12, bisannuel: 24, triennal: 36,
@@ -31,8 +31,8 @@ export function occurrencesInYears(
   const period = periodMonthsOf(periodicity);
   const out: Date[] = [];
 
-  // Anchor index: first k (possibly negative) whose year >= fromYear
-  const monthsDiff = (fromYear - getYear(base)) * 12;
+  // Months between the base date and January of fromYear
+  const monthsDiff = (fromYear - getYear(base)) * 12 - getMonth(base);
   let k = Math.floor(monthsDiff / period) - 1;
 
   for (let i = 0; i < 600; i++, k++) {
