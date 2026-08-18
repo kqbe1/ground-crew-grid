@@ -9,10 +9,7 @@ import { getYear, getMonth, format, subMonths, startOfMonth, endOfMonth } from "
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-const PERIODICITY_MONTHS: Record<string, number> = {
-  mensuel: 1, trimestriel: 3, semestriel: 6, annuel: 12, bisannuel: 24, triennal: 36,
-};
+import { occurrencesInYears } from "@/lib/recurrence";
 
 const ENTRETIEN_TYPES = Object.entries(INTERVENTION_TYPE_LABELS).filter(([k]) => k.startsWith("entretien_"));
 
@@ -57,19 +54,12 @@ export default function AdminStatsTab() {
 
     schedules.forEach((s) => {
       if (!s.next_due_date) return;
-      const periodMonths = PERIODICITY_MONTHS[s.periodicity] || 12;
-      let nextDate = new Date(s.next_due_date);
-      for (let i = 0; i < 200; i++) {
-        const yr = getYear(nextDate);
-        if (yr > currentYear + 3) break;
-        const proj = result.find((p) => p.year === yr);
-        if (proj) {
-          proj.byType[s.intervention_type] = (proj.byType[s.intervention_type] || 0) + 1;
-          proj.total++;
-        }
-        nextDate = new Date(nextDate);
-        nextDate.setMonth(nextDate.getMonth() + periodMonths);
-      }
+      occurrencesInYears(s.next_due_date, s.periodicity, currentYear, currentYear + 3).forEach((d) => {
+        const proj = result.find((p) => p.year === getYear(d));
+        if (!proj) return;
+        proj.byType[s.intervention_type] = (proj.byType[s.intervention_type] || 0) + 1;
+        proj.total++;
+      });
     });
     return result;
   }, [schedules, currentYear]);
