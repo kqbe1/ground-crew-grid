@@ -80,6 +80,7 @@ export default function CommandeDetail() {
 
   const steps = ["demandee", "commandee", "recue", "cloturee"];
   const currentIdx = steps.indexOf(order.status);
+  const photos: string[] = Array.isArray(order.photos) ? order.photos : [];
 
   return (
     <LayoutDetail
@@ -142,13 +143,13 @@ export default function CommandeDetail() {
           <span className="text-xs text-muted-foreground self-center mr-1">Changer le statut :</span>
           {steps.map((step) => {
             const isCurrent = step === order.status;
-            const isPast = steps.indexOf(step) < currentIdx;
+            const isNext = steps.indexOf(step) === currentIdx + 1;
             return (
               <Button
                 key={step}
                 size="sm"
                 variant={isCurrent ? "default" : "outline"}
-                disabled={isCurrent || isPast}
+                disabled={!isNext || saving}
                 onClick={() => setStatus(step)}
                 className={cn(isCurrent && statusColors[step])}
               >
@@ -221,6 +222,8 @@ export default function CommandeDetail() {
             </CardContent>
           </Card>
         )}
+
+        <OrderPhotos photos={photos} />
       </div>
 
       {order.clients && (
