@@ -30,9 +30,10 @@ export async function downloadFichesZip(fiches: UnifiedFiche[]): Promise<ZipExpo
     companyId = profile?.company_id ?? null;
   }
 
+  // Uniquement les configurations de l'entreprise courante (jamais celles d'une autre).
   const { data: allSettings } = companyId
     ? await supabase.from("pdf_settings").select("*").eq("company_id", companyId)
-    : await supabase.from("pdf_settings").select("*").limit(1);
+    : { data: [] as any[] };
 
   const settingsByType: Record<string, any> = {};
   for (const s of allSettings ?? []) settingsByType[s.document_type] = s;
