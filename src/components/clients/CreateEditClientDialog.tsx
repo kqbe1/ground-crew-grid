@@ -124,17 +124,26 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
     let primarySiteId: string | null = null;
     if (savedClientId && form.address_intervention.trim()) {
       const addr = form.address_intervention.trim();
-      const { data: existing } = await supabase
-        .from("client_sites").select("id")
-        .eq("client_id", savedClientId).eq("address", addr).maybeSingle();
-      if (existing?.id) {
-        primarySiteId = existing.id;
+      const { data: sites } = await supabase
+        .from("client_sites")
+        .select("id, name, address, is_primary")
+        .eq("client_id", savedClientId)
+        .order("created_at", { ascending: true });
+      const list = sites ?? [];
+      // même adresse déjà enregistrée → on réutilise le site existant
+      const sameAddress = list.find((s) => (s.address ?? "").trim() === addr);
+      // sinon on réutilise le site principal auto-généré (évite un doublon "Adresse principale"
+      // à chaque correction de l'adresse du client)
+      const autoPrimary = list.find((s) => s.is_primary || s.name === "Adresse principale");
+      if (sameAddress) {
+        primarySiteId = sameAddress.id;
+      } else if (autoPrimary) {
+        primarySiteId = autoPrimary.id;
+        await supabase.from("client_sites").update({ address: addr }).eq("id", autoPrimary.id);
       } else {
-        const { count } = await supabase.from("client_sites")
-          .select("id", { count: "exact" }).eq("client_id", savedClientId);
         const { data: site } = await supabase.from("client_sites").insert({
           client_id: savedClientId, name: "Adresse principale",
-          address: addr, is_primary: (count ?? 0) === 0,
+          address: addr, is_primary: list.length === 0,
         } as any).select("id").single();
         primarySiteId = site?.id ?? null;
       }
