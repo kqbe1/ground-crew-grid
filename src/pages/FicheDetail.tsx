@@ -186,12 +186,18 @@ export default function FicheDetail() {
         ) : null
       }
       actions={
-        <Button variant="outline" size="sm" onClick={async () => {
-          const { pdfCfg, logoDataUrl } = await loadPdfConfig();
-          downloadFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
-        }}>
-          <Download className="w-4 h-4 mr-1" /> Télécharger
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={async () => {
+            const { pdfCfg, logoDataUrl } = await loadPdfConfig();
+            downloadFichePdf(sheet, pdfCfg as Partial<PdfConfig> | undefined, logoDataUrl);
+          }}>
+            <Download className="w-4 h-4 mr-1" /> Télécharger
+          </Button>
+          <Button size="sm" onClick={() => setSendOpen(true)} disabled={!task?.clients?.email}>
+            <Send className="w-4 h-4 mr-1" />
+            {sheet.sent_to_client ? "Renvoyer au client" : "Envoyer au client"}
+          </Button>
+        </div>
       }
       toolbar={isReadOnly ? (
         <SheetStatusBadge status={computeSheetStatus(sheet)} />
