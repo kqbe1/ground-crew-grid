@@ -13,6 +13,7 @@ import { generateFichePdf, downloadFichePdf, PdfConfig } from "@/lib/generateFic
 import { loadPdfConfigAndLogo, ficheDocumentType } from "@/lib/pdfConfig";
 import { sendFicheToAG } from "@/lib/sendEmailAG";
 import { Send } from "lucide-react";
+import SendFicheDialog from "@/components/fiches/SendFicheDialog";
 
 interface FicheDetailDialogProps {
   sheet: any;
@@ -24,6 +25,7 @@ interface FicheDetailDialogProps {
 export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated }: FicheDetailDialogProps) {
   const [sending, setSending] = useState(false);
   const [sendingAG, setSendingAG] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loadingPdf, setLoadingPdf] = useState(false);
 
@@ -300,17 +302,16 @@ export default function FicheDetailDialog({ sheet, open, onOpenChange, onUpdated
             <Download className="w-4 h-4 mr-1" />
             Télécharger PDF
           </Button>
-          {!sheet.sent_to_client && (
-            <Button
-              onClick={handleSendAG}
-              disabled={sendingAG || !task?.clients?.email}
-              size="sm"
-            >
-              <Send className="w-4 h-4 mr-1" />
-              {sendingAG ? "Envoi..." : "Envoyer au client"}
-            </Button>
-          )}
+          <Button
+            onClick={() => setSendOpen(true)}
+            disabled={!task?.clients?.email}
+            size="sm"
+          >
+            <Send className="w-4 h-4 mr-1" />
+            {sheet.sent_to_client ? "Renvoyer au client" : "Envoyer au client"}
+          </Button>
         </div>
+        <SendFicheDialog sheet={sheet} open={sendOpen} onOpenChange={setSendOpen} onSent={onUpdated} />
       </DialogContent>
     </Dialog>
   );
