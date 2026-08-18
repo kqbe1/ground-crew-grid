@@ -103,9 +103,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (error) {
-      // Profile fetch failed — sign the user out rather than trust client-side fallbacks.
-      await supabase.auth.signOut();
-      resetAuthState();
+      // Erreur réseau/transitoire : on NE déconnecte PAS l'utilisateur.
+      // La session reste active, les données profil seront re-synchronisées plus tard.
+      console.warn("[auth] Échec de récupération du profil, session conservée:", error);
       return;
     }
 
