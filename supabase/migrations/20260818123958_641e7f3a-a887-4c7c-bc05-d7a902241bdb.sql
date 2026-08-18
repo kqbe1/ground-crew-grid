@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION private.is_task_assignee(uuid) TO authenticated;
