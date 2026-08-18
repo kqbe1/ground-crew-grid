@@ -5,10 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { INTERVENTION_TYPE_LABELS, TASK_STATUS_LABELS } from "@/lib/constants";
+import { INTERVENTION_TYPE_LABELS, TASK_STATUS_LABELS, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { computeEndTime } from "@/lib/timeRange";
-import { Phone, MapPin, ClipboardList, MessageSquare, KeyRound, UserRound, Building2, StickyNote, Mail } from "lucide-react";
+import { Phone, MapPin, ClipboardList, MessageSquare, KeyRound, UserRound, Building2, StickyNote, Mail, Package, AlertTriangle } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
+
+const orderStatusColors: Record<string, string> = {
+  demandee: "bg-order-demandee text-white",
+  commandee: "bg-order-commandee text-white",
+  recue: "bg-order-recue text-white",
+  cloturee: "bg-order-cloturee text-white",
+};
 
 export default function MobileTaskDetail() {
   const { id } = useParams();
@@ -17,6 +24,7 @@ export default function MobileTaskDetail() {
   const [task, setTask] = useState<any>(null);
   const [hasDraft, setHasDraft] = useState(false);
   const [sheetSubmitted, setSheetSubmitted] = useState(false);
+  const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -53,6 +61,15 @@ export default function MobileTaskDetail() {
         .eq("is_draft", false)
         .maybeSingle();
       if (data) setSheetSubmitted(true);
+    })();
+    (async () => {
+      if (!id) return;
+      const { data } = await supabase
+        .from("parts_orders")
+        .select("id, part_name, part_reference, quantity, status, urgency, notes, created_at")
+        .eq("work_task_id", id)
+        .order("created_at", { ascending: false });
+      setOrders(data ?? []);
     })();
   }, [id]);
 
