@@ -37,7 +37,7 @@ export default function EntretienDetail() {
     const { data } = await supabase
       .from("maintenance_schedules")
       .select(
-        "*, clients(id, name, email, phone, phone_secondary, address_intervention, address_billing, postal_code, city, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal), client_sites(name, address, postal_code, city, notes), client_equipment(name, brand, model, energy_type, maintenance_periodicity, last_maintenance_date, next_maintenance_date, notes)"
+        "*, clients(id, name, email, phone, phone_secondary, address_intervention, address_billing, postal_code, city, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal, owner:clients!clients_owner_client_id_fkey(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)), client_sites(name, address, postal_code, city, notes), client_equipment(name, brand, model, energy_type, maintenance_periodicity, last_maintenance_date, next_maintenance_date, notes)"
       )
       .eq("id", id)
       .single();
@@ -125,6 +125,19 @@ export default function EntretienDetail() {
           <Row label="Notes internes" value={client.notes_internal} />
         </CardContent>
       </Card>
+
+      {client.owner && (
+        <Card>
+          <CardContent className="p-3 grid gap-2 text-sm">
+            <p className="font-medium flex items-center gap-1 mb-1"><User className="w-4 h-4" /> Propriétaire</p>
+            <Row label="Nom et prénom" value={client.owner.name} />
+            <Row label="Téléphone" value={client.owner.phone ? <a className="underline" href={`tel:${client.owner.phone}`}>{client.owner.phone}</a> : null} />
+            <Row label="Téléphone 2" value={client.owner.phone_secondary ? <a className="underline" href={`tel:${client.owner.phone_secondary}`}>{client.owner.phone_secondary}</a> : null} />
+            <Row label="Email" value={client.owner.email} />
+            <Row label="Adresse" value={client.owner.address_intervention} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Site */}
       {site && (
