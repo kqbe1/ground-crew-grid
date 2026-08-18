@@ -208,7 +208,7 @@ export default function FicheDetail() {
           }}>
             <Download className="w-4 h-4 mr-1" /> Télécharger
           </Button>
-          <Button size="sm" onClick={() => setSendOpen(true)} disabled={!task?.clients?.email}>
+          <Button size="sm" onClick={() => setSendOpen(true)}>
             <Send className="w-4 h-4 mr-1" />
             {sheet.sent_to_client ? "Renvoyer au client" : "Envoyer au client"}
           </Button>
