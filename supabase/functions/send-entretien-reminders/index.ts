@@ -33,10 +33,9 @@ Deno.serve(async (req) => {
 
   const { data: schedules, error } = await supabase
     .from('maintenance_schedules')
-    .select('id, company_id, intervention_type, next_due_date, reminder_sent_at, clients(name, email), client_equipment(name, brand, model, energy_type)')
+    .select('id, company_id, intervention_type, next_due_date, reminder_sent_at, reminder_sent_for_date, clients(name, email), client_equipment(name, brand, model, energy_type)')
     .eq('status', 'actif')
     .lte('next_due_date', horizon)
-    .is('reminder_sent_at', null)
 
   if (error) {
     console.error('query failed', error)
@@ -49,6 +48,10 @@ Deno.serve(async (req) => {
   let skipped = 0
 
   for (const s of schedules ?? []) {
+    // Idempotence par échéance : un rappel au maximum par date d'échéance.
+    if (s.reminder_sent_for_date === s.next_due_date) { skipped++; continue }
+    // Legacy : rappel déjà envoyé avant l'introduction de reminder_sent_for_date
+    if (s.reminder_sent_at && !s.reminder_sent_for_date) { skipped++; continue }
     const settings = settingsByCompany.get(s.company_id) ?? settingsByCompany.get('global')
     if (!settings?.auto_reminder_enabled) { skipped++; continue }
 
@@ -88,7 +91,11 @@ Deno.serve(async (req) => {
       console.error('send failed', s.id, await res.text())
       continue
     }
-    await supabase.from('maintenance_schedules').update({ reminder_sent_at: new Date().toISOString() }).eq('id', s.id)
+    await supabase
+      .from('maintenance_schedules')
+      .update({ reminder_sent_at: new Date().toISOString(), reminder_sent_for_date: s.next_due_date })
+      .eq('id', s.id)
+      .eq('next_due_date', s.next_due_date)
     sent++
   }
 
