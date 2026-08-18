@@ -390,6 +390,100 @@ export type Database = {
         }
         Relationships: []
       }
+      company_email_settings: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          reply_to_email: string | null
+          sender_email: string
+          sender_name: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          reply_to_email?: string | null
+          sender_email: string
+          sender_name: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          reply_to_email?: string | null
+          sender_email?: string
+          sender_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_email_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_logs: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          email_type: string
+          error_message: string | null
+          id: string
+          recipient_email: string
+          reply_to_email: string | null
+          resend_id: string | null
+          sender_email: string | null
+          sent_at: string | null
+          status: string
+          subject: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          email_type: string
+          error_message?: string | null
+          id?: string
+          recipient_email: string
+          reply_to_email?: string | null
+          resend_id?: string | null
+          sender_email?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          recipient_email?: string
+          reply_to_email?: string | null
+          resend_id?: string | null
+          sender_email?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -1284,6 +1378,65 @@ export type Database = {
           },
         ]
       }
+      scheduled_email_reminders: {
+        Row: {
+          attempts: number
+          company_id: string
+          created_at: string
+          email_type: string
+          error_message: string | null
+          id: string
+          payload: Json
+          recipient_email: string
+          related_entity_id: string | null
+          related_entity_type: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          company_id: string
+          created_at?: string
+          email_type: string
+          error_message?: string | null
+          id?: string
+          payload?: Json
+          recipient_email: string
+          related_entity_id?: string | null
+          related_entity_type: string
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          company_id?: string
+          created_at?: string
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          payload?: Json
+          recipient_email?: string
+          related_entity_id?: string | null
+          related_entity_type?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_email_reminders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -1614,6 +1767,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_due_email_reminders: {
+        Args: { batch_size?: number }
+        Returns: {
+          attempts: number
+          company_id: string
+          created_at: string
+          email_type: string
+          error_message: string | null
+          id: string
+          payload: Json
+          recipient_email: string
+          related_entity_id: string | null
+          related_entity_type: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "scheduled_email_reminders"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
