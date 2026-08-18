@@ -43,14 +43,16 @@ export async function fetchPdfConfig(documentType: PdfDocumentType) {
         .maybeSingle();
       row = fallback;
     }
-  }
-  if (!row) {
-    const { data: any1 } = await supabase
-      .from("pdf_settings")
-      .select("*")
-      .limit(1)
-      .maybeSingle();
-    row = any1;
+    if (!row) {
+      // Dernier recours : n'importe quelle config DE CETTE entreprise uniquement.
+      const { data: anyOwn } = await supabase
+        .from("pdf_settings")
+        .select("*")
+        .eq("company_id", companyId)
+        .limit(1)
+        .maybeSingle();
+      row = anyOwn;
+    }
   }
   return row;
 }
