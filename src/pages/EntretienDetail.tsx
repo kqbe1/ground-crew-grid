@@ -41,7 +41,7 @@ export default function EntretienDetail() {
         "*, clients(id, name, email, phone, phone_secondary, address_intervention, address_billing, postal_code, city, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal, owner:owner_client_id(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)), client_sites(name, address, postal_code, city, notes), client_equipment(name, brand, model, energy_type, maintenance_periodicity, last_maintenance_date, next_maintenance_date, notes), task_binomes:binome_id(code, name)"
       )
       .eq("id", id)
-      .single();
+      .maybeSingle();
     setSchedule(data);
     const { data: rows } = await supabase
       .from("maintenance_schedule_assignees" as any)

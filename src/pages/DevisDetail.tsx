@@ -30,7 +30,7 @@ export default function DevisDetail() {
 
   const fetchQuote = useCallback(async () => {
     if (!id) return;
-    const { data } = await supabase.from("quotes").select("*, profiles!quotes_created_by_fkey(full_name)").eq("id", id).single();
+    const { data } = await supabase.from("quotes").select("*, profiles!quotes_created_by_fkey(full_name)").eq("id", id).maybeSingle();
     setQuote(data);
     setLoading(false);
   }, [id]);

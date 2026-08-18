@@ -193,7 +193,7 @@ export default function PdfSettingsTab() {
         .from("profiles")
         .select("company_id")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (!profile?.company_id) throw new Error("Entreprise introuvable");
 

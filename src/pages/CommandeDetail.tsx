@@ -36,7 +36,7 @@ export default function CommandeDetail() {
       .from("parts_orders")
       .select(`*, clients(${CLIENT_FULL_SELECT}), work_tasks(title), profiles!parts_orders_requested_by_fkey(full_name)`)
       .eq("id", id)
-      .single();
+      .maybeSingle();
     setOrder(data);
     setLoading(false);
   }, [id]);

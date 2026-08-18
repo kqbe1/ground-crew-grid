@@ -55,7 +55,7 @@ export default function ClientDetail() {
 
   const fetchClient = useCallback(async () => {
     if (!id) return;
-    const { data } = await supabase.from("clients").select("*").eq("id", id).single();
+    const { data } = await supabase.from("clients").select("*").eq("id", id).maybeSingle();
     setClient(data);
     setLoading(false);
   }, [id]);
