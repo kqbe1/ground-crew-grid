@@ -17,3 +17,5 @@ verify_jwt = false
 
 [functions.analyze-nameplate]
 verify_jwt = true
+[functions.send-entretien-reminders]
+verify_jwt = true
