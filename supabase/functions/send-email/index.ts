@@ -19,6 +19,7 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
   const resendKey = Deno.env.get('RESEND_API_KEY')
+  console.log('[send-email debug] SUPABASE_SERVICE_ROLE_KEY available:', !!serviceKey, 'length:', serviceKey?.length ?? 0)
   if (!supabaseUrl || !serviceKey) return json({ error: 'Server configuration error' }, 500)
   if (!resendKey) return json({ error: 'RESEND_API_KEY is not configured' }, 500)
 
