@@ -59,6 +59,8 @@ export default function MobileTaskDetail() {
         .select("id")
         .eq("work_task_id", id)
         .eq("is_draft", false)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (data) setSheetSubmitted(true);
     })();

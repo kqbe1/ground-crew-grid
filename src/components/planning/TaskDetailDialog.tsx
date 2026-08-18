@@ -116,7 +116,10 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
       intervention_type: interventionType as any,
       status: status as any,
       assigned_to: assignedTo || null,
-      second_assigned_to: (secondAssignedTo && secondAssignedTo !== "none") ? secondAssignedTo : null,
+      second_assigned_to:
+        secondAssignedTo && secondAssignedTo !== "none" && secondAssignedTo !== assignedTo
+          ? secondAssignedTo
+          : null,
       binome_id: binomeId || null,
       scheduled_date: scheduledDate,
       start_time: startTime,
@@ -314,7 +317,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
                   <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Aucun</SelectItem>
-                    {workers.map((w) => (
+                    {workers.filter((w) => w.id !== assignedTo).map((w) => (
                       <SelectItem key={w.id} value={w.id}>
                         {workerLabels[w.id] ? `${workerLabels[w.id]} · ` : ""}{w.full_name}
                       </SelectItem>

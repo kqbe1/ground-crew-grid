@@ -60,11 +60,22 @@ export default function MobileAgenda() {
     if (!user) return;
     const fetchTasks = async () => {
       const today = format(new Date(), "yyyy-MM-dd");
+      // Tâches où l'ouvrier est co-assigné (multi-ouvriers depuis le planning desktop)
+      const { data: assigneeRows } = await supabase
+        .from("work_task_assignees")
+        .select("work_task_id")
+        .eq("user_id", user.id);
+      const assignedIds = (assigneeRows ?? []).map((r: any) => r.work_task_id);
+      const orFilter = [
+        `assigned_to.eq.${user.id}`,
+        `second_assigned_to.eq.${user.id}`,
+        ...(assignedIds.length > 0 ? [`id.in.(${assignedIds.join(",")})`] : []),
+      ].join(",");
       const [tasksRes, clientsRes, sheetsRes, lateRes] = await Promise.all([
         supabase
           .from("work_tasks")
           .select("*, client_sites(address, postal_code, city)")
-          .eq("assigned_to", user.id)
+          .or(orFilter)
           .eq("scheduled_date", dayStr)
           .order("start_time"),
         supabase.rpc("get_my_clients_safe"),
@@ -75,7 +86,7 @@ export default function MobileAgenda() {
         supabase
           .from("work_tasks")
           .select("id, title, start_time, scheduled_date, client_id")
-          .eq("assigned_to", user.id)
+          .or(orFilter)
           .lt("scheduled_date", today)
           .order("scheduled_date", { ascending: false }),
       ]);

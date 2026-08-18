@@ -70,6 +70,8 @@ export default function MobileFicheEntretienForm() {
         .select("id, is_draft")
         .eq("work_task_id", taskId)
         .eq("is_draft", false)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (existing) setReadOnly(true);
     })();
@@ -156,7 +158,7 @@ export default function MobileFicheEntretienForm() {
     const map: Record<string, string> = {
       termine: "termine", piece_a_commander: "piece_a_commander",
       piece_commandee: "piece_a_commander", a_refixer: "a_replanifier",
-      sav: "sav", autre: "planifie",
+      sav: "sav", autre: "a_replanifier",
     };
     for (const p of priority) if (details.includes(p)) return map[p];
     return "termine";
