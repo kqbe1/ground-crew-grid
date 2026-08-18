@@ -51,7 +51,7 @@ export async function sendFicheToAG(
     ? format(new Date(sheet.created_at), "dd/MM/yyyy", { locale: fr })
     : "";
 
-  const { error } = await supabase.functions.invoke("send-transactional-email", {
+  const { error } = await supabase.functions.invoke("send-email", {
     body: {
       templateName: "fiche-intervention",
       recipientEmail: clientEmail,
@@ -95,7 +95,7 @@ export async function sendEntretienReminderToAG(schedule: any): Promise<void> {
     ? format(new Date(schedule.next_due_date), "dd/MM/yyyy", { locale: fr })
     : "";
 
-  const { error } = await supabase.functions.invoke("send-transactional-email", {
+  const { error } = await supabase.functions.invoke("send-email", {
     body: {
       templateName: "rappel-entretien",
       recipientEmail: clientEmail,

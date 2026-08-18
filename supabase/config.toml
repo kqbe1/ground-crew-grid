@@ -1,13 +1,10 @@
 project_id = "obvvrvcvijyvnnfdcrpg"
 
-[functions.process-email-queue]
+[functions.send-email]
 verify_jwt = true
 
-[functions.send-transactional-email]
+[functions.process-email-reminders]
 verify_jwt = true
-
-[functions.preview-transactional-email]
-verify_jwt = false
 
 [functions.handle-email-unsubscribe]
 verify_jwt = false

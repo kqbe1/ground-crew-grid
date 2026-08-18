@@ -242,8 +242,167 @@ function TemplateEditor({ templateKey }: { templateKey: TemplateKey }) {
   );
 }
 
+function SenderSettingsCard() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [sender, setSender] = useState({
+    sender_name: "",
+    sender_email: "",
+    reply_to_email: "",
+    is_active: true,
+  });
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id;
+      if (!uid) return setLoading(false);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", uid)
+        .maybeSingle();
+      const cid = profile?.company_id ?? null;
+      setCompanyId(cid);
+      if (cid) {
+        const { data } = await supabase
+          .from("company_email_settings")
+          .select("sender_name, sender_email, reply_to_email, is_active")
+          .eq("company_id", cid)
+          .maybeSingle();
+        if (data) {
+          setSender({
+            sender_name: data.sender_name ?? "",
+            sender_email: data.sender_email ?? "",
+            reply_to_email: data.reply_to_email ?? "",
+            is_active: data.is_active ?? true,
+          });
+        }
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const saveSender = async () => {
+    if (!companyId) return;
+    const emailSchema = z.string().trim().email("Email invalide");
+    if (!emailSchema.safeParse(sender.sender_email).success) {
+      toast.error("Adresse d'expédition invalide");
+      return;
+    }
+    if (sender.reply_to_email && !emailSchema.safeParse(sender.reply_to_email).success) {
+      toast.error("Adresse de réponse invalide");
+      return;
+    }
+    if (!sender.sender_name.trim()) {
+      toast.error("Le nom de l'expéditeur est requis");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.from("company_email_settings").upsert(
+      {
+        company_id: companyId,
+        sender_name: sender.sender_name.trim(),
+        sender_email: sender.sender_email.trim(),
+        reply_to_email: sender.reply_to_email.trim() || null,
+        is_active: sender.is_active,
+      },
+      { onConflict: "company_id" },
+    );
+    setSaving(false);
+    if (error) {
+      console.error(error);
+      toast.error("Erreur lors de la sauvegarde");
+      return;
+    }
+    toast.success("Configuration d'envoi enregistrée");
+  };
+
+  return (
+    <Card className="mb-4">
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Mail className="w-4 h-4" /> Adresse d'envoi de l'entreprise
+        </CardTitle>
+        <CardDescription>
+          Expéditeur utilisé pour tous les emails envoyés aux clients. Les réponses des clients
+          arrivent sur l'adresse de réponse indiquée. Le domaine de l'adresse d'expédition doit être
+          vérifié chez votre fournisseur d'envoi.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="sender_name">Nom de l'expéditeur</Label>
+                <Input
+                  id="sender_name"
+                  value={sender.sender_name}
+                  maxLength={100}
+                  onChange={(e) => setSender({ ...sender, sender_name: e.target.value })}
+                  placeholder="AG Chauffage"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="sender_email">Adresse d'expédition</Label>
+                <Input
+                  id="sender_email"
+                  type="email"
+                  value={sender.sender_email}
+                  maxLength={255}
+                  onChange={(e) => setSender({ ...sender, sender_email: e.target.value })}
+                  placeholder="noreply@votredomaine.be"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="reply_to_email">Adresse de réponse</Label>
+                <Input
+                  id="reply_to_email"
+                  type="email"
+                  value={sender.reply_to_email}
+                  maxLength={255}
+                  onChange={(e) => setSender({ ...sender, reply_to_email: e.target.value })}
+                  placeholder="info@votredomaine.be"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-4 border-t pt-4">
+              <div>
+                <Label htmlFor="sender_active">Envoi activé</Label>
+                <p className="text-xs text-muted-foreground">
+                  Si désactivé, aucun email ne part avec cette configuration.
+                </p>
+              </div>
+              <Switch
+                id="sender_active"
+                checked={sender.is_active}
+                onCheckedChange={(v) => setSender({ ...sender, is_active: v })}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={saveSender} disabled={saving || !companyId}>
+                <Save className="w-4 h-4 mr-1.5" />
+                {saving ? "Enregistrement..." : "Enregistrer"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function EmailSettingsTab() {
   return (
+    <>
+    <SenderSettingsCard />
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
@@ -272,5 +431,6 @@ export default function EmailSettingsTab() {
         </Tabs>
       </CardContent>
     </Card>
+    </>
   );
 }
