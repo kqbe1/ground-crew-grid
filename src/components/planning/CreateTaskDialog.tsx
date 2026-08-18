@@ -22,6 +22,7 @@ import { findOverlaps } from "@/lib/overlapUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
 import ClientCombobox from "@/components/forms/ClientCombobox";
+import { INTERVENTION_TYPE_LABELS } from "@/lib/constants";
 
 const DRAFT_KEY = "create_task_draft_v1";
 function loadDraft(): any | null {
@@ -227,7 +228,12 @@ export default function CreateTaskDialog({
               <Select value={interventionType} onValueChange={setInterventionType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {Object.entries(SIMPLIFIED_TYPES).map(([k, v]) => (
+                  {Object.entries({
+                    ...SIMPLIFIED_TYPES,
+                    ...(SIMPLIFIED_TYPES[interventionType]
+                      ? {}
+                      : { [interventionType]: INTERVENTION_TYPE_LABELS[interventionType] || interventionType }),
+                  }).map(([k, v]) => (
                     <SelectItem key={k} value={k}>{v}</SelectItem>
                   ))}
                 </SelectContent>

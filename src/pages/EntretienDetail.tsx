@@ -4,14 +4,25 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS } from "@/lib/constants";
+import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS, ENERGY_TYPE_LABELS } from "@/lib/constants";
 import { format, differenceInDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Wrench, MapPin, Calendar, AlertTriangle, Pencil, User, Loader2 } from "lucide-react";
+import { Wrench, MapPin, Calendar, AlertTriangle, Pencil, User, CalendarPlus } from "lucide-react";
 import LayoutDetail from "@/components/layout/LayoutDetail";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import CreateEditEntretienDialog from "@/components/entretiens/CreateEditEntretienDialog";
+import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
+
+function Row({ label, value }: { label: string; value?: React.ReactNode }) {
+  if (value === null || value === undefined || value === "") return null;
+  return (
+    <div className="flex justify-between gap-4">
+      <span className="text-muted-foreground shrink-0">{label}</span>
+      <span className="text-right break-words">{value}</span>
+    </div>
+  );
+}
 
 export default function EntretienDetail() {
   const { id } = useParams();
@@ -19,12 +30,15 @@ export default function EntretienDetail() {
   const [schedule, setSchedule] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
+  const [planOpen, setPlanOpen] = useState(false);
 
   const fetchSchedule = useCallback(async () => {
     if (!id) return;
     const { data } = await supabase
       .from("maintenance_schedules")
-      .select("*, clients(name), client_sites(address), client_equipment(name, brand, model)")
+      .select(
+        "*, clients(id, name, email, phone, phone_secondary, address_intervention, address_billing, postal_code, city, region, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal), client_sites(name, address, postal_code, city, notes), client_equipment(name, brand, model, energy_type, maintenance_periodicity, last_maintenance_date, next_maintenance_date, notes)"
+      )
       .eq("id", id)
       .single();
     setSchedule(data);
@@ -37,6 +51,9 @@ export default function EntretienDetail() {
   if (!schedule) return <LayoutDetail notFound resourceLabel="Entretien">{null}</LayoutDetail>;
 
   const daysUntilDue = schedule.next_due_date ? differenceInDays(new Date(schedule.next_due_date), new Date()) : null;
+  const client = schedule.clients || {};
+  const site = schedule.client_sites || null;
+  const equip = schedule.client_equipment || null;
   const urgencyLevel = daysUntilDue === null ? "none" : daysUntilDue < 0 ? "overdue" : daysUntilDue <= 30 ? "soon" : "ok";
   const urgencyStyles: Record<string, string> = {
     overdue: "bg-destructive/10 text-destructive border-destructive/30",
@@ -52,9 +69,14 @@ export default function EntretienDetail() {
       subtitle={schedule.clients?.name}
       hideSeparator
       actions={
-        <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-          <Pencil className="w-4 h-4 mr-1" /> Modifier
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={() => setPlanOpen(true)}>
+            <CalendarPlus className="w-4 h-4 mr-1" /> Planifier cet entretien
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="w-4 h-4 mr-1" /> Modifier
+          </Button>
+        </div>
       }
     >
       {/* Due date card */}
@@ -86,23 +108,57 @@ export default function EntretienDetail() {
 
       <Separator />
 
+      {/* Client */}
+      <Card>
+        <CardContent className="p-3 grid gap-2 text-sm">
+          <p className="font-medium flex items-center gap-1 mb-1"><User className="w-4 h-4" /> Client</p>
+          <Row label="Nom" value={client.name} />
+          <Row label="Téléphone" value={client.phone ? <a className="underline" href={`tel:${client.phone}`}>{client.phone}</a> : null} />
+          <Row label="Téléphone 2" value={client.phone_secondary ? <a className="underline" href={`tel:${client.phone_secondary}`}>{client.phone_secondary}</a> : null} />
+          <Row label="Email" value={client.email ? <a className="underline" href={`mailto:${client.email}`}>{client.email}</a> : null} />
+          <Row label="Adresse d'intervention" value={client.address_intervention} />
+          <Row label="Code postal / Ville" value={[client.postal_code, client.city].filter(Boolean).join(" ")} />
+          <Row label="Adresse de facturation" value={client.address_billing} />
+          <Row label="Région" value={client.region} />
+          <Row label="Contact syndic" value={client.contact_syndic} />
+          <Row label="Contact locataire" value={client.contact_locataire} />
+          <Row label="Clés / codes" value={client.syndic_keys_codes} />
+          <Row label="Notes internes" value={client.notes_internal} />
+        </CardContent>
+      </Card>
+
+      {/* Site */}
+      {site && (
+        <Card>
+          <CardContent className="p-3 grid gap-2 text-sm">
+            <p className="font-medium flex items-center gap-1 mb-1"><MapPin className="w-4 h-4" /> Site</p>
+            <Row label="Nom" value={site.name} />
+            <Row label="Adresse" value={site.address} />
+            <Row label="Code postal / Ville" value={[site.postal_code, site.city].filter(Boolean).join(" ")} />
+            <Row label="Notes" value={site.notes} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Équipement */}
+      {equip && (
+        <Card>
+          <CardContent className="p-3 grid gap-2 text-sm">
+            <p className="font-medium flex items-center gap-1 mb-1"><Wrench className="w-4 h-4" /> Équipement</p>
+            <Row label="Nom" value={equip.name} />
+            <Row label="Énergie" value={ENERGY_TYPE_LABELS[equip.energy_type] || equip.energy_type} />
+            <Row label="Marque / Modèle" value={[equip.brand, equip.model].filter(Boolean).join(" ")} />
+            <Row label="Périodicité" value={PERIODICITY_LABELS[equip.maintenance_periodicity] || equip.maintenance_periodicity} />
+            <Row label="Dernier entretien" value={equip.last_maintenance_date ? format(new Date(equip.last_maintenance_date), "dd/MM/yyyy") : null} />
+            <Row label="Prochain entretien" value={equip.next_maintenance_date ? format(new Date(equip.next_maintenance_date), "dd/MM/yyyy") : null} />
+            <Row label="Notes" value={equip.notes} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Entretien */}
       <div className="grid gap-3 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Client</span>
-          <span className="font-medium flex items-center gap-1"><User className="w-3 h-3" /> {schedule.clients?.name || "—"}</span>
-        </div>
-        {schedule.client_sites?.address && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Site</span>
-            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {schedule.client_sites.address}</span>
-          </div>
-        )}
-        {schedule.client_equipment && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Équipement</span>
-            <span>{schedule.client_equipment.name} {schedule.client_equipment.brand && `(${schedule.client_equipment.brand} ${schedule.client_equipment.model || ""})`}</span>
-          </div>
-        )}
+        <Row label="Type" value={INTERVENTION_TYPE_LABELS[schedule.intervention_type] || schedule.intervention_type} />
         <div className="flex justify-between">
           <span className="text-muted-foreground">Périodicité</span>
           <Badge variant="outline">{PERIODICITY_LABELS[schedule.periodicity]}</Badge>
@@ -111,12 +167,7 @@ export default function EntretienDetail() {
           <span className="text-muted-foreground">Statut</span>
           <Badge variant={schedule.status === "actif" ? "default" : "secondary"}>{schedule.status}</Badge>
         </div>
-        {schedule.last_done_date && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Dernier entretien</span>
-            <span>{format(new Date(schedule.last_done_date), "dd/MM/yyyy")}</span>
-          </div>
-        )}
+        <Row label="Dernier entretien" value={schedule.last_done_date ? format(new Date(schedule.last_done_date), "dd/MM/yyyy") : null} />
       </div>
 
       {schedule.notes && (
@@ -136,6 +187,17 @@ export default function EntretienDetail() {
         onOpenChange={setEditOpen}
         schedule={schedule}
         onSaved={() => { fetchSchedule(); setEditOpen(false); }}
+      />
+
+      <CreateTaskDialog
+        open={planOpen}
+        onOpenChange={setPlanOpen}
+        hideTrigger
+        defaultDate={schedule.next_due_date ? new Date(schedule.next_due_date) : new Date()}
+        defaultClientId={schedule.client_id}
+        defaultInterventionType={schedule.intervention_type}
+        defaultTitle={`${INTERVENTION_TYPE_LABELS[schedule.intervention_type] || "Entretien"} — ${client.name || ""}`.trim()}
+        onCreated={() => { setPlanOpen(false); fetchSchedule(); }}
       />
     </LayoutDetail>
   );
