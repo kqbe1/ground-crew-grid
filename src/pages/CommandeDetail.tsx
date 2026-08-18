@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import CreateFollowUpTaskDialog from "@/components/commandes/CreateFollowUpTaskDialog";
 import ClientInfoCard, { CLIENT_FULL_SELECT } from "@/components/shared/ClientInfoCard";
+import OrderPhotos from "@/components/commandes/OrderPhotos";
 
 const statusColors: Record<string, string> = {
   demandee: "bg-order-demandee text-white",
@@ -29,6 +30,7 @@ export default function CommandeDetail() {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showFollowUp, setShowFollowUp] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const fetchOrder = useCallback(async () => {
     if (!id) return;
@@ -44,13 +46,19 @@ export default function CommandeDetail() {
   useEffect(() => { fetchOrder(); }, [fetchOrder]);
 
   const setStatus = async (next: string) => {
-    if (!order || order.status === next) return;
+    if (!order || order.status === next || saving) return;
     const updates: any = { status: next };
     if (next === "commandee" && !order.ordered_at) updates.ordered_at = new Date().toISOString();
     if (next === "recue" && !order.received_at) updates.received_at = new Date().toISOString();
     if (next === "cloturee" && !order.closed_at) updates.closed_at = new Date().toISOString();
 
-    const { error } = await supabase.from("parts_orders").update(updates).eq("id", order.id);
+    setSaving(true);
+    const { error } = await supabase
+      .from("parts_orders")
+      .update(updates)
+      .eq("id", order.id)
+      .eq("status", order.status as any);
+    setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success(`Statut → ${ORDER_STATUS_LABELS[next]}`);
 
@@ -72,6 +80,7 @@ export default function CommandeDetail() {
 
   const steps = ["demandee", "commandee", "recue", "cloturee"];
   const currentIdx = steps.indexOf(order.status);
+  const photos: string[] = Array.isArray(order.photos) ? order.photos : [];
 
   return (
     <LayoutDetail
@@ -134,13 +143,13 @@ export default function CommandeDetail() {
           <span className="text-xs text-muted-foreground self-center mr-1">Changer le statut :</span>
           {steps.map((step) => {
             const isCurrent = step === order.status;
-            const isPast = steps.indexOf(step) < currentIdx;
+            const isNext = steps.indexOf(step) === currentIdx + 1;
             return (
               <Button
                 key={step}
                 size="sm"
                 variant={isCurrent ? "default" : "outline"}
-                disabled={isCurrent || isPast}
+                disabled={!isNext || saving}
                 onClick={() => setStatus(step)}
                 className={cn(isCurrent && statusColors[step])}
               >
@@ -213,6 +222,8 @@ export default function CommandeDetail() {
             </CardContent>
           </Card>
         )}
+
+        <OrderPhotos photos={photos} />
       </div>
 
       {order.clients && (

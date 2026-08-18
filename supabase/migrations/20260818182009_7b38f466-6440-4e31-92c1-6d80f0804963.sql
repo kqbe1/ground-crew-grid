@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.enforce_parts_order_initial_status() FROM PUBLIC, anon, authenticated;
