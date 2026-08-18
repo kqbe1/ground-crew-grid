@@ -20,6 +20,9 @@ export interface OfflineDraft {
 
 export type DraftSyncState = "pending" | "syncing" | "synced" | "error";
 
+/** Garde anti-concurrence : un même brouillon ne peut pas être synchronisé deux fois en parallèle. */
+const inFlight = new Set<string>();
+
 export interface DraftStatus {
   state: DraftSyncState;
   error?: string;
@@ -93,10 +96,17 @@ async function uploadPayloadMedia(payload: Record<string, any>, workerId: string
 }
 
 async function syncDraft(draft: OfflineDraft): Promise<{ ok: boolean; error?: string }> {
+  if (inFlight.has(draft.id)) return { ok: false, error: "Synchronisation déjà en cours" };
+  inFlight.add(draft.id);
   try {
     const uploaded = await uploadPayloadMedia(draft.payload, draft.worker_id);
-    const { error } = await supabase.from("intervention_sheets").insert(uploaded as any);
-    if (error) {
+    // Idempotence : l'id du brouillon devient l'id de la fiche.
+    // Si une tentative précédente a réussi sans que la réponse nous parvienne,
+    // le ré-envoi échoue en doublon de clé primaire (23505) et est traité comme un succès.
+    const { error } = await supabase
+      .from("intervention_sheets")
+      .insert({ ...uploaded, id: draft.payload?.id ?? draft.id } as any);
+    if (error && (error as any).code !== "23505") {
       console.error("Sync draft error:", error);
       return { ok: false, error: error.message };
     }
@@ -112,6 +122,8 @@ async function syncDraft(draft: OfflineDraft): Promise<{ ok: boolean; error?: st
   } catch (err: any) {
     console.error("Sync draft exception:", err);
     return { ok: false, error: err?.message ?? "Erreur inconnue" };
+  } finally {
+    inFlight.delete(draft.id);
   }
 }
 
