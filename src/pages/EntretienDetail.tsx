@@ -28,6 +28,7 @@ export default function EntretienDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [schedule, setSchedule] = useState<any>(null);
+  const [assignees, setAssignees] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
@@ -37,11 +38,20 @@ export default function EntretienDetail() {
     const { data } = await supabase
       .from("maintenance_schedules")
       .select(
-        "*, clients(id, name, email, phone, phone_secondary, address_intervention, address_billing, postal_code, city, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal, owner:owner_client_id(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)), client_sites(name, address, postal_code, city, notes), client_equipment(name, brand, model, energy_type, maintenance_periodicity, last_maintenance_date, next_maintenance_date, notes)"
+        "*, clients(id, name, email, phone, phone_secondary, address_intervention, address_billing, postal_code, city, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal, owner:owner_client_id(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)), client_sites(name, address, postal_code, city, notes), client_equipment(name, brand, model, energy_type, maintenance_periodicity, last_maintenance_date, next_maintenance_date, notes), task_binomes:binome_id(code, name)"
       )
       .eq("id", id)
       .single();
     setSchedule(data);
+    const { data: rows } = await supabase
+      .from("maintenance_schedule_assignees" as any)
+      .select("user_id, profiles:user_id(full_name, worker_level)")
+      .eq("maintenance_schedule_id", id);
+    setAssignees(
+      ((rows as any[]) || []).map((r) =>
+        [r.profiles?.worker_level, r.profiles?.full_name].filter(Boolean).join(" — ")
+      ).filter(Boolean)
+    );
     setLoading(false);
   }, [id]);
 
@@ -180,6 +190,20 @@ export default function EntretienDetail() {
           <Badge variant={schedule.status === "actif" ? "default" : "secondary"}>{schedule.status}</Badge>
         </div>
         <Row label="Dernier entretien" value={schedule.last_done_date ? format(new Date(schedule.last_done_date), "dd/MM/yyyy") : null} />
+        <Row label="Alerte légale" value={schedule.legal_alert_years ? `Tous les ${schedule.legal_alert_years} an(s)` : null} />
+        <Row label="Ouvriers assignés" value={assignees.length ? assignees.join(", ") : null} />
+        <Row
+          label="Binôme"
+          value={schedule.task_binomes ? `${schedule.task_binomes.code} — ${schedule.task_binomes.name}` : null}
+        />
+        <Row
+          label="Dernier rappel envoyé"
+          value={schedule.reminder_sent_at ? format(new Date(schedule.reminder_sent_at), "dd/MM/yyyy HH:mm") : null}
+        />
+        <Row
+          label="Créé le"
+          value={schedule.created_at ? format(new Date(schedule.created_at), "dd/MM/yyyy") : null}
+        />
       </div>
 
       {schedule.notes && (
@@ -187,7 +211,7 @@ export default function EntretienDetail() {
           <Separator />
           <Card>
             <CardContent className="p-3 text-sm">
-              <p className="font-medium mb-1">Notes</p>
+              <p className="font-medium mb-1">Mémo du bureau</p>
               <p className="whitespace-pre-wrap text-muted-foreground">{schedule.notes}</p>
             </CardContent>
           </Card>
