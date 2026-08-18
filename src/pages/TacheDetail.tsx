@@ -12,10 +12,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useWorkerLabels } from "@/hooks/useWorkerLabels";
 import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
 import ClientCombobox from "@/components/forms/ClientCombobox";
-import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
+import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Loader2, Trash2, Pencil, Clock, User, Calendar, MapPin } from "lucide-react";
+import { Loader2, Trash2, Pencil, Clock, User, Calendar, MapPin, Package, AlertTriangle, ExternalLink } from "lucide-react";
 import LayoutDetail from "@/components/layout/LayoutDetail";
 import { toast } from "sonner";
 
@@ -28,6 +28,13 @@ const statusColor: Record<string, string> = {
 };
 
 const ALL_STATUSES = ["termine", "a_replanifier", "piece_a_commander", "sav", "planifie"] as const;
+
+const orderStatusColors: Record<string, string> = {
+  demandee: "bg-order-demandee text-white",
+  commandee: "bg-order-commandee text-white",
+  recue: "bg-order-recue text-white",
+  cloturee: "bg-order-cloturee text-white",
+};
 
 const SIMPLIFIED_INTERVENTION_LABELS: Record<string, string> = {
   depannage: "Dépannage", entretien: "Entretien", installation: "Installation",
@@ -51,6 +58,7 @@ export default function TacheDetail() {
   const canEdit = role === "admin" || role === "bureau" || role === "super_admin";
 
   const [task, setTask] = useState<any>(null);
+  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -81,6 +89,16 @@ export default function TacheDetail() {
       .eq("id", id)
       .maybeSingle();
     setTask(data);
+    if (data) {
+      const { data: po } = await supabase
+        .from("parts_orders")
+        .select("*, profiles!parts_orders_requested_by_fkey(full_name)")
+        .eq("work_task_id", data.id)
+        .order("created_at", { ascending: false });
+      setOrders(po ?? []);
+    } else {
+      setOrders([]);
+    }
     if (data) {
       setTitle(data.title ?? "");
       setInterventionType(data.intervention_type ?? "autre");
@@ -329,6 +347,47 @@ export default function TacheDetail() {
               <p className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap">{task.memo_secretariat}</p>
             </section>
           )}
+
+          {/* Commandes de pièces liées */}
+          <section className="space-y-2">
+            <h2 className="font-semibold text-sm flex items-center gap-2">
+              <Package className="w-4 h-4" /> Commandes de pièces liées ({orders.length})
+            </h2>
+            {orders.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucune demande de pièce liée à cette tâche.</p>
+            ) : (
+              <div className="space-y-2">
+                {orders.map((o) => (
+                  <div key={o.id} className="p-3 rounded-lg border flex items-start justify-between gap-2 flex-wrap">
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm flex items-center gap-2">
+                        {o.part_name}
+                        {o.urgency && o.urgency !== "normal" && (
+                          <Badge variant="destructive" className="gap-1 text-xs">
+                            <AlertTriangle className="w-3 h-3" />
+                            {o.urgency === "critique" ? "Critique" : "Urgent"}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Qté: {o.quantity}
+                        {o.part_reference ? ` · Réf: ${o.part_reference}` : ""}
+                        {o.supplier ? ` · ${o.supplier}` : ""}
+                        {o.profiles?.full_name ? ` · Demandée par ${o.profiles.full_name}` : ""}
+                      </div>
+                      {o.notes && <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{o.notes}</p>}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge className={`${orderStatusColors[o.status]} text-xs`}>{ORDER_STATUS_LABELS[o.status]}</Badge>
+                      <Button size="sm" variant="ghost" onClick={() => navigate(`/commandes/${o.id}`)}>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
       ) : (
         /* Edit mode */
