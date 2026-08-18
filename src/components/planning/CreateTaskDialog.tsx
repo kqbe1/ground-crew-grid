@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { findOverlaps } from "@/lib/overlapUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
+import { WorkerMultiSelectField } from "@/components/forms/WorkerMultiSelect";
 import ClientCombobox from "@/components/forms/ClientCombobox";
 import { INTERVENTION_TYPE_LABELS } from "@/lib/constants";
 
@@ -87,6 +88,7 @@ export default function CreateTaskDialog({
   const [memoSecretariat, setMemoSecretariat] = useState<string>(_draft?.memoSecretariat ?? "");
 
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
+  const [extraWorkers, setExtraWorkers] = useState<string[]>([]);
   const [binomes, setBinomes] = useState<{ id: string; name: string; code: string; kind: string }[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string; address_intervention?: string | null }[]>([]);
   const [existingTasks, setExistingTasks] = useState<any[]>([]);
@@ -168,7 +170,7 @@ export default function CreateTaskDialog({
       return;
     }
     setLoading(true);
-    const { error } = await supabase.from("work_tasks").insert({
+    const { data: created, error } = await supabase.from("work_tasks").insert({
       title: title.trim(),
       intervention_type: interventionType as any,
       assigned_to: assignedTo || null,
@@ -182,17 +184,24 @@ export default function CreateTaskDialog({
       memo_secretariat: memoSecretariat || null,
       created_by: user.id,
       status: "planifie" as any,
-    } as any);
+    } as any).select("id").single();
     setLoading(false);
     if (error) {
       toast.error("Erreur lors de la création: " + error.message);
       return;
+    }
+    const allAssignees = Array.from(new Set([assignedTo, ...extraWorkers].filter(Boolean)));
+    if (created?.id && allAssignees.length > 0) {
+      await supabase.from("work_task_assignees" as any).insert(
+        allAssignees.map((uid) => ({ work_task_id: created.id, user_id: uid })),
+      );
     }
     toast.success("Tâche créée");
     setTitle("");
     setDescription("");
     setMemoSecretariat("");
     setBinomeId("");
+    setExtraWorkers([]);
     setOpen(false);
     clearDraft();
     onCreated();
@@ -251,6 +260,13 @@ export default function CreateTaskDialog({
               </Select>
             </div>
           </div>
+
+          <WorkerMultiSelectField
+            workers={workers}
+            value={extraWorkers}
+            onChange={setExtraWorkers}
+            primaryId={assignedTo || undefined}
+          />
 
           <div>
             <Label>Binôme</Label>
