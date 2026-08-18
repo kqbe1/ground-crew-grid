@@ -18,6 +18,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from "@/hooks/useAuth";
 import { SheetStatusBadge, computeSheetStatus } from "@/components/shared/SheetStatusBadge";
 import SendFicheDialog from "@/components/fiches/SendFicheDialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+const DELETE_CONFIRM_CODE = "AGDELETENOW";
 
 const statusColor: Record<string, string> = {
   planifie: "bg-[hsl(var(--color-planifie))]",
@@ -65,6 +69,8 @@ export default function FicheDetail() {
     work_status_notes: Record<string, string>;
   }>({ description: "", observations_before: "", supplies_description: "", status_comment: "", work_status_notes: {} });
   const [saving, setSaving] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteCode, setDeleteCode] = useState("");
 
   const fetchSheet = useCallback(async () => {
     if (!id) return;
@@ -118,9 +124,15 @@ export default function FicheDetail() {
   };
 
   const handleDelete = async () => {
+    if (deleteCode.trim().toUpperCase() !== DELETE_CONFIRM_CODE) {
+      toast.error("Code de confirmation incorrect");
+      return;
+    }
     const { error } = await supabase.from("intervention_sheets").delete().eq("id", id!);
     if (error) { toast.error(error.message); return; }
     toast.success("Fiche supprimée");
+    setDeleteOpen(false);
+    setDeleteCode("");
     navigate(-1);
   };
 
@@ -233,18 +245,37 @@ export default function FicheDetail() {
               <Pencil className="w-4 h-4 mr-1" /> Modifier
             </Button>
           )}
-          <AlertDialog>
+          <AlertDialog open={deleteOpen} onOpenChange={(o) => { setDeleteOpen(o); if (!o) setDeleteCode(""); }}>
             <AlertDialogTrigger asChild>
               <Button size="sm" variant="destructive"><Trash2 className="w-4 h-4 mr-1" /> Supprimer</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Supprimer cette fiche ?</AlertDialogTitle>
-                <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+                <AlertDialogDescription>
+                  Cette action est irréversible. Pour confirmer, saisissez le code de sécurité <span className="font-mono font-semibold">{DELETE_CONFIRM_CODE}</span>.
+                </AlertDialogDescription>
               </AlertDialogHeader>
+              <div className="space-y-2">
+                <Label htmlFor="delete-code">Code de confirmation</Label>
+                <Input
+                  id="delete-code"
+                  value={deleteCode}
+                  onChange={(e) => setDeleteCode(e.target.value)}
+                  placeholder={DELETE_CONFIRM_CODE}
+                  autoComplete="off"
+                  className="font-mono"
+                />
+              </div>
               <AlertDialogFooter>
                 <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">Supprimer</AlertDialogAction>
+                <AlertDialogAction
+                  onClick={(e) => { e.preventDefault(); handleDelete(); }}
+                  disabled={deleteCode.trim().toUpperCase() !== DELETE_CONFIRM_CODE}
+                  className="bg-destructive text-destructive-foreground"
+                >
+                  Supprimer
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
