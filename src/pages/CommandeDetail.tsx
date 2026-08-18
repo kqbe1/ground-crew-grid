@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import CreateFollowUpTaskDialog from "@/components/commandes/CreateFollowUpTaskDialog";
 import ClientInfoCard, { CLIENT_FULL_SELECT } from "@/components/shared/ClientInfoCard";
-import { useSignedUrls } from "@/hooks/useSignedUrl";
+import OrderPhotos from "@/components/commandes/OrderPhotos";
 
 const statusColors: Record<string, string> = {
   demandee: "bg-order-demandee text-white",

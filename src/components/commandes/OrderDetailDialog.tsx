@@ -12,6 +12,7 @@ import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import CreateFollowUpTaskDialog from "./CreateFollowUpTaskDialog";
+import OrderPhotos from "./OrderPhotos";
 
 const statusColors: Record<string, string> = {
   demandee: "bg-order-demandee text-white",
@@ -36,19 +37,26 @@ interface Props {
 
 export default function OrderDetailDialog({ open, onOpenChange, order, onUpdated }: Props) {
   const [showFollowUp, setShowFollowUp] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   if (!order) return null;
 
   const workflow = WORKFLOW[order.status];
 
   const advanceStatus = async () => {
-    if (!workflow?.next) return;
+    if (!workflow?.next || saving) return;
     const updates: any = { status: workflow.next };
     if (workflow.next === "commandee") updates.ordered_at = new Date().toISOString();
     if (workflow.next === "recue") updates.received_at = new Date().toISOString();
     if (workflow.next === "cloturee") updates.closed_at = new Date().toISOString();
 
-    const { error } = await supabase.from("parts_orders").update(updates).eq("id", order.id);
+    setSaving(true);
+    const { error } = await supabase
+      .from("parts_orders")
+      .update(updates)
+      .eq("id", order.id)
+      .eq("status", order.status);
+    setSaving(false);
     if (error) { toast.error(error.message); return; }
 
     toast.success(`Statut changé → ${ORDER_STATUS_LABELS[workflow.next]}`);
@@ -183,11 +191,13 @@ export default function OrderDetailDialog({ open, onOpenChange, order, onUpdated
               </CardContent>
             </Card>
           )}
+
+          <OrderPhotos photos={order.photos} />
         </div>
 
         {/* Action button */}
         {workflow?.next && (
-          <Button className={cn("w-full mt-2", workflow.color)} onClick={advanceStatus}>
+          <Button className={cn("w-full mt-2", workflow.color)} onClick={advanceStatus} disabled={saving}>
             <ArrowRight className="w-4 h-4 mr-2" /> {workflow.label}
           </Button>
         )}
