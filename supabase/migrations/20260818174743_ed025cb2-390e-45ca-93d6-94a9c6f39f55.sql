@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.prevent_delete_task_with_final_sheet() FROM PUBLIC, anon, authenticated;
