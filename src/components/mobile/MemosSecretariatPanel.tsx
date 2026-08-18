@@ -17,7 +17,7 @@ interface Props {
 
 export default function MemosSecretariatPanel({ tasks }: Props) {
   const memos = tasks.filter((t) => t.memo_secretariat && t.memo_secretariat.trim().length > 0);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
   if (memos.length === 0) return null;

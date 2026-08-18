@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS, TASK_STATUS_LABELS } from "@/lib/constants";
 import { computeEndTime } from "@/lib/timeRange";
-import { Phone, MapPin, ClipboardList, MessageSquare, KeyRound, UserRound, Building2, StickyNote } from "lucide-react";
+import { Phone, MapPin, ClipboardList, MessageSquare, KeyRound, UserRound, Building2, StickyNote, Mail } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 
 export default function MobileTaskDetail() {
@@ -22,7 +22,7 @@ export default function MobileTaskDetail() {
     const fetchTask = async () => {
       const { data } = await supabase
         .from("work_tasks")
-        .select("*, client_sites(address, name), client_equipment(name, brand, model)")
+        .select("*, client_sites(address, name, postal_code, city), client_equipment(name, brand, model)")
         .eq("id", id)
         .maybeSingle();
 
@@ -30,7 +30,7 @@ export default function MobileTaskDetail() {
         // Fetch full client info including syndic/locataire/keys/notes
         const { data: clientData } = await supabase
           .from("clients")
-          .select("id, name, phone, email, address_intervention, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal")
+          .select("id, name, phone, phone_secondary, email, address_intervention, postal_code, city, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal")
           .eq("id", data.client_id)
           .maybeSingle();
         setTask({ ...data, clients: clientData ?? null });
@@ -65,6 +65,13 @@ export default function MobileTaskDetail() {
   }
 
   const hasClientExtras = task.clients?.contact_syndic || task.clients?.contact_locataire || task.clients?.syndic_keys_codes || task.clients?.notes_internal;
+  const fullAddress = (() => {
+    const addr = task.client_sites?.address || task.clients?.address_intervention || "";
+    const postal = task.client_sites?.postal_code || task.clients?.postal_code || "";
+    const city = task.client_sites?.city || task.clients?.city || "";
+    const locality = [postal, city].filter(Boolean).join(" ");
+    return [addr, locality].filter(Boolean).join(", ");
+  })();
 
   return (
     <div className="p-4 space-y-4">
@@ -123,8 +130,23 @@ export default function MobileTaskDetail() {
           <div className="font-medium">{task.clients?.name}</div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="w-3.5 h-3.5" />
-            {task.client_sites?.address || task.clients?.address_intervention}
+            {fullAddress || "—"}
           </div>
+          {task.clients?.phone && (
+            <a href={`tel:${task.clients.phone}`} className="flex items-center gap-2 text-sm text-primary">
+              <Phone className="w-3.5 h-3.5" /> {task.clients.phone}
+            </a>
+          )}
+          {task.clients?.phone_secondary && (
+            <a href={`tel:${task.clients.phone_secondary}`} className="flex items-center gap-2 text-sm text-primary">
+              <Phone className="w-3.5 h-3.5" /> {task.clients.phone_secondary}
+            </a>
+          )}
+          {task.clients?.email && (
+            <a href={`mailto:${task.clients.email}`} className="flex items-center gap-2 text-sm text-primary break-all">
+              <Mail className="w-3.5 h-3.5 shrink-0" /> {task.clients.email}
+            </a>
+          )}
         </CardContent>
       </Card>
 
@@ -179,8 +201,7 @@ export default function MobileTaskDetail() {
           variant="outline"
           className="w-full"
           onClick={() => {
-            const addr = task.client_sites?.address || task.clients?.address_intervention;
-            if (addr) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`);
+            if (fullAddress) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`);
           }}
         >
           <MapPin className="w-4 h-4 mr-2" /> GPS

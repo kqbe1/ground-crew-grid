@@ -179,4 +179,5 @@
   .badge-sheet-draft { background-color: hsl(var(--color-replanifier) / 0.15); color: hsl(var(--color-replanifier)); }
   .badge-sheet-submitted { background-color: hsl(var(--color-planifie) / 0.12); color: hsl(var(--color-planifie)); }
   .badge-sheet-completed { background-color: hsl(var(--color-termine) / 0.12); color: hsl(var(--color-termine)); }
+  .badge-sheet-late { background-color: hsl(var(--destructive) / 0.12); color: hsl(var(--destructive)); border-color: hsl(var(--destructive) / 0.4); }
 }
