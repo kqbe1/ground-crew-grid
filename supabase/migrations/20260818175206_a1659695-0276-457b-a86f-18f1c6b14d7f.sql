@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_task_assignees() FROM anon, authenticated, public;
