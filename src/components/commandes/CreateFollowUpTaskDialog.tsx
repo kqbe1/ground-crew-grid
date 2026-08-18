@@ -34,6 +34,7 @@ export default function CreateFollowUpTaskDialog({ open, onOpenChange, order, on
   const [description, setDescription] = useState("");
 
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
+  const [sourceTask, setSourceTask] = useState<any>(null);
 
   useEffect(() => {
     if (!open || !order) return;
@@ -44,6 +45,21 @@ export default function CreateFollowUpTaskDialog({ open, onOpenChange, order, on
     supabase.from("profiles").select("id, full_name").eq("is_active", true).then(({ data }) => {
       setWorkers(data ?? []);
     });
+
+    // Reprend le contexte de l'intervention d'origine (site, équipement, type)
+    if (order.work_task_id) {
+      supabase
+        .from("work_tasks")
+        .select("id, client_id, client_site_id, equipment_id, intervention_type")
+        .eq("id", order.work_task_id)
+        .maybeSingle()
+        .then(({ data }) => {
+          setSourceTask(data ?? null);
+          if (data?.intervention_type) setInterventionType(data.intervention_type as string);
+        });
+    } else {
+      setSourceTask(null);
+    }
   }, [open, order]);
 
   const handleSubmit = async () => {
@@ -59,7 +75,9 @@ export default function CreateFollowUpTaskDialog({ open, onOpenChange, order, on
       scheduled_date: scheduledDate,
       start_time: startTime,
       duration_minutes: durationMinutes,
-      client_id: order.client_id || null,
+      client_id: order.client_id || sourceTask?.client_id || null,
+      client_site_id: sourceTask?.client_site_id ?? null,
+      equipment_id: sourceTask?.equipment_id ?? null,
       description: description || null,
       created_by: user.id,
       status: "planifie" as any,

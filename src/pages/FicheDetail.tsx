@@ -631,6 +631,7 @@ export default function FicheDetail() {
                         key={s}
                         size="sm"
                         variant={o.status === s ? "default" : "outline"}
+                        disabled={ORDER_STATUSES.indexOf(s) < ORDER_STATUSES.indexOf(o.status)}
                         className={o.status === s ? `${orderStatusColors[s]} h-7 text-xs` : "h-7 text-xs"}
                         onClick={() => updateOrderStatus(o.id, s)}
                       >
