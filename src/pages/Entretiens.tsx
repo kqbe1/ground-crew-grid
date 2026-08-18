@@ -180,6 +180,7 @@ export default function Entretiens() {
     entretien_pellets: "bg-type-pellets",
     entretien_clim: "bg-type-clim",
     entretien_vmc: "bg-type-vmc",
+    entretien_boiler: "bg-type-boiler",
   };
 
   return (

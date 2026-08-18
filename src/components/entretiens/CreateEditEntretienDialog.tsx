@@ -18,6 +18,7 @@ const TYPE_TO_ENERGY: Record<string, string> = {
   entretien_pellets: "pellets",
   entretien_clim: "clim",
   entretien_vmc: "vmc",
+  entretien_boiler: "boiler",
 };
 
 interface Props {
@@ -76,14 +77,37 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
 
   useEffect(() => {
     if (!form.client_id) { setSites([]); setEquipment([]); setClientRegion(null); return; }
-    supabase.from("client_sites").select("id, name, address").eq("client_id", form.client_id).then(({ data }) => setSites(data ?? []));
+    supabase
+      .from("client_sites")
+      .select("id, name, address, is_primary")
+      .eq("client_id", form.client_id)
+      .order("is_primary", { ascending: false })
+      .order("created_at")
+      .then(({ data }) => {
+        const list = data ?? [];
+        setSites(list);
+        // Pré-sélection automatique du site principal (sinon le premier)
+        setForm((f) => {
+          if (f.client_site_id && list.some((s) => s.id === f.client_site_id)) return f;
+          const primary = list.find((s: any) => s.is_primary) ?? list[0];
+          return primary ? { ...f, client_site_id: primary.id } : { ...f, client_site_id: "" };
+        });
+      });
     const c = clients.find((c) => c.id === form.client_id);
     setClientRegion(c?.region ?? null);
   }, [form.client_id]);
 
   useEffect(() => {
     if (!form.client_site_id) { setEquipment([]); return; }
-    supabase.from("client_equipment").select("id, name, brand, model").eq("client_site_id", form.client_site_id).then(({ data }) => setEquipment(data ?? []));
+    supabase.from("client_equipment").select("id, name, brand, model").eq("client_site_id", form.client_site_id).then(({ data }) => {
+      const list = data ?? [];
+      setEquipment(list);
+      // Si un seul équipement, le pré-sélectionner
+      setForm((f) => {
+        if (f.equipment_id && list.some((e) => e.id === f.equipment_id)) return f;
+        return list.length === 1 ? { ...f, equipment_id: list[0].id } : f;
+      });
+    });
   }, [form.client_site_id]);
 
   // Auto-fill periodicity from legal rules when type or region changes (only for new entretiens)
