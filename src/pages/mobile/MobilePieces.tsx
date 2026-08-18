@@ -13,6 +13,7 @@ import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import { Package, Plus } from "lucide-react";
 import PhotoCapture from "@/components/mobile/PhotoCapture";
 import { uploadPhotos } from "@/lib/storageUpload";
+import OrderPhotos from "@/components/commandes/OrderPhotos";
 import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
@@ -104,7 +105,14 @@ export default function MobilePieces() {
       setOpen(false);
       setReloadKey((k) => k + 1);
     } catch (err: any) {
-      toast.error("Erreur: " + err.message);
+      const msg = String(err?.message ?? "");
+      if (msg.includes("parts_orders_unique_pending_part")) {
+        toast.error("Une demande identique est déjà en cours pour cette tâche.");
+        setOpen(false);
+        setReloadKey((k) => k + 1);
+      } else {
+        toast.error("Erreur: " + msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -135,13 +143,7 @@ export default function MobilePieces() {
                   {ORDER_STATUS_LABELS[o.status]}
                 </Badge>
               </div>
-              {o.photos && o.photos.length > 0 && (
-                <div className="grid grid-cols-4 gap-1.5">
-                  {o.photos.slice(0, 4).map((p: string, i: number) => (
-                    <img key={i} src={p} alt={`pièce ${i + 1}`} className="w-full aspect-square object-cover rounded" />
-                  ))}
-                </div>
-              )}
+              <OrderPhotos photos={o.photos} title="Photos" />
             </CardContent>
           </Card>
         ))}

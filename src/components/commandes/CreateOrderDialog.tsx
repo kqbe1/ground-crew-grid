@@ -80,7 +80,13 @@ export default function CreateOrderDialog({ open, onOpenChange, onSaved }: Props
     } as any);
 
     setLoading(false);
-    if (error) { toast.error("Erreur : " + error.message); }
+    if (error) {
+      if (error.message.includes("parts_orders_unique_pending_part")) {
+        toast.error("Une commande identique est déjà en attente pour cette tâche.");
+      } else {
+        toast.error("Erreur : " + error.message);
+      }
+    }
     else {
       toast.success("Commande créée");
       onOpenChange(false);
