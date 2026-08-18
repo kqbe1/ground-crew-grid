@@ -788,6 +788,7 @@ export type Database = {
       }
       maintenance_schedules: {
         Row: {
+          binome_id: string | null
           client_id: string
           client_site_id: string | null
           company_id: string
@@ -806,6 +807,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          binome_id?: string | null
           client_id: string
           client_site_id?: string | null
           company_id: string
@@ -824,6 +826,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          binome_id?: string | null
           client_id?: string
           client_site_id?: string | null
           company_id?: string
@@ -842,6 +845,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "maintenance_schedules_binome_id_fkey"
+            columns: ["binome_id"]
+            isOneToOne: false
+            referencedRelation: "task_binomes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "maintenance_schedules_client_id_fkey"
             columns: ["client_id"]

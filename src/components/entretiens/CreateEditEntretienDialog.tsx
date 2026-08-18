@@ -38,6 +38,8 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
   const [legalRules, setLegalRules] = useState<Record<string, string>>({});
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
   const [assignees, setAssignees] = useState<string[]>([]);
+  const [binomes, setBinomes] = useState<{ id: string; name: string; code: string }[]>([]);
+  const [binomeId, setBinomeId] = useState<string>("");
   const [form, setForm] = useState({
     client_id: "",
     client_site_id: "",
@@ -57,6 +59,9 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
     loadLegalPeriodicityByEnergy().then(setLegalRules);
     supabase.from("profiles").select("id, full_name").eq("is_active", true).order("display_order")
       .then(({ data }) => setWorkers(data ?? []));
+    supabase.from("task_binomes").select("id, name, code").eq("is_active", true).order("code")
+      .then(({ data }) => setBinomes((data ?? []) as any));
+    setBinomeId((schedule as any)?.binome_id ?? "");
     if (schedule) {
       supabase.from("maintenance_schedule_assignees" as any).select("user_id").eq("maintenance_schedule_id", schedule.id)
         .then(({ data }) => setAssignees(((data ?? []) as any[]).map((r) => r.user_id)));
@@ -137,6 +142,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
       legal_alert_years: form.legal_alert_years ? parseInt(form.legal_alert_years) : null,
       notes: form.notes || null,
       status: form.status,
+      binome_id: binomeId || null,
     };
     const { data: saved, error } = schedule
       ? await supabase.from("maintenance_schedules").update(payload).eq("id", schedule.id).select("id").single()
@@ -192,6 +198,19 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
             </div>
           )}
           <WorkerMultiSelectField label="Ouvriers assignés" workers={workers} value={assignees} onChange={setAssignees} />
+
+          <div className="space-y-2">
+            <Label>Binôme</Label>
+            <Select value={binomeId || "__none"} onValueChange={(v) => setBinomeId(v === "__none" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Aucun binôme" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none">Aucun binôme</SelectItem>
+                {binomes.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>{b.code} — {b.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

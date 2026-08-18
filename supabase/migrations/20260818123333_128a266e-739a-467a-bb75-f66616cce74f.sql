@@ -1,0 +1,1 @@
+ALTER TABLE public.maintenance_schedules ADD COLUMN IF NOT EXISTS binome_id uuid REFERENCES public.task_binomes(id) ON DELETE SET NULL;
