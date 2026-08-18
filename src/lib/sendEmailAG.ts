@@ -14,6 +14,16 @@ async function loadSettings(templateKey: "fiche-intervention" | "rappel-entretie
   return data;
 }
 
+/** Résout l'adresse email destinataire d'une fiche (override > client > facturation). */
+export function resolveFicheEmail(sheet: any): string {
+  return (
+    sheet?.client_email_override ||
+    sheet?.work_tasks?.clients?.email ||
+    sheet?.billing_email ||
+    ""
+  ).trim();
+}
+
 /**
  * Generates the fiche PDF, uploads it to storage, and sends it to the client's email.
  * Throws if the client has no email address.
@@ -21,10 +31,11 @@ async function loadSettings(templateKey: "fiche-intervention" | "rappel-entretie
 export async function sendFicheToAG(
   sheet: any,
   overrides?: Partial<PdfConfig>,
+  recipientOverride?: string,
 ): Promise<void> {
   const task = sheet.work_tasks;
-  const clientEmail = task?.clients?.email;
-  if (!clientEmail) {
+  const clientEmail = (recipientOverride || resolveFicheEmail(sheet)).trim();
+  if (!clientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) {
     throw new Error("Ce client n'a pas d'adresse email");
   }
 
@@ -57,7 +68,7 @@ export async function sendFicheToAG(
       recipientEmail: clientEmail,
       idempotencyKey: `fiche-${sheet.id}-${Date.now()}`,
       templateData: {
-        clientName: task?.clients?.name || "—",
+        clientName: sheet.client_name_override || task?.clients?.name || "—",
         clientCity: task?.clients?.city || "",
         taskTitle: task?.title || "Intervention",
         interventionDate,

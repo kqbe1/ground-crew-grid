@@ -3,12 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Send, Loader2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { generateFichePdf, PdfConfig } from "@/lib/generateFichePdf";
 import { loadPdfConfigAndLogo, ficheDocumentType, withPdfPhotos } from "@/lib/pdfConfig";
-import { sendFicheToAG } from "@/lib/sendEmailAG";
+import { sendFicheToAG, resolveFicheEmail } from "@/lib/sendEmailAG";
 
 type FieldKey =
   | "show_intervention_type"
@@ -50,13 +51,15 @@ export default function SendFicheDialog({ sheet, open, onOpenChange, onSent }: P
   const [sending, setSending] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [emailSubject, setEmailSubject] = useState<string>("");
+  const [recipient, setRecipient] = useState<string>("");
 
-  const clientEmail = sheet?.work_tasks?.clients?.email;
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient.trim());
 
   useEffect(() => {
     if (!open || !sheet) return;
     (async () => {
       setLoading(true);
+      setRecipient(resolveFicheEmail(sheet));
       const { pdfCfg } = await loadPdfConfigAndLogo(ficheDocumentType(sheet));
       const next = { ...values };
       FIELDS.forEach((f) => {
@@ -93,14 +96,14 @@ export default function SendFicheDialog({ sheet, open, onOpenChange, onSent }: P
   };
 
   const send = async () => {
-    if (!clientEmail) {
-      toast.error("Ce client n'a pas d'adresse email");
+    if (!isValidEmail) {
+      toast.error("Adresse email invalide");
       return;
     }
     setSending(true);
     try {
-      await sendFicheToAG(sheet, values as Partial<PdfConfig>);
-      toast.success(`Fiche envoyée à ${clientEmail}`);
+      await sendFicheToAG(sheet, values as Partial<PdfConfig>, recipient.trim());
+      toast.success(`Fiche envoyée à ${recipient.trim()}`);
       onOpenChange(false);
       onSent?.();
     } catch (e: any) {
@@ -118,9 +121,7 @@ export default function SendFicheDialog({ sheet, open, onOpenChange, onSent }: P
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Envoyer la fiche au client</DialogTitle>
-          <DialogDescription>
-            {clientEmail ? `Destinataire : ${clientEmail}` : "Ce client n'a pas d'adresse email"}
-          </DialogDescription>
+          <DialogDescription>Vérifiez l'adresse du destinataire avant l'envoi.</DialogDescription>
         </DialogHeader>
 
         {loading ? (
@@ -129,6 +130,24 @@ export default function SendFicheDialog({ sheet, open, onOpenChange, onSent }: P
           </div>
         ) : (
           <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="fiche-recipient" className="text-sm font-medium">
+                Email du destinataire
+              </Label>
+              <Input
+                id="fiche-recipient"
+                type="email"
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                placeholder="client@exemple.be"
+              />
+              {!isValidEmail && (
+                <p className="text-xs text-destructive">
+                  Aucune adresse valide enregistrée pour ce client — saisissez-la ici.
+                </p>
+              )}
+            </div>
+
             <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
               Contenu de l'email : modèle « Fiche d'intervention » configuré dans Admin › Emails clients.
               <div className="mt-1 text-foreground">Objet : {emailSubject}</div>
@@ -175,7 +194,7 @@ export default function SendFicheDialog({ sheet, open, onOpenChange, onSent }: P
             {previewing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Eye className="w-4 h-4 mr-1" />}
             Aperçu
           </Button>
-          <Button onClick={send} disabled={sending || loading || !clientEmail}>
+          <Button onClick={send} disabled={sending || loading || !isValidEmail}>
             {sending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Send className="w-4 h-4 mr-1" />}
             {sending ? "Envoi..." : "Envoyer"}
           </Button>
