@@ -1590,6 +1590,7 @@ export type Database = {
         | "clim"
         | "vmc"
         | "autre"
+        | "boiler"
       installation_type:
         | "chaudiere"
         | "climatisation"
@@ -1607,6 +1608,7 @@ export type Database = {
         | "remplacement"
         | "rdv_divers"
         | "autre"
+        | "entretien_boiler"
       maintenance_periodicity:
         | "mensuel"
         | "trimestriel"
@@ -1766,6 +1768,7 @@ export const Constants = {
         "clim",
         "vmc",
         "autre",
+        "boiler",
       ],
       installation_type: [
         "chaudiere",
@@ -1785,6 +1788,7 @@ export const Constants = {
         "remplacement",
         "rdv_divers",
         "autre",
+        "entretien_boiler",
       ],
       maintenance_periodicity: [
         "mensuel",
