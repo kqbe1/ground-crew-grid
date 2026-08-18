@@ -314,7 +314,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
                   <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Aucun</SelectItem>
-                    {workers.map((w) => (
+                    {workers.filter((w) => w.id !== assignedTo).map((w) => (
                       <SelectItem key={w.id} value={w.id}>
                         {workerLabels[w.id] ? `${workerLabels[w.id]} · ` : ""}{w.full_name}
                       </SelectItem>
