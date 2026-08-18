@@ -142,6 +142,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
       legal_alert_years: form.legal_alert_years ? parseInt(form.legal_alert_years) : null,
       notes: form.notes || null,
       status: form.status,
+      binome_id: binomeId || null,
     };
     const { data: saved, error } = schedule
       ? await supabase.from("maintenance_schedules").update(payload).eq("id", schedule.id).select("id").single()
@@ -197,6 +198,19 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
             </div>
           )}
           <WorkerMultiSelectField label="Ouvriers assignés" workers={workers} value={assignees} onChange={setAssignees} />
+
+          <div className="space-y-2">
+            <Label>Binôme</Label>
+            <Select value={binomeId || "__none"} onValueChange={(v) => setBinomeId(v === "__none" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Aucun binôme" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none">Aucun binôme</SelectItem>
+                {binomes.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>{b.code} — {b.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
