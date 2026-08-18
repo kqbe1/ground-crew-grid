@@ -42,6 +42,7 @@ const statusColor = (s: string) => {
 export default function DossierDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [client, setClient] = useState<Client | null>(null);
   const [fiches, setFiches] = useState<any[]>([]);
   const [entretiens, setEntretiens] = useState<any[]>([]);
@@ -124,7 +125,7 @@ export default function DossierDetail() {
       <div className="flex flex-col lg:flex-row lg:items-start gap-6">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-3">
-            <BackButton to="/dossiers" size="icon" variant="ghost" />
+            <BackButton size="icon" variant="ghost" />
             <h1 className="text-2xl lg:text-3xl font-bold">{client.name}</h1>
           </div>
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
@@ -134,7 +135,7 @@ export default function DossierDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate(`/clients/${client.id}`)}>
+          <Button variant="outline" onClick={() => navigate(`/clients/${client.id}`, { state: { from: location.pathname } })}>
             <User className="w-4 h-4 mr-1.5" /> Voir fiche client
           </Button>
         </div>
@@ -208,7 +209,7 @@ export default function DossierDetail() {
                   {fiches.map((f) => {
                     const sheet = Array.isArray(f.intervention_sheets) ? f.intervention_sheets[0] : f.intervention_sheets;
                     return (
-                      <TableRow key={f.id} className="cursor-pointer hover:bg-muted/50" onClick={() => sheet && navigate(`/fiches/${sheet.id}`)}>
+                      <TableRow key={f.id} className="cursor-pointer hover:bg-muted/50" onClick={() => sheet && navigate(`/fiches/${sheet.id}`, { state: { from: location.pathname } })}>
                         <TableCell className="font-medium">{f.title}</TableCell>
                         <TableCell className="text-muted-foreground text-sm">{interventionTypeLabels[f.intervention_type] ?? f.intervention_type}</TableCell>
                         <TableCell className="text-sm">
@@ -243,7 +244,7 @@ export default function DossierDetail() {
                 </TableHeader>
                 <TableBody>
                   {entretiens.map((e) => (
-                    <TableRow key={e.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/entretiens/${e.id}`)}>
+                    <TableRow key={e.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/entretiens/${e.id}`, { state: { from: location.pathname } })}>
                       <TableCell className="font-medium">{interventionTypeLabels[e.intervention_type] ?? e.intervention_type}</TableCell>
                       <TableCell className="text-muted-foreground">{periodicityLabels[e.periodicity] ?? e.periodicity}</TableCell>
                       <TableCell className="text-sm">
@@ -277,7 +278,7 @@ export default function DossierDetail() {
                 </TableHeader>
                 <TableBody>
                   {devis.map((d) => (
-                    <TableRow key={d.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/devis/${d.id}`)}>
+                    <TableRow key={d.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/devis/${d.id}`, { state: { from: location.pathname } })}>
                       <TableCell className="font-medium">{d.client_name}</TableCell>
                       <TableCell className="text-muted-foreground capitalize">{d.installation_type?.replace(/_/g, " ") ?? "—"}</TableCell>
                       <TableCell className="text-sm">
@@ -312,7 +313,7 @@ export default function DossierDetail() {
                 </TableHeader>
                 <TableBody>
                   {commandes.map((c) => (
-                    <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/commandes/${c.id}`)}>
+                    <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/commandes/${c.id}`, { state: { from: location.pathname } })}>
                       <TableCell className="font-medium">{c.part_name}</TableCell>
                       <TableCell className="text-muted-foreground">{c.part_reference ?? "—"}</TableCell>
                       <TableCell>{c.quantity}</TableCell>

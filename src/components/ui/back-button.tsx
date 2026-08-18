@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface BackButtonProps {
   /** Override default navigate(-1) behavior */
@@ -15,9 +15,12 @@ interface BackButtonProps {
 
 export default function BackButton({ to, label = "Retour", variant = "outline", size = "sm" }: BackButtonProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from;
 
   const handleClick = () => {
     if (to) navigate(to);
+    else if (from) navigate(from);
     else navigate(-1);
   };
 
