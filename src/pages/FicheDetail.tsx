@@ -214,7 +214,7 @@ export default function FicheDetail() {
         </div>
       }
       toolbar={isReadOnly ? (
-        <SheetStatusBadge status={computeSheetStatus(sheet)} />
+        <SheetStatusBadge status={computeSheetStatus(sheet)} showSubmitted={false} />
       ) : (
         <>
           {ALL_STATUSES.map((s) => (
