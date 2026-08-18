@@ -9,10 +9,7 @@ import { getYear, getMonth, format, subMonths, startOfMonth, endOfMonth } from "
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-const PERIODICITY_MONTHS: Record<string, number> = {
-  mensuel: 1, trimestriel: 3, semestriel: 6, annuel: 12, bisannuel: 24, triennal: 36,
-};
+import { occurrencesInYears } from "@/lib/recurrence";
 
 const ENTRETIEN_TYPES = Object.entries(INTERVENTION_TYPE_LABELS).filter(([k]) => k.startsWith("entretien_"));
 
