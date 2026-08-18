@@ -42,6 +42,7 @@
     --color-pellets: 142 55% 42%;
     --color-clim: 199 89% 48%;
     --color-vmc: 280 65% 42%;
+    --color-boiler: 190 70% 38%;
     --color-depannage: 0 72% 51%;
     --color-installation: 220 72% 50%;
     --color-remplacement: 38 92% 50%;
@@ -144,6 +145,7 @@
   .badge-pellets { background-color: hsl(var(--color-pellets)); color: white; }
   .badge-clim { background-color: hsl(var(--color-clim)); color: white; }
   .badge-vmc { background-color: hsl(var(--color-vmc)); color: white; }
+  .badge-boiler { background-color: hsl(var(--color-boiler)); color: white; }
   .badge-depannage { background-color: hsl(var(--color-depannage)); color: white; }
   .badge-installation { background-color: hsl(var(--color-installation)); color: white; }
   .badge-remplacement { background-color: hsl(var(--color-remplacement)); color: white; }
@@ -156,6 +158,7 @@
   .bg-type-pellets { background-color: hsl(var(--color-pellets)); }
   .bg-type-clim { background-color: hsl(var(--color-clim)); }
   .bg-type-vmc { background-color: hsl(var(--color-vmc)); }
+  .bg-type-boiler { background-color: hsl(var(--color-boiler)); }
 
   /* Soft alerts */
   .alert-warning { background-color: hsl(var(--color-replanifier) / 0.1); color: hsl(var(--color-replanifier)); border-color: hsl(var(--color-replanifier) / 0.3); }
