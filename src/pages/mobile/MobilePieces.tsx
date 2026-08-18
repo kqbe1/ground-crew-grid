@@ -50,7 +50,7 @@ export default function MobilePieces() {
         supabase
           .from("work_tasks")
           .select("id, title, scheduled_date, client_id")
-          .eq("assigned_to", user.id)
+          .or(`assigned_to.eq.${user.id},second_assigned_to.eq.${user.id}`)
           .order("scheduled_date", { ascending: false })
           .limit(60),
       ]);
