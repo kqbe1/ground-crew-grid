@@ -134,12 +134,13 @@ export default function CommandeDetail() {
           <span className="text-xs text-muted-foreground self-center mr-1">Changer le statut :</span>
           {steps.map((step) => {
             const isCurrent = step === order.status;
+            const isPast = steps.indexOf(step) < currentIdx;
             return (
               <Button
                 key={step}
                 size="sm"
                 variant={isCurrent ? "default" : "outline"}
-                disabled={isCurrent}
+                disabled={isCurrent || isPast}
                 onClick={() => setStatus(step)}
                 className={cn(isCurrent && statusColors[step])}
               >
