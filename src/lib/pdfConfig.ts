@@ -83,3 +83,47 @@ export async function loadPdfConfigAndLogo(documentType: PdfDocumentType) {
   const logoDataUrl = await fetchLogoDataUrl(pdfCfg?.logo_url ?? null);
   return { pdfCfg, logoDataUrl };
 }
+
+/** Convert a storage path / signed URL / data URL into a base64 data URL usable by jsPDF. */
+async function toDataUrl(ref: string, bucket = "intervention-photos"): Promise<string | null> {
+  if (!ref) return null;
+  if (ref.startsWith("data:")) return ref;
+  try {
+    let url = ref;
+    if (!ref.startsWith("http")) {
+      const { data } = await supabase.storage.from(bucket).createSignedUrl(ref, 3600);
+      if (!data?.signedUrl) return null;
+      url = data.signedUrl;
+    }
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    return await new Promise<string>((resolve) => {
+      const r = new FileReader();
+      r.onloadend = () => resolve(r.result as string);
+      r.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function resolveList(list: any): Promise<string[]> {
+  if (!Array.isArray(list) || list.length === 0) return [];
+  const out = await Promise.all(list.map((p: string) => toDataUrl(p)));
+  return out.filter(Boolean) as string[];
+}
+
+/**
+ * Returns a copy of the sheet where every photo reference is inlined as a
+ * base64 data URL, so jsPDF can actually embed the images in the PDF.
+ */
+export async function withPdfPhotos(sheet: any): Promise<any> {
+  if (!sheet) return sheet;
+  const [before, after, nameplate] = await Promise.all([
+    resolveList(sheet.photos_before),
+    resolveList(sheet.photos_after),
+    resolveList(sheet.photos_nameplate),
+  ]);
+  return { ...sheet, photos_before: before, photos_after: after, photos_nameplate: nameplate };
+}
