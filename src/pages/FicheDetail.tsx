@@ -17,6 +17,7 @@ import { useSignedUrls } from "@/hooks/useSignedUrl";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { SheetStatusBadge, computeSheetStatus } from "@/components/shared/SheetStatusBadge";
+import SendFicheDialog from "@/components/fiches/SendFicheDialog";
 
 const statusColor: Record<string, string> = {
   planifie: "bg-[hsl(var(--color-planifie))]",
@@ -54,6 +55,7 @@ export default function FicheDetail() {
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [orders, setOrders] = useState<any[]>([]);
+  const [sendOpen, setSendOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [edit, setEdit] = useState<{
     description: string;
