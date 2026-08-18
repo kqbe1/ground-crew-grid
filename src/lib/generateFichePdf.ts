@@ -319,7 +319,7 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
     : (sheet.work_status_detail ? [sheet.work_status_detail] : []);
   const notes: Record<string, string> = sheet.work_status_notes ?? {};
   for (const d of details) {
-    addField("• " + (statusLabels[d] ?? d), notes[d] ? notes[d] : "");
+    addField("• " + (statusLabels[d] ?? d) + " :", notes[d] ? notes[d] : "—");
   }
   if (sheet.status_comment && details.length === 0) {
     addField("Commentaire statut :", sheet.status_comment);
@@ -342,8 +342,8 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
     const clientEmail = sheet.client_email_override || task?.clients?.email;
     const clientPhone = sheet.client_phone_override || task?.clients?.phone;
     const clientAddress = sheet.client_address_override || task?.clients?.address_intervention;
-    const clientPostal = sheet.client_postal_override;
-    const clientCity = sheet.client_city_override;
+    const clientPostal = sheet.client_postal_override || task?.clients?.postal_code;
+    const clientCity = sheet.client_city_override || task?.clients?.city;
 
     addField("Nom :", clientName);
     if (clientEmail) addField("Email :", clientEmail);
@@ -564,6 +564,14 @@ export function generateFichePdf(sheet: any, config?: Partial<PdfConfig>, logoDa
       } catch {
         // skip
       }
+    } else {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(10);
+      doc.setTextColor(120);
+      checkPage(8);
+      doc.text("Pas de signature enregistrée", margin + 2, y);
+      doc.setTextColor(0);
+      y += 8;
     }
   }
 
