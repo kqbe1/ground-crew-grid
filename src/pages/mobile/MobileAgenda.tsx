@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,16 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
 import { computeEndTime } from "@/lib/timeRange";
-import { ChevronLeft, ChevronRight, Phone, MapPin, MessageSquare, Package, CheckCircle2, Pencil, Send } from "lucide-react";
-import {
-  format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
-  startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval,
-  isSameDay, isSameMonth, isToday,
-} from "date-fns";
+import { ChevronLeft, ChevronRight, Phone, MapPin, MessageSquare, Package, CheckCircle2, Pencil, Send, AlertTriangle } from "lucide-react";
+import { format, addDays, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import MemosSecretariatPanel from "@/components/mobile/MemosSecretariatPanel";
+import FichesEnRetardPanel, { LateTask } from "@/components/mobile/FichesEnRetardPanel";
 
 function hasDraftFor(id: string): boolean {
   try {
@@ -23,8 +20,6 @@ function hasDraftFor(id: string): boolean {
               localStorage.getItem(`fiche_draft:entretien:${id}`));
   } catch { return false; }
 }
-
-type ViewMode = "jour" | "semaine" | "mois";
 
 interface Task {
   id: string;
@@ -41,6 +36,7 @@ interface Task {
   client_sites: { address: string; postal_code: string | null; city: string | null } | null;
   sheet_submitted?: boolean;
   sheet_status: "draft" | "submitted" | "completed" | null;
+  is_late?: boolean;
 }
 
 export default function MobileAgenda() {
@@ -50,52 +46,40 @@ export default function MobileAgenda() {
     const saved = sessionStorage.getItem("mobile-agenda-date");
     return saved ? new Date(saved) : new Date();
   });
-  const [view, setView] = useState<ViewMode>(() => {
-    return (sessionStorage.getItem("mobile-agenda-view") as ViewMode) || "jour";
-  });
 
-  // Persist date & view to sessionStorage
   useEffect(() => {
     sessionStorage.setItem("mobile-agenda-date", currentDate.toISOString());
   }, [currentDate]);
-  useEffect(() => {
-    sessionStorage.setItem("mobile-agenda-view", view);
-  }, [view]);
-  const [tasks, setTasks] = useState<Task[]>([]);
 
-  // Compute date range based on view
-  const dateRange = useMemo(() => {
-    if (view === "jour") {
-      const d = format(currentDate, "yyyy-MM-dd");
-      return { from: d, to: d };
-    }
-    if (view === "semaine") {
-      const start = startOfWeek(currentDate, { weekStartsOn: 1 });
-      const end = endOfWeek(currentDate, { weekStartsOn: 1 });
-      return { from: format(start, "yyyy-MM-dd"), to: format(end, "yyyy-MM-dd") };
-    }
-    const start = startOfMonth(currentDate);
-    const end = endOfMonth(currentDate);
-    return { from: format(start, "yyyy-MM-dd"), to: format(end, "yyyy-MM-dd") };
-  }, [currentDate, view]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [lateTasks, setLateTasks] = useState<LateTask[]>([]);
+
+  const dayStr = format(currentDate, "yyyy-MM-dd");
 
   useEffect(() => {
     if (!user) return;
     const fetchTasks = async () => {
-      const [tasksRes, clientsRes, sheetsRes] = await Promise.all([
+      const today = format(new Date(), "yyyy-MM-dd");
+      const [tasksRes, clientsRes, sheetsRes, lateRes] = await Promise.all([
         supabase
           .from("work_tasks")
           .select("*, client_sites(address, postal_code, city)")
           .eq("assigned_to", user.id)
-          .gte("scheduled_date", dateRange.from)
-          .lte("scheduled_date", dateRange.to)
+          .eq("scheduled_date", dayStr)
           .order("start_time"),
         supabase.rpc("get_my_clients_safe"),
         supabase
           .from("intervention_sheets")
           .select("work_task_id, is_draft, final_status")
           .eq("worker_id", user.id),
+        supabase
+          .from("work_tasks")
+          .select("id, title, start_time, scheduled_date, client_id")
+          .eq("assigned_to", user.id)
+          .lt("scheduled_date", today)
+          .order("scheduled_date", { ascending: false }),
       ]);
+
       const clientMap = Object.fromEntries(
         (clientsRes.data ?? []).map((c: any) => [c.id, c])
       );
@@ -103,98 +87,60 @@ export default function MobileAgenda() {
       (sheetsRes.data ?? []).forEach((s: any) => {
         sheetMap.set(s.work_task_id, { is_draft: s.is_draft, final_status: s.final_status });
       });
-      const enriched = (tasksRes.data ?? []).map((t: any) => {
-        const sheet = sheetMap.get(t.id);
-        const hasLocalDraft = hasDraftFor(t.id);
-        let sheet_status: Task["sheet_status"] = null;
-        if (hasLocalDraft) {
-          sheet_status = "draft";
-        } else if (sheet) {
-          if (sheet.is_draft) {
-            sheet_status = "draft";
-          } else if (sheet.final_status === "termine") {
-            sheet_status = "completed";
-          } else {
-            sheet_status = "submitted";
-          }
+
+      const computeStatus = (id: string): Task["sheet_status"] => {
+        const sheet = sheetMap.get(id);
+        // Une fiche envoyée reste "envoyée" même si un vieux brouillon local traîne
+        if (sheet && !sheet.is_draft) {
+          return sheet.final_status === "termine" ? "completed" : "submitted";
         }
+        if (hasDraftFor(id) || sheet?.is_draft) return "draft";
+        return null;
+      };
+
+      const enriched = (tasksRes.data ?? []).map((t: any) => {
+        const sheet_status = computeStatus(t.id);
         return {
           ...t,
           clients: t.client_id ? clientMap[t.client_id] ?? null : null,
-          sheet_submitted: sheet ? !sheet.is_draft : false,
+          sheet_submitted: sheet_status === "submitted" || sheet_status === "completed",
           sheet_status,
+          is_late: t.scheduled_date < today && sheet_status !== "submitted" && sheet_status !== "completed",
         };
       });
       setTasks(enriched as Task[]);
+
+      const late = (lateRes.data ?? [])
+        .filter((t: any) => {
+          const st = computeStatus(t.id);
+          return st !== "submitted" && st !== "completed";
+        })
+        .map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          start_time: t.start_time,
+          scheduled_date: t.scheduled_date,
+          clientName: t.client_id ? clientMap[t.client_id]?.name ?? null : null,
+        }));
+      setLateTasks(late);
     };
     fetchTasks();
-  }, [dateRange, user]);
+  }, [dayStr, user]);
 
-  // Navigation
-  const goBack = () => {
-    if (view === "jour") setCurrentDate((d) => subDays(d, 1));
-    else if (view === "semaine") setCurrentDate((d) => subWeeks(d, 1));
-    else setCurrentDate((d) => subMonths(d, 1));
-  };
+  const goBack = () => setCurrentDate((d) => subDays(d, 1));
+  const goForward = () => setCurrentDate((d) => addDays(d, 1));
 
-  const goForward = () => {
-    if (view === "jour") setCurrentDate((d) => addDays(d, 1));
-    else if (view === "semaine") setCurrentDate((d) => addWeeks(d, 1));
-    else setCurrentDate((d) => addMonths(d, 1));
-  };
-
-  const headerLabel = useMemo(() => {
-    if (view === "jour") {
-      return (
-        <div className="text-center">
-          <div className="text-lg font-bold capitalize">{format(currentDate, "EEEE", { locale: fr })}</div>
-          <div className="text-sm text-muted-foreground">{format(currentDate, "d MMMM yyyy", { locale: fr })}</div>
-        </div>
-      );
-    }
-    if (view === "semaine") {
-      const start = startOfWeek(currentDate, { weekStartsOn: 1 });
-      const end = endOfWeek(currentDate, { weekStartsOn: 1 });
-      return (
-        <div className="text-center">
-          <div className="text-lg font-bold">Semaine {format(currentDate, "w")}</div>
-          <div className="text-sm text-muted-foreground">
-            {format(start, "d MMM", { locale: fr })} – {format(end, "d MMM yyyy", { locale: fr })}
-          </div>
-        </div>
-      );
-    }
-    return (
-      <div className="text-center">
-        <div className="text-lg font-bold capitalize">{format(currentDate, "MMMM yyyy", { locale: fr })}</div>
-      </div>
-    );
-  }, [currentDate, view]);
+  const headerLabel = useMemo(() => (
+    <div className="flex items-baseline gap-2 justify-center">
+      <span className="text-base font-bold capitalize">{format(currentDate, "EEEE", { locale: fr })}</span>
+      <span className="text-sm text-muted-foreground">{format(currentDate, "d MMMM yyyy", { locale: fr })}</span>
+    </div>
+  ), [currentDate]);
 
   return (
     <div className="p-4 space-y-3">
-      {view === "jour" && (
-        <MemosSecretariatPanel
-          tasks={tasks.filter((t) => t.scheduled_date === format(currentDate, "yyyy-MM-dd"))}
-        />
-      )}
-      {/* View tabs */}
-      <div className="flex bg-muted rounded-lg p-0.5">
-        {(["jour", "semaine", "mois"] as ViewMode[]).map((v) => (
-          <button
-            key={v}
-            onClick={() => setView(v)}
-            className={cn(
-              "flex-1 py-1.5 text-sm font-medium rounded-md transition-all capitalize",
-              view === v
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground"
-            )}
-          >
-            {v}
-          </button>
-        ))}
-      </div>
+      <FichesEnRetardPanel tasks={lateTasks} />
+      <MemosSecretariatPanel tasks={tasks} />
 
       {/* Date navigation */}
       <div className="flex items-center justify-between">
@@ -207,23 +153,14 @@ export default function MobileAgenda() {
         </Button>
       </div>
 
-      {/* Content */}
-      {view === "jour" && <DayView tasks={tasks} currentDate={currentDate} navigate={navigate} />}
-      {view === "semaine" && (
-        <WeekView tasks={tasks} currentDate={currentDate} navigate={navigate} onSelectDay={(d) => { setCurrentDate(d); setView("jour"); }} />
-      )}
-      {view === "mois" && (
-        <MonthView tasks={tasks} currentDate={currentDate} onSelectDay={(d) => { setCurrentDate(d); setView("jour"); }} />
-      )}
+      <DayView tasks={tasks} navigate={navigate} />
     </div>
   );
 }
 
 /* ─── Day View ─── */
-function DayView({ tasks, currentDate, navigate }: { tasks: Task[]; currentDate: Date; navigate: (path: string) => void }) {
-  const dayTasks = tasks.filter((t) => t.scheduled_date === format(currentDate, "yyyy-MM-dd"));
-
-  if (dayTasks.length === 0) {
+function DayView({ tasks, navigate }: { tasks: Task[]; navigate: (path: string) => void }) {
+  if (tasks.length === 0) {
     return (
       <div className="py-16 text-center text-muted-foreground">
         <div className="text-4xl mb-2">📋</div>
@@ -234,169 +171,24 @@ function DayView({ tasks, currentDate, navigate }: { tasks: Task[]; currentDate:
 
   return (
     <div className="space-y-3">
-      {dayTasks.map((task) => (
+      {tasks.map((task) => (
         <TaskCard key={task.id} task={task} navigate={navigate} />
       ))}
     </div>
   );
 }
 
-/* ─── Week View ─── */
-function WeekView({ tasks, currentDate, navigate, onSelectDay }: { tasks: Task[]; currentDate: Date; navigate: (path: string) => void; onSelectDay: (d: Date) => void }) {
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-  const days = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
-
-  return (
-    <div className="space-y-3">
-      {days.map((day) => {
-        const dayStr = format(day, "yyyy-MM-dd");
-        const dayTasks = tasks.filter((t) => t.scheduled_date === dayStr);
-        const today = isToday(day);
-
-        return (
-          <div key={dayStr}>
-            <button
-              onClick={() => onSelectDay(day)}
-              className={cn(
-                "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-semibold transition-colors",
-                today ? "bg-primary/10 text-primary" : "bg-muted/50 text-foreground"
-              )}
-            >
-              <span className="capitalize">{format(day, "EEEE d", { locale: fr })}</span>
-              {dayTasks.length > 0 && (
-                <Badge variant="secondary" className="text-[10px]">{dayTasks.length}</Badge>
-              )}
-            </button>
-            {dayTasks.length > 0 && (
-              <div className="mt-1.5 space-y-1.5 pl-1">
-                {dayTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    onClick={() => navigate(`/mobile/tache/${task.id}`)}
-                    className={cn(
-                      "flex items-center gap-3 p-2.5 rounded-lg border-l-4 border bg-card cursor-pointer active:scale-[0.98] transition-transform",
-                      task.sheet_status === "draft" && "border-l-status-replanifier bg-status-replanifier/5",
-                      task.sheet_status === "submitted" && "border-l-status-planifie bg-status-planifie/5",
-                      task.sheet_status === "completed" && "border-l-status-termine bg-status-termine/5",
-                      !task.sheet_status && "border-l-transparent",
-                    )}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-primary">{task.start_time?.slice(0, 5)}</span>
-                        <span className="text-xs text-muted-foreground">→ {computeEndTime(task.start_time?.slice(0, 5) ?? "", task.duration_minutes ?? 0)}</span>
-                      </div>
-                      <div className="font-medium text-sm truncate">{task.title}</div>
-                      <div className="text-xs text-muted-foreground truncate">{task.clients?.name}</div>
-                    </div>
-                    <Badge className={cn("text-[9px] shrink-0", INTERVENTION_TYPE_COLORS[task.intervention_type])}>
-                      {INTERVENTION_TYPE_LABELS[task.intervention_type]?.split(" ").pop()}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/* ─── Month View ─── */
-function MonthView({ tasks, currentDate, onSelectDay }: { tasks: Task[]; currentDate: Date; onSelectDay: (d: Date) => void }) {
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-  const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
-  const allDays = eachDayOfInterval({ start: calStart, end: calEnd });
-
-  const tasksByDate = useMemo(() => {
-    const map: Record<string, number> = {};
-    tasks.forEach((t) => {
-      map[t.scheduled_date] = (map[t.scheduled_date] || 0) + 1;
-    });
-    return map;
-  }, [tasks]);
-
-  const dayNames = ["L", "M", "M", "J", "V", "S", "D"];
-
-  return (
-    <div>
-      {/* Day headers */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
-        {dayNames.map((d, i) => (
-          <div key={i} className="text-center text-xs font-medium text-muted-foreground py-1">{d}</div>
-        ))}
-      </div>
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-1">
-        {allDays.map((day) => {
-          const dayStr = format(day, "yyyy-MM-dd");
-          const count = tasksByDate[dayStr] || 0;
-          const inMonth = isSameMonth(day, currentDate);
-          const today = isToday(day);
-
-          return (
-            <button
-              key={dayStr}
-              onClick={() => onSelectDay(day)}
-              className={cn(
-                "aspect-square flex flex-col items-center justify-center rounded-lg text-sm transition-colors relative",
-                !inMonth && "text-muted-foreground/40",
-                inMonth && "text-foreground",
-                today && "ring-2 ring-primary font-bold",
-                count > 0 && inMonth && "bg-primary/10"
-              )}
-            >
-              <span>{format(day, "d")}</span>
-              {count > 0 && (
-                <div className="flex gap-0.5 mt-0.5">
-                  {Array.from({ length: Math.min(count, 3) }).map((_, i) => (
-                    <div key={i} className="w-1 h-1 rounded-full bg-primary" />
-                  ))}
-                  {count > 3 && <span className="text-[8px] text-primary font-bold">+</span>}
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Selected day tasks summary */}
-      {(() => {
-        const dayStr = format(currentDate, "yyyy-MM-dd");
-        const dayTasks = tasks.filter((t) => t.scheduled_date === dayStr);
-        if (dayTasks.length === 0) return null;
-        return (
-          <div className="mt-3 space-y-1.5">
-            <div className="text-xs font-semibold text-muted-foreground capitalize px-1">
-              {format(currentDate, "EEEE d MMMM", { locale: fr })} · {dayTasks.length} tâche(s)
-            </div>
-            {dayTasks.map((t) => (
-              <div key={t.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-muted/50 text-sm">
-                <span className="font-bold text-primary text-xs">{t.start_time?.slice(0, 5)}</span>
-                <span className="truncate flex-1">{t.title}</span>
-                <span className="text-xs text-muted-foreground">{t.clients?.name}</span>
-              </div>
-            ))}
-          </div>
-        );
-      })()}
-    </div>
-  );
-}
-
-/* ─── Task Card (Day view) ─── */
+/* ─── Task Card ─── */
 function TaskCard({ task, navigate }: { task: Task; navigate: (path: string) => void }) {
   return (
     <Card
       className={cn(
         "animate-slide-in cursor-pointer active:scale-[0.98] transition-transform border-l-4",
-        task.sheet_status === "draft" && "border-l-status-replanifier bg-status-replanifier/5",
-        task.sheet_status === "submitted" && "border-l-status-planifie bg-status-planifie/5",
-        task.sheet_status === "completed" && "border-l-status-termine bg-status-termine/5",
-        !task.sheet_status && "border-l-transparent",
+        task.is_late && "border-l-destructive bg-destructive/5",
+        !task.is_late && task.sheet_status === "draft" && "border-l-status-replanifier bg-status-replanifier/5",
+        !task.is_late && task.sheet_status === "submitted" && "border-l-status-planifie bg-status-planifie/5",
+        !task.is_late && task.sheet_status === "completed" && "border-l-status-termine bg-status-termine/5",
+        !task.is_late && !task.sheet_status && "border-l-transparent",
       )}
       onClick={() => navigate(`/mobile/tache/${task.id}`)}
     >
@@ -412,7 +204,12 @@ function TaskCard({ task, navigate }: { task: Task; navigate: (path: string) => 
             <Badge className={cn("text-xs", INTERVENTION_TYPE_COLORS[task.intervention_type])}>
               {INTERVENTION_TYPE_LABELS[task.intervention_type]}
             </Badge>
-            {task.sheet_status === "draft" && (
+            {task.is_late && (
+              <Badge variant="outline" className="text-[10px] gap-1 badge-sheet-late">
+                <AlertTriangle className="w-3 h-3" /> Fiche à envoyer
+              </Badge>
+            )}
+            {!task.is_late && task.sheet_status === "draft" && (
               <Badge variant="outline" className="text-[10px] gap-1 badge-sheet-draft">
                 <Pencil className="w-3 h-3" /> Brouillon
               </Badge>
