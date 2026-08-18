@@ -93,6 +93,8 @@ async function uploadPayloadMedia(payload: Record<string, any>, workerId: string
 }
 
 async function syncDraft(draft: OfflineDraft): Promise<{ ok: boolean; error?: string }> {
+  if (inFlight.has(draft.id)) return { ok: false, error: "Synchronisation déjà en cours" };
+  inFlight.add(draft.id);
   try {
     const uploaded = await uploadPayloadMedia(draft.payload, draft.worker_id);
     // Idempotence : l'id du brouillon devient l'id de la fiche.
@@ -117,6 +119,8 @@ async function syncDraft(draft: OfflineDraft): Promise<{ ok: boolean; error?: st
   } catch (err: any) {
     console.error("Sync draft exception:", err);
     return { ok: false, error: err?.message ?? "Erreur inconnue" };
+  } finally {
+    inFlight.delete(draft.id);
   }
 }
 
