@@ -3,7 +3,7 @@ import { User, Home } from "lucide-react";
 
 /** Champs client à sélectionner pour afficher une fiche client complète (propriétaire inclus). */
 export const CLIENT_FULL_SELECT =
-  "id, name, email, phone, phone_secondary, address_intervention, address_billing, postal_code, city, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal, owner_client_id, owner:clients!clients_owner_client_id_fkey(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)";
+  "id, name, email, phone, phone_secondary, address_intervention, address_billing, postal_code, city, contact_syndic, contact_locataire, syndic_keys_codes, notes_internal, owner_client_id, owner:owner_client_id(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)";
 
 export function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   if (value === null || value === undefined || value === "") return null;

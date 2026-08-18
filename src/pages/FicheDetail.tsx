@@ -68,7 +68,7 @@ export default function FicheDetail() {
     if (!id) return;
     const { data } = await supabase
       .from("intervention_sheets")
-      .select("*, work_tasks(title, intervention_type, scheduled_date, start_time, duration_minutes, clients(name, email, phone, phone_secondary, address_intervention, postal_code, city, contact_locataire, contact_syndic, owner:clients!clients_owner_client_id_fkey(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)), client_sites(name, address), binome:task_binomes!work_tasks_binome_id_fkey(id, name, code, kind, is_active), assigned:profiles!work_tasks_assigned_to_fkey(full_name), second:profiles!work_tasks_second_assigned_to_fkey(full_name)), profiles!intervention_sheets_worker_id_fkey(full_name)")
+      .select("*, work_tasks(title, intervention_type, scheduled_date, start_time, duration_minutes, clients(name, email, phone, phone_secondary, address_intervention, postal_code, city, contact_locataire, contact_syndic, owner:owner_client_id(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)), client_sites(name, address), binome:task_binomes!work_tasks_binome_id_fkey(id, name, code, kind, is_active), assigned:profiles!work_tasks_assigned_to_fkey(full_name), second:profiles!work_tasks_second_assigned_to_fkey(full_name)), profiles!intervention_sheets_worker_id_fkey(full_name)")
       .eq("id", id)
       .single();
     setSheet(data);
