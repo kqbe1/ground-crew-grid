@@ -11,7 +11,8 @@ import { normalizeSearch } from "@/lib/searchUtils";
 import { format, getYear, getMonth, differenceInDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS } from "@/lib/constants";
-import { Wrench, Calendar, TrendingUp, Plus, AlertTriangle, Search, Filter } from "lucide-react";
+import { Wrench, Calendar, TrendingUp, Plus, AlertTriangle, Search, Filter, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import CreateEditEntretienDialog from "@/components/entretiens/CreateEditEntretienDialog";
 import type { Tables } from "@/integrations/supabase/types";
@@ -34,6 +35,7 @@ export default function Entretiens() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [alertsOpen, setAlertsOpen] = useState(false);
 
   const fetchSchedules = useCallback(async () => {
     const { data } = await supabase
@@ -218,21 +220,25 @@ export default function Entretiens() {
       {/* Legal alerts */}
       {legalAlerts.length > 0 && (
         <Card className="alert-warning">
-          <CardContent className="py-3">
-            <div className="flex items-center gap-2 font-medium mb-2">
-              <AlertTriangle className="w-4 h-4" /> Alertes légales ({legalAlerts.length})
-            </div>
-            <div className="space-y-1">
-              {legalAlerts.slice(0, 5).map((s) => (
-                <div key={s.id} className="text-sm cursor-pointer hover:underline" onClick={() => navigate(`/entretiens/${s.id}`)}>
-                  {s.clients?.name} — {INTERVENTION_TYPE_LABELS[s.intervention_type]} — Échéance : {format(new Date(s.next_due_date), "dd/MM/yyyy")}
-                </div>
-              ))}
-              {legalAlerts.length > 5 && (
-                <div className="text-xs opacity-80">+{legalAlerts.length - 5} autre(s)…</div>
-              )}
-            </div>
-          </CardContent>
+          <Collapsible open={alertsOpen} onOpenChange={setAlertsOpen}>
+            <CollapsibleTrigger asChild>
+              <button type="button" className="w-full flex items-center justify-between gap-2 py-3 px-6 font-medium text-left">
+                <span className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" /> Attention ce mois-ci ({legalAlerts.length})
+                </span>
+                <ChevronDown className={cn("w-4 h-4 transition-transform", alertsOpen && "rotate-180")} />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0 pb-3 space-y-1">
+                {legalAlerts.map((s) => (
+                  <div key={s.id} className="text-sm cursor-pointer hover:underline" onClick={() => navigate(`/entretiens/${s.id}`)}>
+                    {s.clients?.name} — {INTERVENTION_TYPE_LABELS[s.intervention_type]} — Échéance : {format(new Date(s.next_due_date), "dd/MM/yyyy")}
+                  </div>
+                ))}
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
         </Card>
       )}
 
