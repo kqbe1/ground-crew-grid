@@ -33,11 +33,34 @@ export default function CreateOrderDialog({ open, onOpenChange, onSaved }: Props
   useEffect(() => {
     if (!open) return;
     supabase.from("clients").select("id, name, address_intervention").order("name").then(({ data }) => setClients(data ?? []));
-    supabase.from("work_tasks").select("id, title").order("scheduled_date", { ascending: false }).limit(50).then(({ data }) => setTasks(data ?? []));
+    supabase
+      .from("work_tasks")
+      .select("id, title, scheduled_date, client_id")
+      .order("scheduled_date", { ascending: false })
+      .limit(300)
+      .then(({ data }) => setTasks(data ?? []));
   }, [open]);
+
+  const visibleTasks = form.client_id
+    ? tasks.filter((t) => t.client_id === form.client_id)
+    : tasks;
+
+  const selectClient = (clientId: string) => {
+    setForm((f) => {
+      const currentTask = tasks.find((t) => t.id === f.work_task_id);
+      const keepTask = currentTask && currentTask.client_id === clientId;
+      return { ...f, client_id: clientId, work_task_id: keepTask ? f.work_task_id : "" };
+    });
+  };
+
+  const selectTask = (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    setForm((f) => ({ ...f, work_task_id: taskId, client_id: task?.client_id ?? f.client_id }));
+  };
 
   const handleSubmit = async () => {
     if (!form.part_name.trim()) { toast.error("Le nom de la pièce est obligatoire"); return; }
+    if (!form.work_task_id) { toast.error("Sélectionnez la tâche liée"); return; }
 
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
@@ -110,14 +133,21 @@ export default function CreateOrderDialog({ open, onOpenChange, onSaved }: Props
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Client</Label>
-              <ClientCombobox clients={clients} value={form.client_id} onChange={(v) => set("client_id", v)} placeholder="Rechercher un client..." />
+              <ClientCombobox clients={clients} value={form.client_id} onChange={selectClient} placeholder="Rechercher un client..." />
             </div>
             <div className="space-y-2">
-              <Label>Travail lié</Label>
-              <Select value={form.work_task_id} onValueChange={(v) => set("work_task_id", v)}>
+              <Label>Tâche liée *</Label>
+              <Select value={form.work_task_id} onValueChange={selectTask}>
                 <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
-                <SelectContent>
-                  {tasks.map((t) => <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>)}
+                <SelectContent className="max-h-64">
+                  {visibleTasks.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.scheduled_date?.split("-").reverse().join("/")} · {t.title}
+                    </SelectItem>
+                  ))}
+                  {visibleTasks.length === 0 && (
+                    <div className="px-2 py-3 text-sm text-muted-foreground">Aucune tâche pour ce client</div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
