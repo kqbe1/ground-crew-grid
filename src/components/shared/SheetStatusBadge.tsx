@@ -33,9 +33,10 @@ export function sheetStatusBorderClass(status: SheetStatus): string {
 interface SheetStatusBadgeProps {
   status: SheetStatus;
   className?: string;
+  showSubmitted?: boolean;
 }
 
-export function SheetStatusBadge({ status, className }: SheetStatusBadgeProps) {
+export function SheetStatusBadge({ status, className, showSubmitted = true }: SheetStatusBadgeProps) {
   if (!status) return null;
   if (status === "draft") {
     return (
@@ -45,6 +46,7 @@ export function SheetStatusBadge({ status, className }: SheetStatusBadgeProps) {
     );
   }
   if (status === "submitted") {
+    if (!showSubmitted) return null;
     return (
       <Badge variant="outline" className={cn("text-[10px] gap-1 badge-sheet-submitted", className)}>
         <Send className="w-3 h-3" /> Envoyé au bureau
