@@ -1,29 +1,26 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
+import { ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
-interface MemoTask {
+export interface LateTask {
   id: string;
   title: string;
   start_time: string | null;
-  memo_secretariat: string | null;
-  clients?: { name: string } | null;
+  scheduled_date: string;
+  clientName?: string | null;
 }
 
-interface Props {
-  tasks: MemoTask[];
-}
-
-export default function MemosSecretariatPanel({ tasks }: Props) {
-  const memos = tasks.filter((t) => t.memo_secretariat && t.memo_secretariat.trim().length > 0);
+export default function FichesEnRetardPanel({ tasks }: { tasks: LateTask[] }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
-  if (memos.length === 0) return null;
+  if (tasks.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-accent/30 bg-accent/5 overflow-hidden">
+    <div className="rounded-xl border border-destructive/40 bg-destructive/5 overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -31,30 +28,32 @@ export default function MemosSecretariatPanel({ tasks }: Props) {
       >
         <div className="flex items-center gap-2">
           <div className="relative">
-            <MessageSquare className="w-4 h-4 text-accent" />
-            <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 rounded-full bg-accent text-[10px] font-bold text-accent-foreground px-1 flex items-center justify-center">
-              {memos.length}
+            <AlertTriangle className="w-4 h-4 text-destructive" />
+            <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground px-1 flex items-center justify-center">
+              {tasks.length}
             </span>
           </div>
-          <span className="text-sm font-semibold">Mémos secrétariat</span>
+          <span className="text-sm font-semibold text-destructive">Fiches à envoyer</span>
         </div>
         {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
       </button>
       <div className={cn("transition-all", open ? "max-h-[60vh] overflow-y-auto" : "max-h-0 overflow-hidden")}>
         <div className="px-3 pb-3 space-y-2">
-          {memos.map((t) => (
+          {tasks.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => navigate(`/mobile/tache/${t.id}`)}
               className="w-full text-left bg-background rounded-lg p-2.5 border border-border active:scale-[0.99] transition-transform"
             >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-bold text-primary">{t.start_time?.slice(0, 5) ?? "—"}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-destructive capitalize">
+                  {format(new Date(t.scheduled_date), "d MMM", { locale: fr })}
+                </span>
+                <span className="text-xs text-muted-foreground">{t.start_time?.slice(0, 5) ?? "—"}</span>
                 <span className="text-xs font-medium truncate flex-1">{t.title}</span>
-                {t.clients?.name && <span className="text-[10px] text-muted-foreground truncate">{t.clients.name}</span>}
               </div>
-              <div className="text-sm whitespace-pre-line">{t.memo_secretariat}</div>
+              {t.clientName && <div className="text-[11px] text-muted-foreground truncate">{t.clientName}</div>}
             </button>
           ))}
         </div>
