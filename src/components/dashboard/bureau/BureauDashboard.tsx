@@ -312,8 +312,15 @@ export default function BureauDashboard() {
           <Button variant="outline" size="sm" disabled={filteredFiches.length === 0 || loading} onClick={async () => {
             toast.info("Génération du ZIP en cours…");
             try {
-              await downloadFichesZip(filteredFiches);
-              toast.success("ZIP téléchargé !");
+              const res = await downloadFichesZip(filteredFiches);
+              if (res.failed.length > 0) {
+                toast.warning(
+                  `${res.succeeded} document(s) exporté(s), ${res.failed.length} en erreur (voir _ERREURS.txt dans le ZIP)`,
+                  { description: res.failed.slice(0, 3).map((f) => `${f.label} : ${f.reason}`).join(" • ") },
+                );
+              } else {
+                toast.success("ZIP téléchargé !");
+              }
             } catch (e) { toast.error("Erreur lors de la génération du ZIP"); }
           }}>
             <Download className="w-4 h-4 mr-1" />Télécharger ZIP
