@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from "@/lib/constants";
 import { computeEndTime } from "@/lib/timeRange";
-import { ChevronLeft, ChevronRight, Phone, MapPin, MessageSquare, Package, CheckCircle2, Pencil, Send, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Phone, MapPin, MessageSquare, Package, CheckCircle2, Pencil, Send, AlertTriangle, Plus } from "lucide-react";
 import { format, addDays, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -152,6 +152,10 @@ export default function MobileAgenda() {
           <ChevronRight className="w-5 h-5" />
         </Button>
       </div>
+
+      <Button variant="outline" className="w-full" onClick={() => navigate("/mobile/fiche/nouvelle")}>
+        <Plus className="w-4 h-4 mr-1" /> Nouvelle fiche d'intervention
+      </Button>
 
       <DayView tasks={tasks} navigate={navigate} />
     </div>
