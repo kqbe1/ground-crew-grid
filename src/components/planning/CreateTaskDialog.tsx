@@ -41,13 +41,25 @@ interface CreateTaskDialogProps {
   defaultWorkerId?: string;
   defaultDuration?: number;
   onCreated: () => void;
+  /** Mode contrôlé (ex: bouton "Planifier" depuis un entretien) */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+  defaultClientId?: string;
+  defaultInterventionType?: string;
+  defaultTitle?: string;
 }
 
-export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinute, defaultWorkerId, defaultDuration, onCreated }: CreateTaskDialogProps) {
+export default function CreateTaskDialog({
+  defaultDate, defaultHour, defaultMinute, defaultWorkerId, defaultDuration, onCreated,
+  open: openProp, onOpenChange: onOpenChangeProp, hideTrigger, defaultClientId, defaultInterventionType, defaultTitle,
+}: CreateTaskDialogProps) {
   const { user } = useAuth();
   const _draft = loadDraft();
   // Si le dialog était ouvert via clic créneau, on ne restaure pas son état "open"
-  const [open, setOpen] = useState<boolean>(false);
+  const [openState, setOpenState] = useState<boolean>(false);
+  const open = openProp ?? openState;
+  const setOpen = (v: boolean) => { onOpenChangeProp ? onOpenChangeProp(v) : setOpenState(v); };
   const [loading, setLoading] = useState(false);
 
   const [title, setTitle] = useState<string>(_draft?.title ?? "");
@@ -141,6 +153,14 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
     if (defaultWorkerId) setAssignedTo(defaultWorkerId);
   }, [open, defaultDate, defaultHour, defaultMinute, defaultWorkerId, defaultDuration]);
 
+  // Valeurs pré-remplies fournies par l'appelant (client / type / titre)
+  useEffect(() => {
+    if (!open) return;
+    if (defaultClientId) setClientId(defaultClientId);
+    if (defaultInterventionType) setInterventionType(defaultInterventionType);
+    if (defaultTitle) setTitle((t) => t || defaultTitle);
+  }, [open, defaultClientId, defaultInterventionType, defaultTitle]);
+
   const handleSubmit = async () => {
     if (!title.trim() || !user) {
       toast.error("Le titre est obligatoire");
@@ -179,11 +199,13 @@ export default function CreateTaskDialog({ defaultDate, defaultHour, defaultMinu
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" data-create-task-trigger>
-          <Plus className="w-4 h-4 mr-1" /> Nouvelle tâche
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button size="sm" data-create-task-trigger>
+            <Plus className="w-4 h-4 mr-1" /> Nouvelle tâche
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Créer une tâche</DialogTitle>
