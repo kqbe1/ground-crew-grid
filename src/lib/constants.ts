@@ -4,6 +4,7 @@ export const INTERVENTION_TYPE_LABELS: Record<string, string> = {
   entretien_pellets: "Entretien Pellets",
   entretien_clim: "Entretien Clim",
   entretien_vmc: "Entretien VMC",
+  entretien_boiler: "Entretien Boiler",
   depannage: "Dépannage",
   installation: "Installation",
   remplacement: "Remplacement",
@@ -17,6 +18,7 @@ export const INTERVENTION_TYPE_COLORS: Record<string, string> = {
   entretien_pellets: "badge-pellets",
   entretien_clim: "badge-clim",
   entretien_vmc: "badge-vmc",
+  entretien_boiler: "badge-boiler",
   depannage: "badge-depannage",
   installation: "badge-installation",
   remplacement: "badge-remplacement",
@@ -78,6 +80,7 @@ export const ENERGY_TYPE_LABELS: Record<string, string> = {
   electricite: "Électricité",
   clim: "Climatisation",
   vmc: "VMC",
+  boiler: "Boiler",
   autre: "Autre",
 };
 
@@ -91,7 +94,7 @@ export const PERIODICITY_LABELS: Record<string, string> = {
 };
 
 // Grouped filter options: single "Entretien" entry covering all entretien_* subtypes
-export const ENTRETIEN_SUBTYPES = ["entretien_gaz", "entretien_mazout", "entretien_pellets", "entretien_clim", "entretien_vmc"];
+export const ENTRETIEN_SUBTYPES = ["entretien_gaz", "entretien_mazout", "entretien_pellets", "entretien_clim", "entretien_vmc", "entretien_boiler"];
 export const STANDALONE_INTERVENTION_TYPES = ["depannage", "installation", "remplacement", "rdv_divers", "autre"];
 
 export const FILTER_TYPE_GROUPS = [
