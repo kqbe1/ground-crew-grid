@@ -90,6 +90,8 @@ export default function CreateTaskDialog({
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
   const [extraWorkers, setExtraWorkers] = useState<string[]>([]);
   const [binomes, setBinomes] = useState<{ id: string; name: string; code: string; kind: string }[]>([]);
+  const [templates, setTemplates] = useState<{ id: string; name: string; intervention_type: string; description: string | null; default_duration_minutes: number }[]>([]);
+  const [templateId, setTemplateId] = useState<string>("");
   const [clients, setClients] = useState<{ id: string; name: string; address_intervention?: string | null }[]>([]);
   const [existingTasks, setExistingTasks] = useState<any[]>([]);
 
@@ -118,9 +120,26 @@ export default function CreateTaskDialog({
         .eq("is_active", true)
         .order("code");
       setBinomes((b ?? []) as any);
+      const { data: tpl } = await supabase
+        .from("task_templates")
+        .select("id, name, intervention_type, description, default_duration_minutes")
+        .order("name");
+      setTemplates((tpl ?? []) as any);
     };
     fetchData();
   }, [open]);
+
+  const applyTemplate = (id: string) => {
+    setTemplateId(id);
+    const tpl = templates.find((t) => t.id === id);
+    if (!tpl) return;
+    setTitle(tpl.name);
+    setInterventionType(tpl.intervention_type);
+    if (tpl.description) setDescription(tpl.description);
+    const dur = tpl.default_duration_minutes || durationMinutes;
+    setDurationMinutes(dur);
+    setEndTime(computeEndTime(startTime, dur));
+  };
 
   // Fetch tasks for the selected date to check overlaps
   useEffect(() => {
@@ -176,6 +195,7 @@ export default function CreateTaskDialog({
       assigned_to: assignedTo || null,
       second_assigned_to: null,
       binome_id: binomeId || null,
+      template_id: templateId || null,
       scheduled_date: scheduledDate,
       start_time: startTime,
       duration_minutes: durationMinutes,
@@ -201,6 +221,7 @@ export default function CreateTaskDialog({
     setDescription("");
     setMemoSecretariat("");
     setBinomeId("");
+    setTemplateId("");
     setExtraWorkers([]);
     setOpen(false);
     clearDraft();
@@ -225,6 +246,20 @@ export default function CreateTaskDialog({
             <Label>Client</Label>
             <ClientCombobox clients={clients} value={clientId} onChange={setClientId} placeholder="Rechercher un client..." />
           </div>
+
+          {templates.length > 0 && (
+            <div>
+              <Label>Modèle de tâche</Label>
+              <Select value={templateId} onValueChange={applyTemplate}>
+                <SelectTrigger><SelectValue placeholder="Aucun modèle" /></SelectTrigger>
+                <SelectContent>
+                  {templates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div>
             <Label>Titre *</Label>
