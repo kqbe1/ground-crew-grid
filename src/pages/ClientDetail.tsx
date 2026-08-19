@@ -23,6 +23,7 @@ type ClientEquipment = Tables<"client_equipment">;
 const INTERVENTION_TYPE_LABELS: Record<string, string> = {
   entretien_gaz: "Entretien Gaz", entretien_mazout: "Entretien Mazout", entretien_pellets: "Entretien Pellets",
   entretien_clim: "Entretien Clim", entretien_vmc: "Entretien VMC", depannage: "Dépannage",
+  entretien_boiler: "Entretien Boiler",
   installation: "Installation", remplacement: "Remplacement", rdv_divers: "RDV Divers", autre: "Autre",
 };
 
