@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,14 @@ export default function EditUserDialog({ open, onOpenChange, user, onSaved }: Pr
       
       if (fullName && fullName !== user.full_name) body.full_name = fullName;
       if (email && email !== user.email) body.email = email;
-      if (password) body.password = password;
+      if (password) {
+        if (password.length < 8) {
+          toast.error("Le mot de passe doit contenir au moins 8 caractères");
+          setLoading(false);
+          return;
+        }
+        body.password = password;
+      }
 
       if (Object.keys(body).length <= 1) {
         toast.info("Aucune modification détectée");
@@ -58,9 +65,13 @@ export default function EditUserDialog({ open, onOpenChange, user, onSaved }: Pr
           body: JSON.stringify(body),
         }
       );
-      const result = await resp.json();
+      const result = await resp.json().catch(() => ({}));
       if (!resp.ok || result.error) {
-        throw new Error(result.error || "Erreur lors de la mise à jour");
+        const raw = String(result.error ?? "");
+        const message = /weak|easy to guess/i.test(raw)
+          ? "Mot de passe trop faible : choisissez un mot de passe plus complexe (8+ caractères, chiffres et symboles)."
+          : raw || "Erreur lors de la mise à jour";
+        throw new Error(message);
       }
       toast.success("Utilisateur mis à jour");
       onOpenChange(false);
@@ -72,11 +83,14 @@ export default function EditUserDialog({ open, onOpenChange, user, onSaved }: Pr
     }
   };
 
-  // Initialize on first render when open
-  if (open && user && !fullName && !email) {
-    setFullName(user.full_name || "");
-    setEmail(user.email || "");
-  }
+  // Initialize fields when the dialog opens for a user
+  useEffect(() => {
+    if (open && user) {
+      setFullName(user.full_name || "");
+      setEmail(user.email || "");
+      setPassword("");
+    }
+  }, [open, user]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
