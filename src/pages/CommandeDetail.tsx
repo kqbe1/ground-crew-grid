@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
-import { Package, AlertTriangle, User, FileText, Trash2, Check } from "lucide-react";
+import { Package, AlertTriangle, User, FileText, Trash2, Check, Pencil } from "lucide-react";
 import LayoutDetail from "@/components/layout/LayoutDetail";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import CreateFollowUpTaskDialog from "@/components/commandes/CreateFollowUpTaskDialog";
 import ClientInfoCard, { CLIENT_FULL_SELECT } from "@/components/shared/ClientInfoCard";
 import OrderPhotos from "@/components/commandes/OrderPhotos";
+import CreateOrderDialog from "@/components/commandes/CreateOrderDialog";
 
 const statusColors: Record<string, string> = {
   demandee: "bg-order-demandee text-white",
@@ -30,6 +31,7 @@ export default function CommandeDetail() {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showFollowUp, setShowFollowUp] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const fetchOrder = useCallback(async () => {
@@ -90,6 +92,9 @@ export default function CommandeDetail() {
       hideSeparator
       toolbar={
         <>
+          <Button size="sm" variant="outline" onClick={() => setShowEdit(true)}>
+            <Pencil className="w-4 h-4 mr-1" /> Modifier
+          </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button size="sm" variant="destructive"><Trash2 className="w-4 h-4 mr-1" /> Supprimer</Button>
@@ -237,6 +242,13 @@ export default function CommandeDetail() {
         onOpenChange={(o) => { setShowFollowUp(o); if (!o) fetchOrder(); }}
         order={order}
         onCreated={() => { setShowFollowUp(false); fetchOrder(); }}
+      />
+
+      <CreateOrderDialog
+        open={showEdit}
+        onOpenChange={setShowEdit}
+        order={order}
+        onSaved={() => { setShowEdit(false); fetchOrder(); }}
       />
     </LayoutDetail>
   );
