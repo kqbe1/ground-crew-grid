@@ -81,7 +81,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
       .then(({ data }) => {
         const list = data ?? [];
         setSites(list);
-        // Pré-sélection©lection automatique du site principal (sinon le premier)
+        // Pré-sélection automatique du site principal (sinon le premier)
         setForm((f) => {
           if (f.client_site_id && list.some((s) => s.id === f.client_site_id)) return f;
           const primary = list.find((s: any) => s.is_primary) ?? list[0];
@@ -95,7 +95,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
     supabase.from("client_equipment").select("id, name, brand, model").eq("client_site_id", form.client_site_id).then(({ data }) => {
       const list = data ?? [];
       setEquipment(list);
-      // Si un seul équipement, le pré-sélectionner©lectionner
+      // Si un seul équipement, le pré-sélectionner
       setForm((f) => {
         if (f.equipment_id && list.some((e) => e.id === f.equipment_id)) return f;
         return list.length === 1 ? { ...f, equipment_id: list[0].id } : f;
@@ -155,7 +155,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
           <div className="space-y-2">
             <Label>Client *</Label>
             <Select value={form.client_id} onValueChange={(v) => set("client_id", v)}>
-              <SelectTrigger><SelectValue placeholder="Sélectionner©lectionner un client" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Sélectionner un client" /></SelectTrigger>
               <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
@@ -163,7 +163,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
             <div className="space-y-2">
               <Label>Site</Label>
               <Select value={form.client_site_id} onValueChange={(v) => set("client_site_id", v)}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner©lectionner un site" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Sélectionner un site" /></SelectTrigger>
                 <SelectContent>{sites.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}  -  {s.address}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -172,7 +172,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
             <div className="space-y-2">
               <Label>Équipement</Label>
               <Select value={form.equipment_id} onValueChange={(v) => set("equipment_id", v)}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner©lectionner" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                 <SelectContent>{equipment.map((e) => <SelectItem key={e.id} value={e.id}>{e.name} {e.brand && `(${e.brand})`}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -205,7 +205,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Alerte légale©gale (années©es)</Label>
+              <Label>Alerte légale (années)</Label>
               <Input type="number" min={1} max={10} value={form.legal_alert_years} onChange={(e) => set("legal_alert_years", e.target.value)} placeholder="Ex: 2" />
             </div>
             <div className="space-y-2">
