@@ -254,6 +254,7 @@ export default function ClientDetail() {
       {/* History */}
       <section className="space-y-3">
         <h2 className="font-semibold text-sm">Historique ({tasks.length})</h2>
+        {null}
         {tasks.length === 0 && <p className="text-sm text-muted-foreground py-4 text-center">Aucune intervention</p>}
         {tasks.map((task) => {
           const st = STATUS_LABELS[task.status] || { label: task.status, color: "" };
