@@ -10,6 +10,7 @@ import { loadLegalPeriodicityByEnergy } from "@/lib/legalRules";
 import { toast } from "sonner";
 import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS } from "@/lib/constants";
 import type { Tables } from "@/integrations/supabase/types";
+import { useAuth } from "@/hooks/useAuth";
 
 type Schedule = Tables<"maintenance_schedules">;
 
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export default function CreateEditEntretienDialog({ open, onOpenChange, schedule, onSaved }: Props) {
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
@@ -116,6 +118,10 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
     if (!form.client_id || !form.next_due_date) { toast.error("Client et prochaine échéance obligatoires"); return; }
     if (form.last_done_date && form.last_done_date >= form.next_due_date) {
       toast.error("La prochaine échéance doit être postérieure au dernier entretien");
+      return;
+    }
+    if (!profile?.company_id) {
+      toast.error("Entreprise introuvable pour votre compte");
       return;
     }
     setLoading(true);
