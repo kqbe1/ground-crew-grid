@@ -39,6 +39,11 @@ const ENERGY_LABELS: Record<string, string> = {
   clim: "Clim", vmc: "VMC", autre: "Autre",
 };
 
+const PERIODICITY_LABELS: Record<string, string> = {
+  mensuel: "Mensuel", trimestriel: "Trimestriel", semestriel: "Semestriel",
+  annuel: "Annuel", bisannuel: "Bisannuel", triennal: "Triennal",
+};
+
 export default function ClientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -251,10 +256,46 @@ export default function ClientDetail() {
 
       <Separator />
 
+      {/* Entretiens */}
+      <section className="space-y-3">
+        <h2 className="font-semibold text-sm">Entretiens ({entretiens.length})</h2>
+        {entretiens.length === 0 && <p className="text-sm text-muted-foreground">Aucun entretien programmé pour ce client.</p>}
+        {entretiens.map((m) => (
+          <Card key={m.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/entretiens/${m.id}`)}>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-medium text-sm flex items-center gap-2">
+                    <Wrench className="w-4 h-4" />
+                    {INTERVENTION_TYPE_LABELS[m.intervention_type] || m.intervention_type}
+                    <Badge variant="outline" className="text-xs">{PERIODICITY_LABELS[m.periodicity] || m.periodicity}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Prochaine échéance : {format(new Date(m.next_due_date), "dd/MM/yyyy")}
+                    {m.last_done_date && ` · Dernier : ${format(new Date(m.last_done_date), "dd/MM/yyyy")}`}
+                  </p>
+                  {(m.client_sites?.name || m.client_equipment?.name) && (
+                    <p className="text-xs text-muted-foreground">
+                      {m.client_sites?.name ? `Site : ${m.client_sites.name}` : ""}
+                      {m.client_sites?.name && m.client_equipment?.name ? " · " : ""}
+                      {m.client_equipment?.name
+                        ? `Équipement : ${[m.client_equipment.name, m.client_equipment.brand, m.client_equipment.model].filter(Boolean).join(" ")}`
+                        : ""}
+                    </p>
+                  )}
+                </div>
+                <Badge variant={m.status === "actif" ? "default" : "secondary"} className="text-xs shrink-0">{m.status}</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </section>
+
+      <Separator />
+
       {/* History */}
       <section className="space-y-3">
         <h2 className="font-semibold text-sm">Historique ({tasks.length})</h2>
-        {null}
         {tasks.length === 0 && <p className="text-sm text-muted-foreground py-4 text-center">Aucune intervention</p>}
         {tasks.map((task) => {
           const st = STATUS_LABELS[task.status] || { label: task.status, color: "" };
