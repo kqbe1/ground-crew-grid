@@ -342,8 +342,8 @@ Deno.serve(async (req) => {
       await adminClient.auth.admin.deleteUser(newUserId);
       return fail(
         step,
-        "Erreur lors de la configuration du profil",
-        500,
+        `Erreur lors de la configuration du profil : ${profileError.message}`,
+        400,
         { profileError, profileExisted: profileExists },
       );
     }
