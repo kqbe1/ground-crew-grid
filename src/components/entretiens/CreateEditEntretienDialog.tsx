@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +81,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
       .then(({ data }) => {
         const list = data ?? [];
         setSites(list);
-        // Pré-sélection automatique du site principal (sinon le premier)
+        // PrÃ©-sÃ©lection automatique du site principal (sinon le premier)
         setForm((f) => {
           if (f.client_site_id && list.some((s) => s.id === f.client_site_id)) return f;
           const primary = list.find((s: any) => s.is_primary) ?? list[0];
@@ -95,7 +95,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
     supabase.from("client_equipment").select("id, name, brand, model").eq("client_site_id", form.client_site_id).then(({ data }) => {
       const list = data ?? [];
       setEquipment(list);
-      // Si un seul équipement, le pré-sélectionner
+      // Si un seul Ã©quipement, le prÃ©-sÃ©lectionner
       setForm((f) => {
         if (f.equipment_id && list.some((e) => e.id === f.equipment_id)) return f;
         return list.length === 1 ? { ...f, equipment_id: list[0].id } : f;
@@ -113,9 +113,9 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
   }, [form.intervention_type, legalRules, schedule]);
 
   const handleSubmit = async () => {
-    if (!form.client_id || !form.next_due_date) { toast.error("Client et prochaine échéance obligatoires"); return; }
+    if (!form.client_id || !form.next_due_date) { toast.error("Client et prochaine Ã©chÃ©ance obligatoires"); return; }
     if (form.last_done_date && form.last_done_date >= form.next_due_date) {
-      toast.error("La prochaine échéance doit être postérieure au dernier entretien");
+      toast.error("La prochaine Ã©chÃ©ance doit Ãªtre postÃ©rieure au dernier entretien");
       return;
     }
     setLoading(true);
@@ -130,13 +130,14 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
       legal_alert_years: form.legal_alert_years ? parseInt(form.legal_alert_years) : null,
       notes: form.notes || null,
       status: form.status,
+      company_id: profile.company_id,
     };
     const { error } = schedule
       ? await supabase.from("maintenance_schedules").update(payload).eq("id", schedule.id).select("id").single()
       : await supabase.from("maintenance_schedules").insert(payload as any).select("id").single();
     setLoading(false);
     if (error) toast.error(error.message);
-    else { toast.success(schedule ? "Entretien modifié" : "Entretien créé"); onOpenChange(false); onSaved(); }
+    else { toast.success(schedule ? "Entretien modifiÃ©" : "Entretien crÃ©Ã©"); onOpenChange(false); onSaved(); }
   };
 
   const set = (key: string, val: string) => setForm((f) => ({ ...f, [key]: val }));
@@ -148,13 +149,13 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{schedule ? "Modifier l'entretien" : "Nouvel entretien"}</DialogTitle>
-          <DialogDescription>{schedule ? "Modifiez les informations" : "Planifiez un entretien récurrent"}</DialogDescription>
+          <DialogDescription>{schedule ? "Modifiez les informations" : "Planifiez un entretien rÃ©current"}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Client *</Label>
             <Select value={form.client_id} onValueChange={(v) => set("client_id", v)}>
-              <SelectTrigger><SelectValue placeholder="Sélectionner un client" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="SÃ©lectionner un client" /></SelectTrigger>
               <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
@@ -162,16 +163,16 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
             <div className="space-y-2">
               <Label>Site</Label>
               <Select value={form.client_site_id} onValueChange={(v) => set("client_site_id", v)}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner un site" /></SelectTrigger>
-                <SelectContent>{sites.map((s) => <SelectItem key={s.id} value={s.id}>{s.name} — {s.address}</SelectItem>)}</SelectContent>
+                <SelectTrigger><SelectValue placeholder="SÃ©lectionner un site" /></SelectTrigger>
+                <SelectContent>{sites.map((s) => <SelectItem key={s.id} value={s.id}>{s.name} â€” {s.address}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           )}
           {equipment.length > 0 && (
             <div className="space-y-2">
-              <Label>Équipement</Label>
+              <Label>Ã‰quipement</Label>
               <Select value={form.equipment_id} onValueChange={(v) => set("equipment_id", v)}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="SÃ©lectionner" /></SelectTrigger>
                 <SelectContent>{equipment.map((e) => <SelectItem key={e.id} value={e.id}>{e.name} {e.brand && `(${e.brand})`}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -185,7 +186,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Périodicité</Label>
+              <Label>PÃ©riodicitÃ©</Label>
               <Select value={form.periodicity} onValueChange={(v) => set("periodicity", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(PERIODICITY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
@@ -194,7 +195,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Prochaine échéance *</Label>
+              <Label>Prochaine Ã©chÃ©ance *</Label>
               <Input type="date" value={form.next_due_date} onChange={(e) => set("next_due_date", e.target.value)} />
             </div>
             <div className="space-y-2">
@@ -204,7 +205,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Alerte légale (années)</Label>
+              <Label>Alerte lÃ©gale (annÃ©es)</Label>
               <Input type="number" min={1} max={10} value={form.legal_alert_years} onChange={(e) => set("legal_alert_years", e.target.value)} placeholder="Ex: 2" />
             </div>
             <div className="space-y-2">
@@ -214,7 +215,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
                 <SelectContent>
                   <SelectItem value="actif">Actif</SelectItem>
                   <SelectItem value="suspendu">Suspendu</SelectItem>
-                  <SelectItem value="termine">Terminé</SelectItem>
+                  <SelectItem value="termine">TerminÃ©</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -226,9 +227,11 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
-          <Button onClick={handleSubmit} disabled={loading}>{loading ? "Enregistrement..." : schedule ? "Modifier" : "Créer"}</Button>
+          <Button onClick={handleSubmit} disabled={loading}>{loading ? "Enregistrement..." : schedule ? "Modifier" : "CrÃ©er"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+
