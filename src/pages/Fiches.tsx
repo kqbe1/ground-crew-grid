@@ -23,6 +23,7 @@ export default function Fiches() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [archiveFilter, setArchiveFilter] = useState("all");
   const [workerFilter, setWorkerFilter] = useState("all");
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
   const workerLabels = useWorkerLabels();
@@ -51,6 +52,8 @@ export default function Fiches() {
 
   const filtered = sheets.filter((s) => {
     if (statusFilter !== "all" && s.final_status !== statusFilter) return false;
+    if (archiveFilter === "archived" && !s.bureau_archived) return false;
+    if (archiveFilter === "active" && s.bureau_archived) return false;
     if (workerFilter !== "all" && s.worker_id !== workerFilter) return false;
     if (typeFilter !== "all") {
       if (typeFilter === "entretien") {
@@ -108,6 +111,14 @@ export default function Fiches() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={archiveFilter} onValueChange={setArchiveFilter}>
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Archivage" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes</SelectItem>
+                <SelectItem value="active">Non archivées</SelectItem>
+                <SelectItem value="archived">Archivées</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       }
@@ -148,6 +159,7 @@ export default function Fiches() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap">
+                  {sheet.bureau_archived && <Badge variant="secondary" className="text-[10px] px-1.5">Archivée</Badge>}
                   {sheet.sent_to_client && <div className="p-1 rounded bg-[hsl(var(--color-termine))]/10" title="Envoyé"><Mail className="w-3.5 h-3.5 text-[hsl(var(--color-termine))]" /></div>}
                   {sheet.signature_data && <div className="p-1 rounded bg-[hsl(var(--color-termine))]/10" title="Signé"><FileSignature className="w-3.5 h-3.5 text-[hsl(var(--color-termine))]" /></div>}
                   {(sheet.photos_before?.length > 0 || sheet.photos_after?.length > 0) && <div className="p-1 rounded bg-primary/10" title="Photos"><Camera className="w-3.5 h-3.5 text-primary" /></div>}
