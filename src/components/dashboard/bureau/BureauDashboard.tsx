@@ -56,6 +56,7 @@ export default function BureauDashboard() {
         profiles:worker_id(full_name, worker_level)
       `)
       .eq("is_draft", false)
+      .eq("bureau_archived", false)
       .order("created_at", { ascending: false });
 
     // Fetch quotes (logique partagée avec la page Devis)
