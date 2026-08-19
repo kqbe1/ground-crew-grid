@@ -66,12 +66,13 @@ export default function ClientDetail() {
     if (!id) return;
     const { data } = await supabase
       .from("clients")
-      .select("*, owner:owner_client_id(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)")
+      .select(`${CLIENT_FULL_SELECT}, birthday`)
       .eq("id", id)
       .maybeSingle();
     setClient(data);
     setLoading(false);
   }, [id]);
+
 
   const fetchSites = useCallback(async () => {
     if (!id) return;
