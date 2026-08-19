@@ -41,7 +41,10 @@ const Email = ({
   footerText = 'Merci de votre confiance,',
 }: Props) => (
   <Html lang="fr" dir="ltr">
-    <Head />
+    <Head>
+      <meta charSet="utf-8" />
+      <meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
+    </Head>
     <Preview>Votre fiche d'intervention</Preview>
     <Body style={main}>
       <Container style={container}>

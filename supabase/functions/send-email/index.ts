@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
     res = await fetch(RESEND_API, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
         Authorization: `Bearer ${resendKey}`,
         ...(body.idempotencyKey ? { 'Idempotency-Key': String(body.idempotencyKey) } : {}),
       },

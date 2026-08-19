@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
 
     const res = await fetch(`${url}/functions/v1/send-email`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
+      headers: { 'Content-Type': 'application/json; charset=utf-8', Authorization: `Bearer ${serviceKey}` },
       body: JSON.stringify({
         templateName: 'rappel-entretien',
         emailType: 'rappel-entretien',
