@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS, ORDER_STATUS_LABELS } from "@/lib/constants";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin, Package, ExternalLink, Pencil, X, Save, UsersRound } from "lucide-react";
+import { FileSignature, Clock, Mail, Check, User, AlertTriangle, Download, Loader2, Trash2, MessageSquare, Send, Wrench, MapPin, Package, ExternalLink, Pencil, X, Save, UsersRound, Archive } from "lucide-react";
 import LayoutDetail from "@/components/layout/LayoutDetail";
 import { PhotoGrid } from "@/components/ui/photo-lightbox";
 import { toast } from "sonner";
