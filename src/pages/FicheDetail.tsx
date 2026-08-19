@@ -112,6 +112,22 @@ export default function FicheDetail() {
     fetchSheet();
   };
 
+  const toggleArchive = async () => {
+    const next = !sheet?.bureau_archived;
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from("intervention_sheets")
+      .update({
+        bureau_archived: next,
+        bureau_archived_at: next ? new Date().toISOString() : null,
+        bureau_archived_by: next ? user?.id ?? null : null,
+      } as any)
+      .eq("id", id!);
+    if (error) { toast.error(error.message); return; }
+    toast.success(next ? "Fiche validée et archivée" : "Fiche désarchivée");
+    fetchSheet();
+  };
+
   const updateOrderStatus = async (orderId: string, status: string) => {
     const patch: any = { status };
     if (status === "commandee") patch.ordered_at = new Date().toISOString();
@@ -211,6 +227,16 @@ export default function FicheDetail() {
           }}>
             <Download className="w-4 h-4 mr-1" /> Télécharger
           </Button>
+          {!isReadOnly && (
+            <Button
+              variant={sheet.bureau_archived ? "outline" : "secondary"}
+              size="sm"
+              onClick={toggleArchive}
+            >
+              <Archive className="w-4 h-4 mr-1" />
+              {sheet.bureau_archived ? "Désarchiver" : "Valider et archiver"}
+            </Button>
+          )}
           <Button size="sm" onClick={() => setSendOpen(true)}>
             <Send className="w-4 h-4 mr-1" />
             {sheet.sent_to_client ? "Renvoyer au client" : "Envoyer au client"}
@@ -221,6 +247,9 @@ export default function FicheDetail() {
         <SheetStatusBadge status={computeSheetStatus(sheet)} showSubmitted={false} />
       ) : (
         <>
+          {sheet.bureau_archived && (
+            <Badge variant="secondary" className="mr-1">Archivée</Badge>
+          )}
           {ALL_STATUSES.map((s) => (
             <Button key={s} size="sm" variant={sheet.final_status === s ? "default" : "outline"} className={sheet.final_status === s ? `${statusColor[s]} text-white` : ""} onClick={() => updateStatus(s)}>
               {TASK_STATUS_LABELS[s]}
