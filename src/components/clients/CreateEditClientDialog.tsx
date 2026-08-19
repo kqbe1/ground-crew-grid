@@ -18,12 +18,7 @@ const ENERGY_LABELS: Record<string, string> = {
   clim: "Clim", vmc: "VMC", autre: "Autre",
 };
 
-type DraftEquipment = {
-  name: string;
-  brand: string;
-  model: string;
-  energy_type: string;
-};
+type DraftEquipment = { name: string; brand: string; model: string; energy_type: string };
 
 interface Props {
   open: boolean;
@@ -34,19 +29,7 @@ interface Props {
 
 export default function CreateEditClientDialog({ open, onOpenChange, client, onSaved }: Props) {
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    phone_secondary: "",
-    email: "",
-    address_intervention: "",
-    address_billing: "",
-    contact_syndic: "",
-    contact_locataire: "",
-    notes_internal: "",
-    syndic_keys_codes: "",
-    birthday: "",
-  });
+  const [form, setForm] = useState({ name: "", phone: "", phone_secondary: "", email: "", address_intervention: "", address_billing: "", contact_syndic: "", contact_locataire: "", notes_internal: "", syndic_keys_codes: "", birthday: "" });
   const [draftEquipments, setDraftEquipments] = useState<DraftEquipment[]>([]);
   const [newEq, setNewEq] = useState<DraftEquipment>({ name: "", brand: "", model: "", energy_type: "autre" });
   const [ownerClientId, setOwnerClientId] = useState<string>("");
@@ -55,60 +38,26 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
   useEffect(() => {
     if (!open) return;
     (async () => {
-      const { data } = await supabase
-        .from("clients")
-        .select("id, name, address_intervention, email, phone")
-        .order("name");
+      const { data } = await supabase.from("clients").select("id, name, address_intervention, email, phone").order("name");
       setAllClients((data ?? []) as ClientOption[]);
     })();
   }, [open]);
 
   useEffect(() => {
     if (client) {
-      setForm({
-        name: client.name || "",
-        phone: client.phone || "",
-        phone_secondary: client.phone_secondary || "",
-        email: client.email || "",
-        address_intervention: client.address_intervention || "",
-        address_billing: client.address_billing || "",
-        contact_syndic: client.contact_syndic || "",
-        contact_locataire: client.contact_locataire || "",
-        notes_internal: client.notes_internal || "",
-        syndic_keys_codes: client.syndic_keys_codes || "",
-        birthday: client.birthday || "",
-      });
+      setForm({ name: client.name || "", phone: client.phone || "", phone_secondary: client.phone_secondary || "", email: client.email || "", address_intervention: client.address_intervention || "", address_billing: client.address_billing || "", contact_syndic: client.contact_syndic || "", contact_locataire: client.contact_locataire || "", notes_internal: client.notes_internal || "", syndic_keys_codes: client.syndic_keys_codes || "", birthday: client.birthday || "" });
       setOwnerClientId((client as any).owner_client_id || "");
     } else {
-      setForm({
-        name: "", phone: "", phone_secondary: "", email: "",
-        address_intervention: "", address_billing: "", contact_syndic: "",
-        contact_locataire: "", notes_internal: "", syndic_keys_codes: "", birthday: "",
-      });
+      setForm({ name: "", phone: "", phone_secondary: "", email: "", address_intervention: "", address_billing: "", contact_syndic: "", contact_locataire: "", notes_internal: "", syndic_keys_codes: "", birthday: "" });
       setOwnerClientId("");
+      setDraftEquipments([]);
     }
   }, [client, open]);
 
   const handleSubmit = async () => {
-    if (!form.name.trim()) {
-      toast.error("Le nom est obligatoire");
-      return;
-    }
+    if (!form.name.trim()) { toast.error("Le nom est obligatoire"); return; }
     setLoading(true);
-    const payload = {
-      name: form.name.trim(),
-      phone: form.phone || null,
-      phone_secondary: form.phone_secondary || null,
-      email: form.email || null,
-      address_intervention: form.address_intervention || null,
-      address_billing: form.address_billing || null,
-      contact_syndic: form.contact_syndic || null,
-      contact_locataire: form.contact_locataire || null,
-      notes_internal: form.notes_internal || null,
-      syndic_keys_codes: form.syndic_keys_codes || null,
-      birthday: form.birthday || null,
-      owner_client_id: ownerClientId || null,
-    };
+    const payload = { name: form.name.trim(), phone: form.phone || null, phone_secondary: form.phone_secondary || null, email: form.email || null, address_intervention: form.address_intervention || null, address_billing: form.address_billing || null, contact_syndic: form.contact_syndic || null, contact_locataire: form.contact_locataire || null, notes_internal: form.notes_internal || null, syndic_keys_codes: form.syndic_keys_codes || null, birthday: form.birthday || null, owner_client_id: ownerClientId || null };
 
     let savedClientId = client?.id ?? null;
     if (client) {
@@ -120,62 +69,75 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
       savedClientId = data.id;
     }
 
-    // Auto-create primary site from address_intervention if not already present.
-    // Le site est aussi créé lorsque l'adresse est vide mais que des équipements
-    // doivent être rattachés (sinon ils étaient silencieusement ignorés).
+    // Un équipement ne peut pas être rattaché sans client_site_id. En création,
+    // créer donc toujours un site principal dès qu'un équipement est demandé,
+    // même si l'adresse d'intervention n'est pas encore renseignée.
     let primarySiteId: string | null = null;
-    const needSite = !!form.address_intervention.trim() || draftEquipments.length > 0;
-    if (savedClientId && needSite) {
-      const addr = form.address_intervention.trim() || "Adresse à compléter";
-      const { data: sites } = await supabase
+    if (savedClientId && (form.address_intervention.trim() || (!client && draftEquipments.length > 0))) {
+      const addr = form.address_intervention.trim();
+      const { data: sites, error: sitesError } = await supabase
         .from("client_sites")
         .select("id, name, address, is_primary")
         .eq("client_id", savedClientId)
         .order("created_at", { ascending: true });
+      if (sitesError) {
+        setLoading(false);
+        toast.error("Impossible de récupérer les sites : " + sitesError.message);
+        return;
+      }
       const list = sites ?? [];
-      // même adresse déjà enregistrée → on réutilise le site existant
-      const sameAddress = list.find((s) => (s.address ?? "").trim() === addr);
-      // sinon on réutilise le site principal auto-généré (évite un doublon "Adresse principale"
-      // à chaque correction de l'adresse du client)
+      const sameAddress = addr ? list.find((s) => (s.address ?? "").trim() === addr) : undefined;
       const autoPrimary = list.find((s) => s.is_primary || s.name === "Adresse principale");
       if (sameAddress) {
         primarySiteId = sameAddress.id;
       } else if (autoPrimary) {
         primarySiteId = autoPrimary.id;
-        await supabase.from("client_sites").update({ address: addr }).eq("id", autoPrimary.id);
+        if (addr && (autoPrimary.address ?? "").trim() !== addr) {
+          const { error } = await supabase.from("client_sites").update({ address: addr }).eq("id", autoPrimary.id);
+          if (error) { setLoading(false); toast.error("Impossible de mettre à jour le site : " + error.message); return; }
+        }
       } else {
-        const { data: site, error: siteErr } = await supabase.from("client_sites").insert({
-          client_id: savedClientId, name: "Adresse principale",
-          address: addr, is_primary: list.length === 0,
+        const { data: site, error } = await supabase.from("client_sites").insert({
+          client_id: savedClientId,
+          name: "Adresse principale",
+          address: addr || "Adresse à compléter",
+          is_primary: true,
         } as any).select("id").single();
-        if (siteErr) toast.error("Site principal : " + siteErr.message);
-        primarySiteId = site?.id ?? null;
+        if (error || !site) {
+          setLoading(false);
+          toast.error("Impossible de créer le site principal : " + (error?.message || "erreur inconnue"));
+          return;
+        }
+        primarySiteId = site.id;
       }
     }
 
-    // Insert draft equipments (only used in creation flow)
     if (savedClientId && draftEquipments.length > 0) {
       if (!primarySiteId) {
-        toast.error("Équipements non créés : aucun site disponible pour ce client");
-      } else {
-        const rows = draftEquipments.filter((e) => e.name.trim()).map((e) => ({
-          client_site_id: primarySiteId, name: e.name.trim(),
-          brand: e.brand || null, model: e.model || null,
-          energy_type: e.energy_type as any,
-        }));
-        if (rows.length > 0) {
-          const { data: inserted, error: eqErr } = await supabase
-            .from("client_equipment").insert(rows as any).select("id");
-          if (eqErr) toast.error("Équipements : " + eqErr.message);
-          else toast.success(`${inserted?.length ?? rows.length} équipement(s) ajouté(s)`);
+        setLoading(false);
+        toast.error("Impossible de rattacher les équipements : aucun site principal n'a pu être créé.");
+        return;
+      }
+      const rows = draftEquipments.filter((e) => e.name.trim()).map((e) => ({ client_site_id: primarySiteId, name: e.name.trim(), brand: e.brand || null, model: e.model || null, energy_type: e.energy_type as any }));
+      if (rows.length > 0) {
+        const { data: inserted, error: eqErr } = await supabase.from("client_equipment").insert(rows as any).select("id");
+        if (eqErr) {
+          setLoading(false);
+          toast.error("Équipements : " + eqErr.message);
+          return;
+        }
+        if (!inserted || inserted.length !== rows.length) {
+          setLoading(false);
+          toast.error("Tous les équipements demandés n'ont pas pu être enregistrés.");
+          return;
         }
       }
     }
 
     setLoading(false);
     toast.success(client ? "Client modifié" : "Client créé");
-    setDraftEquipments([]);
     onOpenChange(false);
+    setDraftEquipments([]);
     onSaved();
   };
 
@@ -184,123 +146,28 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
     setDraftEquipments((prev) => [...prev, newEq]);
     setNewEq({ name: "", brand: "", model: "", energy_type: "autre" });
   };
-  const removeDraftEquipment = (idx: number) => {
-    setDraftEquipments((prev) => prev.filter((_, i) => i !== idx));
-  };
-
+  const removeDraftEquipment = (idx: number) => setDraftEquipments((prev) => prev.filter((_, i) => i !== idx));
   const set = (key: string, val: string) => setForm((f) => ({ ...f, [key]: val }));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{client ? "Modifier le client" : "Nouveau client"}</DialogTitle>
-          <DialogDescription>
-            {client ? "Modifiez les informations du client" : "Remplissez les informations du nouveau client"}
-          </DialogDescription>
-        </DialogHeader>
+        <DialogHeader><DialogTitle>{client ? "Modifier le client" : "Nouveau client"}</DialogTitle><DialogDescription>{client ? "Modifiez les informations du client" : "Remplissez les informations du nouveau client"}</DialogDescription></DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2 md:col-span-2">
-            <Label>Nom *</Label>
-            <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Nom du client" />
-          </div>
-          <div className="space-y-2">
-            <Label>Téléphone</Label>
-            <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+32 ..." />
-          </div>
-          <div className="space-y-2">
-            <Label>Téléphone secondaire</Label>
-            <Input value={form.phone_secondary} onChange={(e) => set("phone_secondary", e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Email</Label>
-            <Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Date de naissance</Label>
-            <Input type="date" value={form.birthday} onChange={(e) => set("birthday", e.target.value)} />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label>Adresse d'intervention</Label>
-            <Input value={form.address_intervention} onChange={(e) => set("address_intervention", e.target.value)} />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label>Coordonnées de facturation</Label>
-            <Input value={form.address_billing} onChange={(e) => set("address_billing", e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Propriétaire / Syndic</Label>
-            <ClientCombobox
-              clients={allClients.filter((c) => c.id !== client?.id)}
-              value={ownerClientId}
-              onChange={setOwnerClientId}
-              placeholder="Sélectionner une fiche existante..."
-              emptyLabel="Aucun propriétaire/syndic"
-            />
-            <Input
-              value={form.contact_syndic}
-              onChange={(e) => set("contact_syndic", e.target.value)}
-              placeholder="Ou saisir un contact libre (nom, téléphone...)"
-              className="text-xs"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Contact locataire</Label>
-            <Input value={form.contact_locataire} onChange={(e) => set("contact_locataire", e.target.value)} />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label>Codes / clés syndic</Label>
-            <Input value={form.syndic_keys_codes} onChange={(e) => set("syndic_keys_codes", e.target.value)} />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label>Notes internes</Label>
-            <Textarea value={form.notes_internal} onChange={(e) => set("notes_internal", e.target.value)} rows={3} />
-          </div>
+          <div className="space-y-2 md:col-span-2"><Label>Nom *</Label><Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Nom du client" /></div>
+          <div className="space-y-2"><Label>Téléphone</Label><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+32 ..." /></div>
+          <div className="space-y-2"><Label>Téléphone secondaire</Label><Input value={form.phone_secondary} onChange={(e) => set("phone_secondary", e.target.value)} /></div>
+          <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></div>
+          <div className="space-y-2"><Label>Date de naissance</Label><Input type="date" value={form.birthday} onChange={(e) => set("birthday", e.target.value)} /></div>
+          <div className="space-y-2 md:col-span-2"><Label>Adresse d'intervention</Label><Input value={form.address_intervention} onChange={(e) => set("address_intervention", e.target.value)} /></div>
+          <div className="space-y-2 md:col-span-2"><Label>Coordonnées de facturation</Label><Input value={form.address_billing} onChange={(e) => set("address_billing", e.target.value)} /></div>
+          <div className="space-y-2"><Label>Propriétaire / Syndic</Label><ClientCombobox clients={allClients.filter((c) => c.id !== client?.id)} value={ownerClientId} onChange={setOwnerClientId} placeholder="Sélectionner une fiche existante..." emptyLabel="Aucun propriétaire/syndic" /><Input value={form.contact_syndic} onChange={(e) => set("contact_syndic", e.target.value)} placeholder="Ou saisir un contact libre (nom, téléphone...)" className="text-xs" /></div>
+          <div className="space-y-2"><Label>Contact locataire</Label><Input value={form.contact_locataire} onChange={(e) => set("contact_locataire", e.target.value)} /></div>
+          <div className="space-y-2 md:col-span-2"><Label>Codes / clés syndic</Label><Input value={form.syndic_keys_codes} onChange={(e) => set("syndic_keys_codes", e.target.value)} /></div>
+          <div className="space-y-2 md:col-span-2"><Label>Notes internes</Label><Textarea value={form.notes_internal} onChange={(e) => set("notes_internal", e.target.value)} rows={3} /></div>
         </div>
-        {!client && (
-          <div className="border-t pt-4 mt-2 space-y-3">
-            <div>
-              <Label className="text-sm font-semibold">Équipements à ajouter (optionnel)</Label>
-              <p className="text-xs text-muted-foreground">Rattachés à l'adresse principale lors de la création.</p>
-            </div>
-            {draftEquipments.length > 0 && (
-              <div className="space-y-1">
-                {draftEquipments.map((eq, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-sm border rounded p-2">
-                    <span className="flex-1">
-                      <strong>{eq.name}</strong>
-                      {(eq.brand || eq.model) && (
-                        <span className="text-muted-foreground"> — {[eq.brand, eq.model].filter(Boolean).join(" ")}</span>
-                      )}
-                      <span className="ml-2 text-xs text-muted-foreground">({ENERGY_LABELS[eq.energy_type]})</span>
-                    </span>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeDraftEquipment(idx)}>
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-2">
-              <Input placeholder="Nom équipement" value={newEq.name} onChange={(e) => setNewEq((s) => ({ ...s, name: e.target.value }))} />
-              <Select value={newEq.energy_type} onValueChange={(v) => setNewEq((s) => ({ ...s, energy_type: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{Object.entries(ENERGY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-              </Select>
-              <Input placeholder="Marque" value={newEq.brand} onChange={(e) => setNewEq((s) => ({ ...s, brand: e.target.value }))} />
-              <Input placeholder="Modèle" value={newEq.model} onChange={(e) => setNewEq((s) => ({ ...s, model: e.target.value }))} />
-            </div>
-            <Button type="button" variant="outline" size="sm" onClick={addDraftEquipment} disabled={!newEq.name.trim()}>
-              <Plus className="w-4 h-4 mr-1" /> Ajouter cet équipement
-            </Button>
-          </div>
-        )}
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Enregistrement..." : client ? "Modifier" : "Créer"}
-          </Button>
-        </DialogFooter>
+        {!client && <div className="border-t pt-4 mt-2 space-y-3"><div><Label className="text-sm font-semibold">Équipements à ajouter (optionnel)</Label><p className="text-xs text-muted-foreground">Rattachés à l'adresse principale lors de la création.</p></div>{draftEquipments.length > 0 && <div className="space-y-1">{draftEquipments.map((eq, idx) => <div key={idx} className="flex items-center gap-2 text-sm border rounded p-2"><span className="flex-1"><strong>{eq.name}</strong>{(eq.brand || eq.model) && <span className="text-muted-foreground"> — {[eq.brand, eq.model].filter(Boolean).join(" ")}</span>}<span className="ml-2 text-xs text-muted-foreground">({ENERGY_LABELS[eq.energy_type]})</span></span><Button type="button" variant="ghost" size="icon" onClick={() => removeDraftEquipment(idx)}><Trash2 className="w-4 h-4 text-destructive" /></Button></div>)}</div>}<div className="grid grid-cols-2 gap-2"><Input placeholder="Nom équipement" value={newEq.name} onChange={(e) => setNewEq((s) => ({ ...s, name: e.target.value }))} /><Select value={newEq.energy_type} onValueChange={(v) => setNewEq((s) => ({ ...s, energy_type: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(ENERGY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select><Input placeholder="Marque" value={newEq.brand} onChange={(e) => setNewEq((s) => ({ ...s, brand: e.target.value }))} /><Input placeholder="Modèle" value={newEq.model} onChange={(e) => setNewEq((s) => ({ ...s, model: e.target.value }))} /></div><Button type="button" variant="outline" size="sm" onClick={addDraftEquipment} disabled={!newEq.name.trim()}><Plus className="w-4 h-4 mr-1" /> Ajouter cet équipement</Button></div>}
+        <DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button><Button onClick={handleSubmit} disabled={loading}>{loading ? "Enregistrement..." : client ? "Modifier" : "Créer"}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
