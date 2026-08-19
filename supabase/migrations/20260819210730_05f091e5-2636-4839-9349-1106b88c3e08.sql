@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.validate_maintenance_binome_ref() FROM PUBLIC, anon, authenticated;
