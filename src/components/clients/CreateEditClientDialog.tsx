@@ -120,10 +120,13 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
       savedClientId = data.id;
     }
 
-    // Auto-create primary site from address_intervention if not already present
+    // Auto-create primary site from address_intervention if not already present.
+    // Le site est aussi créé lorsque l'adresse est vide mais que des équipements
+    // doivent être rattachés (sinon ils étaient silencieusement ignorés).
     let primarySiteId: string | null = null;
-    if (savedClientId && form.address_intervention.trim()) {
-      const addr = form.address_intervention.trim();
+    const needSite = !!form.address_intervention.trim() || draftEquipments.length > 0;
+    if (savedClientId && needSite) {
+      const addr = form.address_intervention.trim() || "Adresse à compléter";
       const { data: sites } = await supabase
         .from("client_sites")
         .select("id, name, address, is_primary")
@@ -141,29 +144,37 @@ export default function CreateEditClientDialog({ open, onOpenChange, client, onS
         primarySiteId = autoPrimary.id;
         await supabase.from("client_sites").update({ address: addr }).eq("id", autoPrimary.id);
       } else {
-        const { data: site } = await supabase.from("client_sites").insert({
+        const { data: site, error: siteErr } = await supabase.from("client_sites").insert({
           client_id: savedClientId, name: "Adresse principale",
           address: addr, is_primary: list.length === 0,
         } as any).select("id").single();
+        if (siteErr) toast.error("Site principal : " + siteErr.message);
         primarySiteId = site?.id ?? null;
       }
     }
 
     // Insert draft equipments (only used in creation flow)
-    if (savedClientId && draftEquipments.length > 0 && primarySiteId) {
-      const rows = draftEquipments.filter((e) => e.name.trim()).map((e) => ({
-        client_site_id: primarySiteId, name: e.name.trim(),
-        brand: e.brand || null, model: e.model || null,
-        energy_type: e.energy_type as any,
-      }));
-      if (rows.length > 0) {
-        const { error: eqErr } = await supabase.from("client_equipment").insert(rows as any);
-        if (eqErr) toast.error("Équipements : " + eqErr.message);
+    if (savedClientId && draftEquipments.length > 0) {
+      if (!primarySiteId) {
+        toast.error("Équipements non créés : aucun site disponible pour ce client");
+      } else {
+        const rows = draftEquipments.filter((e) => e.name.trim()).map((e) => ({
+          client_site_id: primarySiteId, name: e.name.trim(),
+          brand: e.brand || null, model: e.model || null,
+          energy_type: e.energy_type as any,
+        }));
+        if (rows.length > 0) {
+          const { data: inserted, error: eqErr } = await supabase
+            .from("client_equipment").insert(rows as any).select("id");
+          if (eqErr) toast.error("Équipements : " + eqErr.message);
+          else toast.success(`${inserted?.length ?? rows.length} équipement(s) ajouté(s)`);
+        }
       }
     }
 
     setLoading(false);
     toast.success(client ? "Client modifié" : "Client créé");
+    setDraftEquipments([]);
     onOpenChange(false);
     onSaved();
   };

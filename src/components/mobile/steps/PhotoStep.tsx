@@ -12,7 +12,6 @@ function compressImage(file: File): Promise<string> {
     const img = new window.Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
-      URL.revokeObjectURL(url);
       let { width, height } = img;
       if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
         const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
@@ -24,9 +23,11 @@ function compressImage(file: File): Promise<string> {
       canvas.height = height;
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL("image/jpeg", JPEG_QUALITY));
+      const out = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+      URL.revokeObjectURL(url);
+      resolve(out);
     };
-    img.onerror = reject;
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("decode failed")); };
     img.src = url;
   });
 }
@@ -55,21 +56,20 @@ export default function PhotoStep({
   const [compressing, setCompressing] = useState(false);
 
   const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+    const input = e.target;
+    const files = Array.from(input.files ?? []);
+    input.value = "";
+    if (files.length === 0) return;
     setCompressing(true);
-    const newPhotos = [...photos];
-    for (const file of Array.from(files)) {
-      try {
-        const compressed = await compressImage(file);
-        newPhotos.push(compressed);
-      } catch {
-        // skip
-      }
+    const results = await Promise.all(
+      files.map((f) => compressImage(f).catch(() => null)),
+    );
+    const added = results.filter((r): r is string => !!r);
+    if (added.length < files.length) {
+      console.warn(`${files.length - added.length} photo(s) non ajoutée(s)`);
     }
-    onPhotosChange(newPhotos);
+    onPhotosChange([...photos, ...added]);
     setCompressing(false);
-    e.target.value = "";
   };
 
   const removePhoto = (index: number) => {

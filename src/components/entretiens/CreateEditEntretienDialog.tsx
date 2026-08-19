@@ -35,8 +35,6 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
   const [sites, setSites] = useState<any[]>([]);
   const [equipment, setEquipment] = useState<any[]>([]);
   const [legalRules, setLegalRules] = useState<Record<string, string>>({});
-  const [binomes, setBinomes] = useState<{ id: string; name: string; code: string }[]>([]);
-  const [binomeId, setBinomeId] = useState<string>("");
   const [form, setForm] = useState({
     client_id: "",
     client_site_id: "",
@@ -54,9 +52,6 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
     if (!open) return;
     supabase.from("clients").select("id, name").order("name").then(({ data }) => setClients(data ?? []));
     loadLegalPeriodicityByEnergy().then(setLegalRules);
-    supabase.from("task_binomes").select("id, name, code").eq("is_active", true).order("code")
-      .then(({ data }) => setBinomes((data ?? []) as any));
-    setBinomeId((schedule as any)?.binome_id ?? "");
     if (schedule) {
       setForm({
         client_id: schedule.client_id,
@@ -119,6 +114,10 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
 
   const handleSubmit = async () => {
     if (!form.client_id || !form.next_due_date) { toast.error("Client et prochaine échéance obligatoires"); return; }
+    if (form.last_done_date && form.last_done_date >= form.next_due_date) {
+      toast.error("La prochaine échéance doit être postérieure au dernier entretien");
+      return;
+    }
     setLoading(true);
     const payload = {
       client_id: form.client_id,
@@ -131,7 +130,6 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
       legal_alert_years: form.legal_alert_years ? parseInt(form.legal_alert_years) : null,
       notes: form.notes || null,
       status: form.status,
-      binome_id: binomeId || null,
     };
     const { error } = schedule
       ? await supabase.from("maintenance_schedules").update(payload).eq("id", schedule.id).select("id").single()
@@ -178,19 +176,6 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
               </Select>
             </div>
           )}
-          <div className="space-y-2">
-            <Label>Binôme</Label>
-            <Select value={binomeId || "__none"} onValueChange={(v) => setBinomeId(v === "__none" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="Aucun binôme" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none">Aucun binôme</SelectItem>
-                {binomes.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>{b.code} — {b.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Type d'entretien *</Label>

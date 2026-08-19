@@ -13,9 +13,12 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
+  /** Commande existante → mode édition */
+  order?: any | null;
 }
 
-export default function CreateOrderDialog({ open, onOpenChange, onSaved }: Props) {
+export default function CreateOrderDialog({ open, onOpenChange, onSaved, order }: Props) {
+  const isEdit = !!order;
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
@@ -41,6 +44,24 @@ export default function CreateOrderDialog({ open, onOpenChange, onSaved }: Props
       .then(({ data }) => setTasks(data ?? []));
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    if (order) {
+      setForm({
+        part_name: order.part_name ?? "",
+        part_reference: order.part_reference ?? "",
+        quantity: order.quantity ?? 1,
+        supplier: order.supplier ?? "",
+        urgency: (order.urgency ?? "normal") as any,
+        client_id: order.client_id ?? "",
+        work_task_id: order.work_task_id ?? "",
+        notes: order.notes ?? "",
+      });
+    } else {
+      setForm({ part_name: "", part_reference: "", quantity: 1, supplier: "", urgency: "normal", client_id: "", work_task_id: "", notes: "" });
+    }
+  }, [open, order]);
+
   const visibleTasks = form.client_id
     ? tasks.filter((t) => t.client_id === form.client_id)
     : tasks;
@@ -63,6 +84,26 @@ export default function CreateOrderDialog({ open, onOpenChange, onSaved }: Props
     if (!form.work_task_id) { toast.error("Sélectionnez la tâche liée"); return; }
 
     setLoading(true);
+
+    if (isEdit) {
+      const { error: updErr } = await supabase.from("parts_orders").update({
+        part_name: form.part_name.trim(),
+        part_reference: form.part_reference || null,
+        quantity: form.quantity,
+        supplier: form.supplier || null,
+        urgency: form.urgency,
+        client_id: form.client_id || null,
+        work_task_id: form.work_task_id || null,
+        notes: form.notes || null,
+      } as any).eq("id", order.id);
+      setLoading(false);
+      if (updErr) { toast.error("Erreur : " + updErr.message); return; }
+      toast.success("Commande modifiée");
+      onOpenChange(false);
+      onSaved();
+      return;
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { toast.error("Vous devez être connecté"); setLoading(false); return; }
 
@@ -101,8 +142,8 @@ export default function CreateOrderDialog({ open, onOpenChange, onSaved }: Props
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Nouvelle commande</DialogTitle>
-          <DialogDescription>Créez une demande de pièce</DialogDescription>
+          <DialogTitle>{isEdit ? "Modifier la commande" : "Nouvelle commande"}</DialogTitle>
+          <DialogDescription>{isEdit ? "Modifiez les informations de la demande de pièce" : "Créez une demande de pièce"}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -166,7 +207,7 @@ export default function CreateOrderDialog({ open, onOpenChange, onSaved }: Props
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
           <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Enregistrement..." : "Créer la commande"}
+            {loading ? "Enregistrement..." : isEdit ? "Enregistrer" : "Créer la commande"}
           </Button>
         </DialogFooter>
       </DialogContent>
