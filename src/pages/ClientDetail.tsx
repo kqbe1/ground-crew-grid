@@ -47,6 +47,7 @@ export default function ClientDetail() {
   const [sites, setSites] = useState<ClientSite[]>([]);
   const [equipment, setEquipment] = useState<ClientEquipment[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [entretiens, setEntretiens] = useState<any[]>([]);
   const [newSite, setNewSite] = useState({ name: "", address: "" });
   const [showAddSite, setShowAddSite] = useState(false);
   const [newEquip, setNewEquip] = useState({ name: "", brand: "", model: "", energy_type: "autre", client_site_id: "" });
@@ -78,8 +79,22 @@ export default function ClientDetail() {
     setTasks(data ?? []);
   }, [id]);
 
+  const fetchEntretiens = useCallback(async () => {
+    if (!id) return;
+    const siteIds = sites.map((s) => s.id);
+    const filters = [`client_id.eq.${id}`];
+    if (siteIds.length > 0) filters.push(`client_site_id.in.(${siteIds.join(",")})`);
+    const { data } = await supabase
+      .from("maintenance_schedules")
+      .select("*, client_sites(name, address), client_equipment(name, brand, model, energy_type)")
+      .or(filters.join(","))
+      .order("next_due_date", { ascending: true });
+    setEntretiens(data ?? []);
+  }, [id, sites]);
+
   useEffect(() => { fetchClient(); fetchSites(); fetchTasks(); }, [fetchClient, fetchSites, fetchTasks]);
   useEffect(() => { if (sites.length > 0) fetchEquipment(); }, [sites, fetchEquipment]);
+  useEffect(() => { fetchEntretiens(); }, [fetchEntretiens]);
 
   const addSite = async () => {
     if (!client || !newSite.name.trim() || !newSite.address.trim()) return;
