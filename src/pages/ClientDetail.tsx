@@ -192,26 +192,7 @@ export default function ClientDetail() {
       {(client.owner || client.contact_syndic || client.syndic_keys_codes) && (
         <>
           <section className="space-y-3">
-            {client.owner && (
-              <div className="space-y-1">
-                <h2 className="font-semibold text-sm">Propriétaire</h2>
-                <div className="text-sm grid gap-1">
-                  <div
-                    className="font-medium cursor-pointer hover:underline w-fit"
-                    onClick={() => navigate(`/clients/${client.owner.id}`)}
-                  >
-                    {client.owner.name}
-                  </div>
-                  {(client.owner.phone || client.owner.phone_secondary) && (
-                    <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-muted-foreground" /> {[client.owner.phone, client.owner.phone_secondary].filter(Boolean).join(" / ")}</div>
-                  )}
-                  {client.owner.email && <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-muted-foreground" /> {client.owner.email}</div>}
-                  {(client.owner.address_intervention || client.owner.city) && (
-                    <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /> {[client.owner.address_intervention, [client.owner.postal_code, client.owner.city].filter(Boolean).join(" ")].filter(Boolean).join(" — ")}</div>
-                  )}
-                </div>
-              </div>
-            )}
+            {client.owner && <OwnerInfoCard owner={client.owner} />}
             {(client.contact_syndic || client.syndic_keys_codes) && (
               <div className="space-y-1">
                 <h2 className="font-semibold text-sm">Syndic</h2>
@@ -225,6 +206,7 @@ export default function ClientDetail() {
           <Separator />
         </>
       )}
+
 
       {/* Sites */}
       <section className="space-y-3">
