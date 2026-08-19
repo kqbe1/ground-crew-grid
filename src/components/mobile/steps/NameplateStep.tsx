@@ -111,21 +111,15 @@ export default function NameplateStep({ data, onChange, photos, onPhotosChange }
   };
 
   const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>, fromCamera: boolean) => {
-    const files = e.target.files;
-    if (!files) return;
+    const input = e.target;
+    const files = Array.from(input.files ?? []);
+    input.value = "";
+    if (files.length === 0) return;
     setCompressing(true);
-    const newPhotos = [...photos];
-    const compressed: string[] = [];
-    for (const file of Array.from(files)) {
-      try {
-        const c = await compressImage(file);
-        newPhotos.push(c);
-        compressed.push(c);
-      } catch {}
-    }
-    onPhotosChange(newPhotos);
+    const results = await Promise.all(files.map((f) => compressImage(f).catch(() => null)));
+    const compressed = results.filter((r): r is string => !!r);
+    onPhotosChange([...photos, ...compressed]);
     setCompressing(false);
-    e.target.value = "";
     // Auto-analyse the first captured/added photo
     if (compressed.length > 0 && fromCamera) {
       analyzeImage(compressed[0]);

@@ -114,6 +114,10 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
 
   const handleSubmit = async () => {
     if (!form.client_id || !form.next_due_date) { toast.error("Client et prochaine échéance obligatoires"); return; }
+    if (form.last_done_date && form.last_done_date >= form.next_due_date) {
+      toast.error("La prochaine échéance doit être postérieure au dernier entretien");
+      return;
+    }
     setLoading(true);
     const payload = {
       client_id: form.client_id,
