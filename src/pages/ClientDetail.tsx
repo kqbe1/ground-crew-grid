@@ -15,6 +15,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CreateEditClientDialog from "@/components/clients/CreateEditClientDialog";
 import { Separator } from "@/components/ui/separator";
+import { OwnerInfoCard, CLIENT_FULL_SELECT } from "@/components/shared/ClientInfoCard";
+
 
 type Client = Tables<"clients">;
 type ClientSite = Tables<"client_sites">;
@@ -48,7 +50,7 @@ const PERIODICITY_LABELS: Record<string, string> = {
 export default function ClientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [client, setClient] = useState<Client | null>(null);
+  const [client, setClient] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [sites, setSites] = useState<ClientSite[]>([]);
   const [equipment, setEquipment] = useState<ClientEquipment[]>([]);
@@ -62,10 +64,15 @@ export default function ClientDetail() {
 
   const fetchClient = useCallback(async () => {
     if (!id) return;
-    const { data } = await supabase.from("clients").select("*").eq("id", id).maybeSingle();
+    const { data } = await supabase
+      .from("clients")
+      .select(`${CLIENT_FULL_SELECT}, birthday`)
+      .eq("id", id)
+      .maybeSingle();
     setClient(data);
     setLoading(false);
   }, [id]);
+
 
   const fetchSites = useCallback(async () => {
     if (!id) return;
@@ -169,9 +176,7 @@ export default function ClientDetail() {
           {client.address_intervention && <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /> {client.address_intervention}</div>}
           {client.address_billing && <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground opacity-50" /> Facturation : {client.address_billing}</div>}
           {client.birthday && <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-muted-foreground" /> Anniversaire : {format(new Date(client.birthday), "dd MMMM yyyy", { locale: fr })}</div>}
-          {client.contact_syndic && <div className="flex items-center gap-2"><Building2 className="w-4 h-4 text-muted-foreground" /> Syndic : {client.contact_syndic}</div>}
           {client.contact_locataire && <div><span className="text-muted-foreground">Locataire :</span> {client.contact_locataire}</div>}
-          {client.syndic_keys_codes && <div><span className="text-muted-foreground">Clés/Codes :</span> {client.syndic_keys_codes}</div>}
           {client.notes_internal && (
             <Card><CardContent className="p-3 text-sm">
               <p className="font-medium mb-1">Notes internes</p>
@@ -182,6 +187,26 @@ export default function ClientDetail() {
       </section>
 
       <Separator />
+
+      {/* Propriétaire / Syndic */}
+      {(client.owner || client.contact_syndic || client.syndic_keys_codes) && (
+        <>
+          <section className="space-y-3">
+            {client.owner && <OwnerInfoCard owner={client.owner} />}
+            {(client.contact_syndic || client.syndic_keys_codes) && (
+              <div className="space-y-1">
+                <h2 className="font-semibold text-sm">Syndic</h2>
+                <div className="text-sm grid gap-1">
+                  {client.contact_syndic && <div className="flex items-center gap-2"><Building2 className="w-4 h-4 text-muted-foreground" /> {client.contact_syndic}</div>}
+                  {client.syndic_keys_codes && <div><span className="text-muted-foreground">Clés/Codes :</span> {client.syndic_keys_codes}</div>}
+                </div>
+              </div>
+            )}
+          </section>
+          <Separator />
+        </>
+      )}
+
 
       {/* Sites */}
       <section className="space-y-3">

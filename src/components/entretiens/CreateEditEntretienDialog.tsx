@@ -138,12 +138,23 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
       status: form.status,
       company_id: profile.company_id,
     };
-    const { error } = schedule
-      ? await supabase.from("maintenance_schedules").update(payload).eq("id", schedule.id).select("id").single()
-      : await supabase.from("maintenance_schedules").insert(payload as any).select("id").single();
-    setLoading(false);
-    if (error) toast.error(error.message);
-    else { toast.success(schedule ? "Entretien modifié" : "Entretien créé"); onOpenChange(false); onSaved(); }
+    try {
+      const { data, error } = schedule
+        ? await supabase.from("maintenance_schedules").update(payload).eq("id", schedule.id).select("id").single()
+        : await supabase.from("maintenance_schedules").insert(payload as any).select("id").single();
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success(schedule ? "Entretien modifié" : "Entretien créé");
+        onOpenChange(false);
+        onSaved();
+      }
+    } catch (err) {
+      console.error("[CreateEditEntretienDialog] erreur inattendue", err);
+      toast.error("Une erreur inattendue est survenue lors de l'enregistrement.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const set = (key: string, val: string) => setForm((f) => ({ ...f, [key]: val }));
