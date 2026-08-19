@@ -428,7 +428,7 @@ export default function EmailSettingsTab() {
           <Mail className="w-4 h-4" /> Modèles d'emails envoyés aux clients
         </CardTitle>
         <CardDescription>
-          Personnalisez le contenu des emails envoyés depuis <strong>info@agchauffage.be</strong> vers vos clients.
+          Personnalisez le contenu des emails envoyés depuis l'adresse d'expédition configurée ci-dessus vers vos clients.
         </CardDescription>
       </CardHeader>
       <CardContent>
