@@ -24,7 +24,7 @@ interface TextBlock {
 }
 
 interface PdfSettings {
-  id: string;
+  id: string | null;
   document_type: DocumentType;
   company_name: string;
   company_address: string;
@@ -92,6 +92,37 @@ function newBlockId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+/** Configuration neutre proposée à une entreprise qui n'en a pas encore.
+ *  Ces valeurs ne sont que des valeurs initiales de formulaire :
+ *  elles n'écrasent jamais une configuration déjà enregistrée. */
+function blankSettings(documentType: DocumentType): PdfSettings {
+  return {
+    id: null,
+    document_type: documentType,
+    company_name: "",
+    company_address: "",
+    company_phone: "",
+    company_email: "",
+    company_website: "",
+    company_vat: "",
+    logo_url: null,
+    document_title: DOC_TYPE_LABELS[documentType],
+    primary_color: "#1e40af",
+    show_horaires: true,
+    show_description: true,
+    show_checklist: true,
+    show_client_state: true,
+    show_photos_before: true,
+    show_photos_after: true,
+    show_signature: true,
+    show_worker_info: true,
+    show_client_info: true,
+    show_intervention_type: true,
+    footer_text: "",
+    text_blocks: [],
+  };
+}
+
 function normalizeBlocks(raw: unknown): TextBlock[] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -115,6 +146,7 @@ export default function PdfSettingsTab() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
 
   const settings = allSettings[activeType];
 
@@ -125,7 +157,27 @@ export default function PdfSettingsTab() {
 
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data } = await supabase.from("pdf_settings").select("*");
+      const { data: { user } } = await supabase.auth.getUser();
+      let cid: string | null = null;
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("company_id")
+          .eq("id", user.id)
+          .maybeSingle();
+        cid = profile?.company_id ?? null;
+      }
+      setCompanyId(cid);
+
+      let data: any[] = [];
+      if (cid) {
+        const { data: rows } = await supabase
+          .from("pdf_settings")
+          .select("*")
+          .eq("company_id", cid);
+        data = rows ?? [];
+      }
+
       const map: Record<DocumentType, PdfSettings | null> = {
         fiche_intervention: null,
         fiche_entretien: null,
@@ -139,6 +191,11 @@ export default function PdfSettingsTab() {
             text_blocks: normalizeBlocks((row as any).text_blocks),
           } as PdfSettings;
         }
+      }
+      // Les documents non encore configurés pour CETTE entreprise reçoivent
+      // un formulaire vierge (aucune écriture en base tant que l'utilisateur n'enregistre pas).
+      for (const dt of DOC_TYPES) {
+        if (!map[dt]) map[dt] = blankSettings(dt);
       }
       setAllSettings(map);
 
