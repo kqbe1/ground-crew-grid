@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,7 +34,7 @@ const fail = (step: Step, userMessage: string, status: number, technical?: unkno
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
 
 const findAuthUserByEmail = async (
-  adminClient: ReturnType<typeof createClient>,
+  adminClient: SupabaseClient,
   email: string,
 ) => {
   const targetEmail = normalizeEmail(email);
@@ -54,7 +54,7 @@ const findAuthUserByEmail = async (
 
 // Single source of truth for user_roles: exactly one row matching profiles.role.
 const syncSingleRole = async (
-  adminClient: ReturnType<typeof createClient>,
+  adminClient: SupabaseClient,
   userId: string,
   role: string,
 ) => {
