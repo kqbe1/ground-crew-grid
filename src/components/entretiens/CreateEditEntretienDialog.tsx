@@ -132,11 +132,9 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
       status: form.status,
     };
     try {
-      console.log("[CreateEditEntretienDialog] payload envoyé", payload);
       const { data, error } = schedule
         ? await supabase.from("maintenance_schedules").update(payload).eq("id", schedule.id).select("id").single()
         : await supabase.from("maintenance_schedules").insert(payload as any).select("id").single();
-      console.log("[CreateEditEntretienDialog] réponse Supabase", { data, error });
       if (error) {
         toast.error(error.message);
       } else {
