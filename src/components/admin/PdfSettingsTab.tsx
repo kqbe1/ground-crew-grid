@@ -279,14 +279,26 @@ export default function PdfSettingsTab() {
     setSaving(true);
     const { id, text_blocks, ...rest } = settings;
     const payload: any = { ...rest, text_blocks: text_blocks ?? [] };
-    const { error } = await supabase
-      .from("pdf_settings")
-      .update(payload)
-      .eq("id", id);
-    if (error) {
-      toast.error("Erreur : " + error.message);
+    if (id) {
+      const { error } = await supabase.from("pdf_settings").update(payload).eq("id", id);
+      if (error) toast.error("Erreur : " + error.message);
+      else toast.success(`Configuration « ${DOC_TYPE_LABELS[activeType]} » sauvegardée`);
     } else {
-      toast.success(`Configuration « ${DOC_TYPE_LABELS[activeType]} » sauvegardée`);
+      // Première configuration de cette entreprise pour ce document.
+      const { data, error } = await supabase
+        .from("pdf_settings")
+        .insert({ ...payload, company_id: companyId } as any)
+        .select("id")
+        .maybeSingle();
+      if (error) {
+        toast.error("Erreur : " + error.message);
+      } else {
+        setAllSettings((prev) => ({
+          ...prev,
+          [activeType]: { ...(prev[activeType] as PdfSettings), id: data?.id ?? null },
+        }));
+        toast.success(`Configuration « ${DOC_TYPE_LABELS[activeType]} » créée`);
+      }
     }
     setSaving(false);
   };
