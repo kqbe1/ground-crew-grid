@@ -15,9 +15,12 @@ import { useWorkerLabels } from "@/hooks/useWorkerLabels";
 import LayoutPage from "@/components/layout/LayoutPage";
 import { SheetStatusBadge, computeSheetStatus, sheetStatusBorderClass } from "@/components/shared/SheetStatusBadge";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Fiches() {
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const canCreateTask = role === "admin" || role === "bureau" || role === "super_admin";
   const [searchParams] = useSearchParams();
   const [sheets, setSheets] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -78,7 +81,7 @@ export default function Fiches() {
       icon={ClipboardList}
       title="Fiches d'intervention"
       subtitle={`${filtered.length} fiche${filtered.length > 1 ? "s" : ""}`}
-      actions={<CreateTaskDialog defaultDate={new Date()} onCreated={() => fetchSheets()} />}
+      actions={canCreateTask ? <CreateTaskDialog defaultDate={new Date()} onCreated={() => fetchSheets()} /> : undefined}
       toolbar={
         <div className="flex flex-col sm:flex-row gap-3 w-full">
           <div className="relative flex-1 min-w-[180px]">
