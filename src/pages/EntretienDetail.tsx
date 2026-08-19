@@ -7,12 +7,18 @@ import { Separator } from "@/components/ui/separator";
 import { INTERVENTION_TYPE_LABELS, PERIODICITY_LABELS, ENERGY_TYPE_LABELS } from "@/lib/constants";
 import { format, differenceInDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Wrench, MapPin, Calendar, AlertTriangle, Pencil, User, CalendarPlus } from "lucide-react";
+import { Wrench, MapPin, Calendar, AlertTriangle, Pencil, User, CalendarPlus, Trash2 } from "lucide-react";
 import LayoutDetail from "@/components/layout/LayoutDetail";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import CreateEditEntretienDialog from "@/components/entretiens/CreateEditEntretienDialog";
 import CreateTaskDialog from "@/components/planning/CreateTaskDialog";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   if (value === null || value === undefined || value === "") return null;
@@ -27,11 +33,41 @@ function Row({ label, value }: { label: string; value?: React.ReactNode }) {
 export default function EntretienDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const canManage = role === "admin" || role === "bureau" || role === "super_admin";
   const [schedule, setSchedule] = useState<any>(null);
   const [assignees, setAssignees] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!id) return;
+    setDeleting(true);
+    try {
+      const { error, count } = await supabase
+        .from("maintenance_schedules")
+        .delete({ count: "exact" })
+        .eq("id", id);
+      if (error) {
+        toast.error(`Suppression impossible : ${error.message}`);
+        return;
+      }
+      if (!count) {
+        toast.error("Suppression refusée : vous n'avez pas les droits sur cet entretien.");
+        return;
+      }
+      toast.success("Entretien supprimé");
+      setDeleteOpen(false);
+      navigate("/entretiens", { replace: true });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur lors de la suppression");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const fetchSchedule = useCallback(async () => {
     if (!id) return;
@@ -86,6 +122,11 @@ export default function EntretienDetail() {
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
             <Pencil className="w-4 h-4 mr-1" /> Modifier
           </Button>
+          {canManage && (
+            <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+              <Trash2 className="w-4 h-4 mr-1" /> Supprimer
+            </Button>
+          )}
         </div>
       }
     >
@@ -235,6 +276,27 @@ export default function EntretienDetail() {
         defaultTitle={`${INTERVENTION_TYPE_LABELS[schedule.intervention_type] || "Entretien"} — ${client.name || ""}`.trim()}
         onCreated={() => { setPlanOpen(false); fetchSchedule(); }}
       />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cet entretien ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              L'entretien récurrent et ses assignations d'ouvriers seront définitivement supprimés.
+              Les tâches et fiches d'intervention déjà planifiées ne sont pas affectées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+              disabled={deleting}
+            >
+              {deleting ? "Suppression…" : "Supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </LayoutDetail>
   );
 }
