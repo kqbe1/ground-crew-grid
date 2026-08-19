@@ -50,7 +50,6 @@ function compressImage(file: File): Promise<string> {
     const img = new window.Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
-      URL.revokeObjectURL(url);
       let { width, height } = img;
       if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
         const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
