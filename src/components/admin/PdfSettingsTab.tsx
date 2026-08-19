@@ -320,7 +320,7 @@ export default function PdfSettingsTab() {
           ))}
         </TabsList>
         <div className="text-center text-muted-foreground py-8">
-          Configuration introuvable pour ce document.
+          Aucune entreprise associée à votre compte : impossible d'afficher la configuration PDF.
         </div>
       </Tabs>
     );
@@ -357,7 +357,7 @@ export default function PdfSettingsTab() {
               <Input
                 value={settings.company_name}
                 onChange={(e) => update("company_name", e.target.value)}
-                placeholder="Mon Entreprise SPRL"
+                placeholder="Nom de votre entreprise"
               />
             </div>
             <div className="space-y-2">
@@ -375,7 +375,7 @@ export default function PdfSettingsTab() {
             <Textarea
               value={settings.company_address}
               onChange={(e) => update("company_address", e.target.value)}
-              placeholder="Rue de l'Industrie 10, 1000 Bruxelles"
+              placeholder="Adresse de votre entreprise"
               rows={2}
             />
           </div>
@@ -394,7 +394,7 @@ export default function PdfSettingsTab() {
               <Input
                 value={settings.company_email}
                 onChange={(e) => update("company_email", e.target.value)}
-                placeholder="info@entreprise.be"
+                placeholder="info@votredomaine.be"
               />
             </div>
             <div className="space-y-2">
@@ -402,7 +402,7 @@ export default function PdfSettingsTab() {
               <Input
                 value={settings.company_website}
                 onChange={(e) => update("company_website", e.target.value)}
-                placeholder="www.entreprise.be"
+                placeholder="www.votredomaine.be"
               />
             </div>
           </div>
@@ -485,7 +485,7 @@ export default function PdfSettingsTab() {
             <Input
               value={settings.footer_text}
               onChange={(e) => update("footer_text", e.target.value)}
-              placeholder="Merci pour votre confiance — www.entreprise.be"
+              placeholder="Merci pour votre confiance — www.votredomaine.be"
             />
           </div>
         </CardContent>
