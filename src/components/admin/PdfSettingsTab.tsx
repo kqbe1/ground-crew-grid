@@ -24,7 +24,7 @@ interface TextBlock {
 }
 
 interface PdfSettings {
-  id: string;
+  id: string | null;
   document_type: DocumentType;
   company_name: string;
   company_address: string;
@@ -92,6 +92,37 @@ function newBlockId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+/** Configuration neutre proposée à une entreprise qui n'en a pas encore.
+ *  Ces valeurs ne sont que des valeurs initiales de formulaire :
+ *  elles n'écrasent jamais une configuration déjà enregistrée. */
+function blankSettings(documentType: DocumentType): PdfSettings {
+  return {
+    id: null,
+    document_type: documentType,
+    company_name: "",
+    company_address: "",
+    company_phone: "",
+    company_email: "",
+    company_website: "",
+    company_vat: "",
+    logo_url: null,
+    document_title: DOC_TYPE_LABELS[documentType],
+    primary_color: "#1e40af",
+    show_horaires: true,
+    show_description: true,
+    show_checklist: true,
+    show_client_state: true,
+    show_photos_before: true,
+    show_photos_after: true,
+    show_signature: true,
+    show_worker_info: true,
+    show_client_info: true,
+    show_intervention_type: true,
+    footer_text: "",
+    text_blocks: [],
+  };
+}
+
 function normalizeBlocks(raw: unknown): TextBlock[] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -115,6 +146,7 @@ export default function PdfSettingsTab() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
 
   const settings = allSettings[activeType];
 
@@ -125,7 +157,27 @@ export default function PdfSettingsTab() {
 
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data } = await supabase.from("pdf_settings").select("*");
+      const { data: { user } } = await supabase.auth.getUser();
+      let cid: string | null = null;
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("company_id")
+          .eq("id", user.id)
+          .maybeSingle();
+        cid = profile?.company_id ?? null;
+      }
+      setCompanyId(cid);
+
+      let data: any[] = [];
+      if (cid) {
+        const { data: rows } = await supabase
+          .from("pdf_settings")
+          .select("*")
+          .eq("company_id", cid);
+        data = rows ?? [];
+      }
+
       const map: Record<DocumentType, PdfSettings | null> = {
         fiche_intervention: null,
         fiche_entretien: null,
@@ -139,6 +191,11 @@ export default function PdfSettingsTab() {
             text_blocks: normalizeBlocks((row as any).text_blocks),
           } as PdfSettings;
         }
+      }
+      // Les documents non encore configurés pour CETTE entreprise reçoivent
+      // un formulaire vierge (aucune écriture en base tant que l'utilisateur n'enregistre pas).
+      for (const dt of DOC_TYPES) {
+        if (!map[dt]) map[dt] = blankSettings(dt);
       }
       setAllSettings(map);
 
@@ -222,14 +279,26 @@ export default function PdfSettingsTab() {
     setSaving(true);
     const { id, text_blocks, ...rest } = settings;
     const payload: any = { ...rest, text_blocks: text_blocks ?? [] };
-    const { error } = await supabase
-      .from("pdf_settings")
-      .update(payload)
-      .eq("id", id);
-    if (error) {
-      toast.error("Erreur : " + error.message);
+    if (id) {
+      const { error } = await supabase.from("pdf_settings").update(payload).eq("id", id);
+      if (error) toast.error("Erreur : " + error.message);
+      else toast.success(`Configuration « ${DOC_TYPE_LABELS[activeType]} » sauvegardée`);
     } else {
-      toast.success(`Configuration « ${DOC_TYPE_LABELS[activeType]} » sauvegardée`);
+      // Première configuration de cette entreprise pour ce document.
+      const { data, error } = await supabase
+        .from("pdf_settings")
+        .insert({ ...payload, company_id: companyId } as any)
+        .select("id")
+        .maybeSingle();
+      if (error) {
+        toast.error("Erreur : " + error.message);
+      } else {
+        setAllSettings((prev) => ({
+          ...prev,
+          [activeType]: { ...(prev[activeType] as PdfSettings), id: data?.id ?? null },
+        }));
+        toast.success(`Configuration « ${DOC_TYPE_LABELS[activeType]} » créée`);
+      }
     }
     setSaving(false);
   };
@@ -251,7 +320,7 @@ export default function PdfSettingsTab() {
           ))}
         </TabsList>
         <div className="text-center text-muted-foreground py-8">
-          Configuration introuvable pour ce document.
+          Aucune entreprise associée à votre compte : impossible d'afficher la configuration PDF.
         </div>
       </Tabs>
     );
@@ -288,7 +357,7 @@ export default function PdfSettingsTab() {
               <Input
                 value={settings.company_name}
                 onChange={(e) => update("company_name", e.target.value)}
-                placeholder="Mon Entreprise SPRL"
+                placeholder="Nom de votre entreprise"
               />
             </div>
             <div className="space-y-2">
@@ -306,7 +375,7 @@ export default function PdfSettingsTab() {
             <Textarea
               value={settings.company_address}
               onChange={(e) => update("company_address", e.target.value)}
-              placeholder="Rue de l'Industrie 10, 1000 Bruxelles"
+              placeholder="Adresse de votre entreprise"
               rows={2}
             />
           </div>
@@ -325,7 +394,7 @@ export default function PdfSettingsTab() {
               <Input
                 value={settings.company_email}
                 onChange={(e) => update("company_email", e.target.value)}
-                placeholder="info@entreprise.be"
+                placeholder="info@votredomaine.be"
               />
             </div>
             <div className="space-y-2">
@@ -333,7 +402,7 @@ export default function PdfSettingsTab() {
               <Input
                 value={settings.company_website}
                 onChange={(e) => update("company_website", e.target.value)}
-                placeholder="www.entreprise.be"
+                placeholder="www.votredomaine.be"
               />
             </div>
           </div>
@@ -416,7 +485,7 @@ export default function PdfSettingsTab() {
             <Input
               value={settings.footer_text}
               onChange={(e) => update("footer_text", e.target.value)}
-              placeholder="Merci pour votre confiance — www.entreprise.be"
+              placeholder="Merci pour votre confiance — www.votredomaine.be"
             />
           </div>
         </CardContent>

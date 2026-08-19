@@ -23,6 +23,7 @@ type ClientEquipment = Tables<"client_equipment">;
 const INTERVENTION_TYPE_LABELS: Record<string, string> = {
   entretien_gaz: "Entretien Gaz", entretien_mazout: "Entretien Mazout", entretien_pellets: "Entretien Pellets",
   entretien_clim: "Entretien Clim", entretien_vmc: "Entretien VMC", depannage: "Dépannage",
+  entretien_boiler: "Entretien Boiler",
   installation: "Installation", remplacement: "Remplacement", rdv_divers: "RDV Divers", autre: "Autre",
 };
 
@@ -39,6 +40,11 @@ const ENERGY_LABELS: Record<string, string> = {
   clim: "Clim", vmc: "VMC", autre: "Autre",
 };
 
+const PERIODICITY_LABELS: Record<string, string> = {
+  mensuel: "Mensuel", trimestriel: "Trimestriel", semestriel: "Semestriel",
+  annuel: "Annuel", bisannuel: "Bisannuel", triennal: "Triennal",
+};
+
 export default function ClientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -47,6 +53,7 @@ export default function ClientDetail() {
   const [sites, setSites] = useState<ClientSite[]>([]);
   const [equipment, setEquipment] = useState<ClientEquipment[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [entretiens, setEntretiens] = useState<any[]>([]);
   const [newSite, setNewSite] = useState({ name: "", address: "" });
   const [showAddSite, setShowAddSite] = useState(false);
   const [newEquip, setNewEquip] = useState({ name: "", brand: "", model: "", energy_type: "autre", client_site_id: "" });
@@ -78,8 +85,22 @@ export default function ClientDetail() {
     setTasks(data ?? []);
   }, [id]);
 
+  const fetchEntretiens = useCallback(async () => {
+    if (!id) return;
+    const siteIds = sites.map((s) => s.id);
+    const filters = [`client_id.eq.${id}`];
+    if (siteIds.length > 0) filters.push(`client_site_id.in.(${siteIds.join(",")})`);
+    const { data } = await supabase
+      .from("maintenance_schedules")
+      .select("*, client_sites(name, address), client_equipment(name, brand, model, energy_type)")
+      .or(filters.join(","))
+      .order("next_due_date", { ascending: true });
+    setEntretiens(data ?? []);
+  }, [id, sites]);
+
   useEffect(() => { fetchClient(); fetchSites(); fetchTasks(); }, [fetchClient, fetchSites, fetchTasks]);
   useEffect(() => { if (sites.length > 0) fetchEquipment(); }, [sites, fetchEquipment]);
+  useEffect(() => { fetchEntretiens(); }, [fetchEntretiens]);
 
   const addSite = async () => {
     if (!client || !newSite.name.trim() || !newSite.address.trim()) return;
@@ -232,6 +253,43 @@ export default function ClientDetail() {
             </div>
           </CardContent></Card>
         )}
+      </section>
+
+      <Separator />
+
+      {/* Entretiens */}
+      <section className="space-y-3">
+        <h2 className="font-semibold text-sm">Entretiens ({entretiens.length})</h2>
+        {entretiens.length === 0 && <p className="text-sm text-muted-foreground">Aucun entretien programmé pour ce client.</p>}
+        {entretiens.map((m) => (
+          <Card key={m.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/entretiens/${m.id}`)}>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-medium text-sm flex items-center gap-2">
+                    <Wrench className="w-4 h-4" />
+                    {INTERVENTION_TYPE_LABELS[m.intervention_type] || m.intervention_type}
+                    <Badge variant="outline" className="text-xs">{PERIODICITY_LABELS[m.periodicity] || m.periodicity}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Prochaine échéance : {format(new Date(m.next_due_date), "dd/MM/yyyy")}
+                    {m.last_done_date && ` · Dernier : ${format(new Date(m.last_done_date), "dd/MM/yyyy")}`}
+                  </p>
+                  {(m.client_sites?.name || m.client_equipment?.name) && (
+                    <p className="text-xs text-muted-foreground">
+                      {m.client_sites?.name ? `Site : ${m.client_sites.name}` : ""}
+                      {m.client_sites?.name && m.client_equipment?.name ? " · " : ""}
+                      {m.client_equipment?.name
+                        ? `Équipement : ${[m.client_equipment.name, m.client_equipment.brand, m.client_equipment.model].filter(Boolean).join(" ")}`
+                        : ""}
+                    </p>
+                  )}
+                </div>
+                <Badge variant={m.status === "actif" ? "default" : "secondary"} className="text-xs shrink-0">{m.status}</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </section>
 
       <Separator />

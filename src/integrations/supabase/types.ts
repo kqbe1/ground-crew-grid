@@ -636,6 +636,9 @@ export type Database = {
           billing_same_as_intervention: boolean | null
           binome_name: string | null
           binome_percentage: number | null
+          bureau_archived: boolean
+          bureau_archived_at: string | null
+          bureau_archived_by: string | null
           checklist_results: Json | null
           client_absent: boolean
           client_address_override: string | null
@@ -684,6 +687,9 @@ export type Database = {
           billing_same_as_intervention?: boolean | null
           binome_name?: string | null
           binome_percentage?: number | null
+          bureau_archived?: boolean
+          bureau_archived_at?: string | null
+          bureau_archived_by?: string | null
           checklist_results?: Json | null
           client_absent?: boolean
           client_address_override?: string | null
@@ -732,6 +738,9 @@ export type Database = {
           billing_same_as_intervention?: boolean | null
           binome_name?: string | null
           binome_percentage?: number | null
+          bureau_archived?: boolean
+          bureau_archived_at?: string | null
+          bureau_archived_by?: string | null
           checklist_results?: Json | null
           client_absent?: boolean
           client_address_override?: string | null
@@ -770,6 +779,13 @@ export type Database = {
           worker_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "intervention_sheets_bureau_archived_by_fkey"
+            columns: ["bureau_archived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "intervention_sheets_company_id_fkey"
             columns: ["company_id"]

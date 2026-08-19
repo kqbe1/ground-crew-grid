@@ -5,10 +5,25 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { TASK_STATUS_LABELS, INTERVENTION_TYPE_LABELS } from "@/lib/constants";
 
+async function currentCompanyId(): Promise<string | null> {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth?.user) return null;
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("company_id")
+    .eq("id", auth.user.id)
+    .maybeSingle();
+  return prof?.company_id ?? null;
+}
+
+/** Charge la configuration email de l'entreprise courante uniquement. */
 async function loadSettings(templateKey: "fiche-intervention" | "rappel-entretien") {
+  const companyId = await currentCompanyId();
+  if (!companyId) return null;
   const { data } = await supabase
     .from("email_settings")
     .select("subject, intro_text, footer_text, contact_phone, contact_email")
+    .eq("company_id", companyId)
     .eq("template_key", templateKey)
     .maybeSingle();
   return data;
@@ -136,7 +151,7 @@ export async function sendEntretienReminderToAG(schedule: any): Promise<void> {
         interventionType: INTERVENTION_TYPE_LABELS[schedule.intervention_type] || schedule.intervention_type || "Entretien",
         dueDate,
         contactPhone: settings?.contact_phone || "",
-        contactEmail: settings?.contact_email || "info@agchauffage.be",
+        contactEmail: settings?.contact_email || "",
         customSubject: settings?.subject || "",
         introText: settings?.intro_text || undefined,
         footerText: settings?.footer_text || undefined,

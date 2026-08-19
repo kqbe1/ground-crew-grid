@@ -38,11 +38,11 @@ const Email = ({
   description = '',
   pdfUrl = '',
   introText = "Suite à notre intervention, veuillez trouver ci-dessous le récapitulatif ainsi que la fiche d'intervention en pièce jointe (lien PDF).",
-  footerText = 'Merci de votre confiance,\nAG Chauffage',
+  footerText = 'Merci de votre confiance,',
 }: Props) => (
   <Html lang="fr" dir="ltr">
     <Head />
-    <Preview>Votre fiche d'intervention AG Chauffage</Preview>
+    <Preview>Votre fiche d'intervention</Preview>
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>Votre fiche d'intervention</Heading>
@@ -83,7 +83,7 @@ export const template = {
   component: Email,
   subject: (data: Props) =>
     data?.customSubject?.trim() ||
-    `Votre fiche d'intervention AG Chauffage${data?.interventionDate ? ` — ${data.interventionDate}` : ''}`,
+    `Votre fiche d'intervention${data?.interventionDate ? ` — ${data.interventionDate}` : ''}`,
   displayName: "Fiche d'intervention (client)",
   previewData: {
     clientName: 'Dupont Jean',

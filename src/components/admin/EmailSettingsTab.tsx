@@ -25,20 +25,20 @@ interface Settings {
 
 const DEFAULTS: Record<TemplateKey, Settings> = {
   "fiche-intervention": {
-    subject: "Votre fiche d'intervention AG Chauffage",
+    subject: "Votre fiche d'intervention",
     intro_text:
       "Suite à notre intervention, veuillez trouver ci-dessous le récapitulatif ainsi que la fiche d'intervention en pièce jointe (lien PDF).",
-    footer_text: "Merci de votre confiance,\nAG Chauffage",
+    footer_text: "Merci de votre confiance,\nNom de votre entreprise",
     contact_phone: "",
-    contact_email: "info@agchauffage.be",
+    contact_email: "",
   },
   "rappel-entretien": {
-    subject: "Votre entretien AG Chauffage — planifions un rendez-vous",
+    subject: "Votre entretien — planifions un rendez-vous",
     intro_text:
       "Nous vous contactons pour convenir d'une date pour votre prochain entretien. Merci de nous répondre à cet email ou de nous téléphoner afin de fixer un rendez-vous.",
-    footer_text: "Merci de votre confiance,\nAG Chauffage",
+    footer_text: "Merci de votre confiance,\nNom de votre entreprise",
     contact_phone: "",
-    contact_email: "info@agchauffage.be",
+    contact_email: "",
     auto_reminder_enabled: true,
     reminder_days_before: 30,
   },
@@ -56,6 +56,7 @@ function TemplateEditor({ templateKey }: { templateKey: TemplateKey }) {
   const [values, setValues] = useState<Settings>(DEFAULTS[templateKey]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [companyId, setCompanyId] = useState<string | null>(null);
 
   const isRappel = templateKey === "rappel-entretien";
 
@@ -66,13 +67,30 @@ function TemplateEditor({ templateKey }: { templateKey: TemplateKey }) {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from("email_settings")
-        .select("subject, intro_text, footer_text, contact_phone, contact_email, auto_reminder_enabled, reminder_days_before")
-        .eq("template_key", templateKey)
-        .maybeSingle();
+      const { data: auth } = await supabase.auth.getUser();
+      let cid: string | null = null;
+      if (auth.user?.id) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("company_id")
+          .eq("id", auth.user.id)
+          .maybeSingle();
+        cid = profile?.company_id ?? null;
+      }
+      setCompanyId(cid);
+
+      let data: any = null;
+      if (cid) {
+        const res = await supabase
+          .from("email_settings")
+          .select("subject, intro_text, footer_text, contact_phone, contact_email, auto_reminder_enabled, reminder_days_before")
+          .eq("company_id", cid)
+          .eq("template_key", templateKey)
+          .maybeSingle();
+        data = res.data;
+      }
       if (data) setValues(data as Settings);
-      else setValues(DEFAULTS[templateKey]);
+      else setValues({ ...DEFAULTS[templateKey], subject: DEFAULTS[templateKey].subject, footer_text: "" });
       setLoading(false);
     })();
   }, [templateKey]);
@@ -92,12 +110,13 @@ function TemplateEditor({ templateKey }: { templateKey: TemplateKey }) {
       .from("email_settings")
       .upsert(
         {
+          company_id: companyId,
           template_key: templateKey,
           subject: parsed.data.subject,
           intro_text: parsed.data.intro_text,
-          footer_text: parsed.data.footer_text || DEFAULTS[templateKey].footer_text,
+          footer_text: parsed.data.footer_text || "",
           contact_phone: parsed.data.contact_phone || "",
-          contact_email: parsed.data.contact_email || "info@agchauffage.be",
+          contact_email: parsed.data.contact_email || "",
           ...(isRappel
             ? {
                 auto_reminder_enabled: values.auto_reminder_enabled ?? true,
@@ -194,7 +213,7 @@ function TemplateEditor({ templateKey }: { templateKey: TemplateKey }) {
               value={values.contact_email}
               maxLength={255}
               onChange={(e) => setValues({ ...values, contact_email: e.target.value })}
-              placeholder="info@agchauffage.be"
+              placeholder="info@votredomaine.be"
             />
           </div>
         </div>
@@ -347,7 +366,7 @@ function SenderSettingsCard() {
                   value={sender.sender_name}
                   maxLength={100}
                   onChange={(e) => setSender({ ...sender, sender_name: e.target.value })}
-                  placeholder="AG Chauffage"
+                  placeholder="Nom de votre entreprise"
                 />
               </div>
               <div className="space-y-1.5">
@@ -409,7 +428,7 @@ export default function EmailSettingsTab() {
           <Mail className="w-4 h-4" /> Modèles d'emails envoyés aux clients
         </CardTitle>
         <CardDescription>
-          Personnalisez le contenu des emails envoyés depuis <strong>info@agchauffage.be</strong> vers vos clients.
+          Personnalisez le contenu des emails envoyés depuis l'adresse d'expédition configurée ci-dessus vers vos clients.
         </CardDescription>
       </CardHeader>
       <CardContent>
