@@ -295,7 +295,6 @@ export default function EntretienDetail() {
               {deleting ? "Suppression…" : "Supprimer"}
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </LayoutDetail>
