@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import CreateFollowUpTaskDialog from "@/components/commandes/CreateFollowUpTaskDialog";
 import ClientInfoCard, { CLIENT_FULL_SELECT } from "@/components/shared/ClientInfoCard";
 import OrderPhotos from "@/components/commandes/OrderPhotos";
-import CreateOrderDialog from "@/components/commandes/CreateOrderDialog";
+import EditOrderDialog from "@/components/commandes/EditOrderDialog";
 
 const statusColors: Record<string, string> = {
   demandee: "bg-order-demandee text-white",
@@ -62,7 +62,7 @@ export default function CommandeDetail() {
       .eq("status", order.status as any);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
-    toast.success(`Statut → ${ORDER_STATUS_LABELS[next]}`);
+    toast.success(`Statut â†’ ${ORDER_STATUS_LABELS[next]}`);
 
     if (next === "recue" && order.client_id) {
       setShowFollowUp(true);
@@ -73,7 +73,7 @@ export default function CommandeDetail() {
   const handleDelete = async () => {
     const { error } = await supabase.from("parts_orders").delete().eq("id", id!);
     if (error) { toast.error(error.message); return; }
-    toast.success("Commande supprimée");
+    toast.success("Commande supprimÃ©e");
     navigate(-1);
   };
 
@@ -88,7 +88,7 @@ export default function CommandeDetail() {
     <LayoutDetail
       icon={<Package className="w-5 h-5" />}
       title={order.part_name}
-      subtitle={`${order.clients?.name ?? "—"} · ${format(new Date(order.created_at), "d MMMM yyyy", { locale: fr })}`}
+      subtitle={`${order.clients?.name ?? "â€”"} Â· ${format(new Date(order.created_at), "d MMMM yyyy", { locale: fr })}`}
       hideSeparator
       toolbar={
         <>
@@ -102,7 +102,7 @@ export default function CommandeDetail() {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Supprimer cette commande ?</AlertDialogTitle>
-                <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+                <AlertDialogDescription>Cette action est irrÃ©versible.</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Annuler</AlertDialogCancel>
@@ -183,12 +183,12 @@ export default function CommandeDetail() {
           </div>
         )}
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">Quantité</span>
+          <span className="text-muted-foreground">QuantitÃ©</span>
           <span>{order.quantity}</span>
         </div>
         {order.part_reference && (
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Référence</span>
+            <span className="text-muted-foreground">RÃ©fÃ©rence</span>
             <span className="font-mono text-xs">{order.part_reference}</span>
           </div>
         )}
@@ -200,23 +200,23 @@ export default function CommandeDetail() {
         )}
         {order.work_tasks?.title && (
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Travail lié</span>
+            <span className="text-muted-foreground">Travail liÃ©</span>
             <span className="truncate max-w-[200px]">{order.work_tasks.title}</span>
           </div>
         )}
         {order.profiles?.full_name && (
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Demandé par</span>
+            <span className="text-muted-foreground">DemandÃ© par</span>
             <span className="flex items-center gap-1"><User className="w-3 h-3" /> {order.profiles.full_name}</span>
           </div>
         )}
 
         <Separator />
         <div className="space-y-1 text-xs text-muted-foreground">
-          <div className="flex justify-between"><span>Créée</span><span>{format(new Date(order.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}</span></div>
-          {order.ordered_at && <div className="flex justify-between"><span>Commandée</span><span>{format(new Date(order.ordered_at), "dd/MM/yyyy HH:mm", { locale: fr })}</span></div>}
-          {order.received_at && <div className="flex justify-between"><span>Reçue</span><span>{format(new Date(order.received_at), "dd/MM/yyyy HH:mm", { locale: fr })}</span></div>}
-          {order.closed_at && <div className="flex justify-between"><span>Clôturée</span><span>{format(new Date(order.closed_at), "dd/MM/yyyy HH:mm", { locale: fr })}</span></div>}
+          <div className="flex justify-between"><span>CrÃ©Ã©e</span><span>{format(new Date(order.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}</span></div>
+          {order.ordered_at && <div className="flex justify-between"><span>CommandÃ©e</span><span>{format(new Date(order.ordered_at), "dd/MM/yyyy HH:mm", { locale: fr })}</span></div>}
+          {order.received_at && <div className="flex justify-between"><span>ReÃ§ue</span><span>{format(new Date(order.received_at), "dd/MM/yyyy HH:mm", { locale: fr })}</span></div>}
+          {order.closed_at && <div className="flex justify-between"><span>ClÃ´turÃ©e</span><span>{format(new Date(order.closed_at), "dd/MM/yyyy HH:mm", { locale: fr })}</span></div>}
         </div>
 
         {order.notes && (
@@ -253,3 +253,4 @@ export default function CommandeDetail() {
     </LayoutDetail>
   );
 }
+
