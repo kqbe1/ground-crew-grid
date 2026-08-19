@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,9 +113,9 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
   }, [form.intervention_type, legalRules, schedule]);
 
   const handleSubmit = async () => {
-    if (!form.client_id || !form.next_due_date) { toast.error("Client et prochaine Ã©chÃ©ance obligatoires"); return; }
+    if (!form.client_id || !form.next_due_date) { toast.error("Client et prochaine échéance obligatoires"); return; }
     if (form.last_done_date && form.last_done_date >= form.next_due_date) {
-      toast.error("La prochaine Ã©chÃ©ance doit Ãªtre postÃ©rieure au dernier entretien");
+      toast.error("La prochaine échéance doit être postérieure au dernier entretien");
       return;
     }
     setLoading(true);
@@ -149,7 +149,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{schedule ? "Modifier l'entretien" : "Nouvel entretien"}</DialogTitle>
-          <DialogDescription>{schedule ? "Modifiez les informations" : "Planifiez un entretien rÃ©current"}</DialogDescription>
+          <DialogDescription>{schedule ? "Modifiez les informations" : "Planifiez un entretien récurrent"}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -186,7 +186,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>PÃ©riodicitÃ©</Label>
+              <Label>Périodicité</Label>
               <Select value={form.periodicity} onValueChange={(v) => set("periodicity", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(PERIODICITY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
@@ -195,7 +195,7 @@ export default function CreateEditEntretienDialog({ open, onOpenChange, schedule
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Prochaine Ã©chÃ©ance *</Label>
+              <Label>Prochaine échéance *</Label>
               <Input type="date" value={form.next_due_date} onChange={(e) => set("next_due_date", e.target.value)} />
             </div>
             <div className="space-y-2">
