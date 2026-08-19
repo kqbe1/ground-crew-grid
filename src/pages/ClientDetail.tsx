@@ -15,6 +15,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CreateEditClientDialog from "@/components/clients/CreateEditClientDialog";
 import { Separator } from "@/components/ui/separator";
+import { OwnerInfoCard, CLIENT_FULL_SELECT } from "@/components/shared/ClientInfoCard";
+
 
 type Client = Tables<"clients">;
 type ClientSite = Tables<"client_sites">;
@@ -64,12 +66,13 @@ export default function ClientDetail() {
     if (!id) return;
     const { data } = await supabase
       .from("clients")
-      .select("*, owner:owner_client_id(id, name, phone, phone_secondary, email, address_intervention, postal_code, city)")
+      .select(`${CLIENT_FULL_SELECT}, birthday`)
       .eq("id", id)
       .maybeSingle();
     setClient(data);
     setLoading(false);
   }, [id]);
+
 
   const fetchSites = useCallback(async () => {
     if (!id) return;
@@ -189,26 +192,7 @@ export default function ClientDetail() {
       {(client.owner || client.contact_syndic || client.syndic_keys_codes) && (
         <>
           <section className="space-y-3">
-            {client.owner && (
-              <div className="space-y-1">
-                <h2 className="font-semibold text-sm">Propriétaire</h2>
-                <div className="text-sm grid gap-1">
-                  <div
-                    className="font-medium cursor-pointer hover:underline w-fit"
-                    onClick={() => navigate(`/clients/${client.owner.id}`)}
-                  >
-                    {client.owner.name}
-                  </div>
-                  {(client.owner.phone || client.owner.phone_secondary) && (
-                    <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-muted-foreground" /> {[client.owner.phone, client.owner.phone_secondary].filter(Boolean).join(" / ")}</div>
-                  )}
-                  {client.owner.email && <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-muted-foreground" /> {client.owner.email}</div>}
-                  {(client.owner.address_intervention || client.owner.city) && (
-                    <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /> {[client.owner.address_intervention, [client.owner.postal_code, client.owner.city].filter(Boolean).join(" ")].filter(Boolean).join(" — ")}</div>
-                  )}
-                </div>
-              </div>
-            )}
+            {client.owner && <OwnerInfoCard owner={client.owner} />}
             {(client.contact_syndic || client.syndic_keys_codes) && (
               <div className="space-y-1">
                 <h2 className="font-semibold text-sm">Syndic</h2>
@@ -222,6 +206,7 @@ export default function ClientDetail() {
           <Separator />
         </>
       )}
+
 
       {/* Sites */}
       <section className="space-y-3">
