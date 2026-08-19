@@ -59,7 +59,9 @@ export default function SignatureCanvas({ onSignatureChange, value }: SignatureC
   };
 
   const startDraw = (e: React.TouchEvent | React.MouseEvent) => {
-    e.preventDefault();
+    // Les listeners touch de React sont passifs : preventDefault y est interdit.
+    // Le défilement est déjà bloqué par la classe `touch-none` sur le canvas.
+    if (!("touches" in e)) e.preventDefault();
     const c = getCtx();
     if (!c) return;
     const pos = getPos(e);
@@ -70,7 +72,7 @@ export default function SignatureCanvas({ onSignatureChange, value }: SignatureC
 
   const draw = (e: React.TouchEvent | React.MouseEvent) => {
     if (!isDrawing) return;
-    e.preventDefault();
+    if (!("touches" in e)) e.preventDefault();
     const c = getCtx();
     if (!c) return;
     const pos = getPos(e);
