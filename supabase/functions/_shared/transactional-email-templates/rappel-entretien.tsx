@@ -33,9 +33,9 @@ const Email = ({
   interventionType = 'Entretien',
   dueDate = '',
   contactPhone = '',
-  contactEmail = 'info@agchauffage.be',
+  contactEmail = '',
   introText = "Nous vous contactons pour convenir d'une date pour votre prochain entretien. Merci de nous répondre à cet email ou de nous téléphoner afin de fixer un rendez-vous.",
-  footerText = 'Merci de votre confiance,\nAG Chauffage',
+  footerText = 'Merci de votre confiance,',
 }: Props) => (
   <Html lang="fr" dir="ltr">
     <Head />
@@ -56,7 +56,7 @@ const Email = ({
         <Section style={card}>
           <Text style={label}>Nous contacter</Text>
           {contactPhone && <Text style={row}>📞 {contactPhone}</Text>}
-          <Text style={row}>✉️ {contactEmail}</Text>
+          {contactEmail && <Text style={row}>✉️ {contactEmail}</Text>}
         </Section>
 
         <Hr style={hr} />
@@ -70,7 +70,7 @@ export const template = {
   component: Email,
   subject: (data: Props) =>
     data?.customSubject?.trim() ||
-    `Votre entretien AG Chauffage — planifions un rendez-vous`,
+    `Votre entretien — planifions un rendez-vous`,
   displayName: "Rappel d'entretien (client)",
   previewData: {
     clientName: 'Dupont Jean',
@@ -79,7 +79,7 @@ export const template = {
     interventionType: 'Entretien annuel',
     dueDate: '15/09/2026',
     contactPhone: '+32 4 000 00 00',
-    contactEmail: 'info@agchauffage.be',
+    contactEmail: 'info@votredomaine.be',
   },
 } satisfies TemplateEntry
 
