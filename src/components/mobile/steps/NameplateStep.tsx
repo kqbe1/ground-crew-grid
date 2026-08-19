@@ -61,9 +61,11 @@ function compressImage(file: File): Promise<string> {
       canvas.height = height;
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL("image/jpeg", JPEG_QUALITY));
+      const out = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+      URL.revokeObjectURL(url);
+      resolve(out);
     };
-    img.onerror = reject;
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("decode failed")); };
     img.src = url;
   });
 }
