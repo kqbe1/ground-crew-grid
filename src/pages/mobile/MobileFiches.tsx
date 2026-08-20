@@ -14,7 +14,8 @@ import {
   sheetStatusBorderClass,
 } from "@/components/shared/SheetStatusBadge";
 import { listLocalFicheDrafts, removeLocalFicheDraft, type LocalFicheDraft } from "@/lib/localFicheDrafts";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 interface DraftItem extends LocalFicheDraft {
@@ -97,7 +98,12 @@ export default function MobileFiches() {
 
   return (
     <div className="p-4 space-y-4">
-      <h1 className="text-xl font-bold">Mes fiches</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">Mes fiches</h1>
+        <Button size="sm" onClick={() => navigate("/mobile/fiche/nouvelle")}>
+          <Plus className="w-4 h-4 mr-1" /> Nouvelle fiche
+        </Button>
+      </div>
 
       {drafts.length > 0 && (
         <div className="space-y-2">
