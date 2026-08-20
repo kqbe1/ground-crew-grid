@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -61,34 +61,35 @@ export default function ClientDetailDialog({ open, onOpenChange, client, onEdit,
   const [newEquip, setNewEquip] = useState({ name: "", brand: "", model: "", energy_type: "autre" as string, client_site_id: "" });
   const [showAddEquip, setShowAddEquip] = useState(false);
 
-  useEffect(() => {
-    if (!client || !open) return;
-    fetchSites();
-    fetchTasks();
-  }, [client, open]);
-
-  useEffect(() => {
-    if (sites.length > 0) fetchEquipment();
-  }, [sites]);
-
-  const fetchSites = async () => {
+  const fetchSites = useCallback(async () => {
     if (!client) return;
     const { data } = await supabase.from("client_sites").select("*").eq("client_id", client.id).order("is_primary", { ascending: false });
     setSites(data ?? []);
-  };
+  }, [client]);
 
-  const fetchEquipment = async () => {
+  const fetchEquipment = useCallback(async () => {
     if (sites.length === 0) { setEquipment([]); return; }
     const siteIds = sites.map((s) => s.id);
     const { data } = await supabase.from("client_equipment").select("*").in("client_site_id", siteIds);
     setEquipment(data ?? []);
-  };
+  }, [sites]);
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     if (!client) return;
     const { data } = await supabase.from("work_tasks").select("*").eq("client_id", client.id).order("scheduled_date", { ascending: false }).limit(50);
     setTasks(data ?? []);
-  };
+  }, [client]);
+
+  useEffect(() => {
+    if (!client || !open) return;
+    fetchSites();
+    fetchTasks();
+  }, [client, open, fetchSites, fetchTasks]);
+
+  useEffect(() => {
+    if (sites.length > 0) fetchEquipment();
+  }, [sites, fetchEquipment]);
+
 
   const addSite = async () => {
     if (!client || !newSite.name.trim() || !newSite.address.trim()) return;

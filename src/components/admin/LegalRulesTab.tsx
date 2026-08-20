@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -29,7 +29,7 @@ export default function LegalRulesTab() {
 
   const key = (e: string, r: string) => `${e}|${r}`;
 
-  const fetchRules = async () => {
+  const fetchRules = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("legal_maintenance_rules" as any)
@@ -45,9 +45,11 @@ export default function LegalRulesTab() {
     });
     setRules(map);
     setLoading(false);
-  };
+  }, []);
 
-  useEffect(() => { fetchRules(); }, []);
+  useEffect(() => {
+    fetchRules();
+  }, [fetchRules]);
 
   const updateRule = async (energy: string, region: string, periodicity: string) => {
     const k = key(energy, region);

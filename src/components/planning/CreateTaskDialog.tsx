@@ -185,8 +185,7 @@ export default function CreateTaskDialog({
       setEndTime(computeEndTime(newStart, dur));
     }
     if (defaultWorkerId) setAssignedTo(defaultWorkerId);
-  }, [open, defaultDate, defaultHour, defaultMinute, defaultWorkerId, defaultDuration]);
-
+  }, [open, defaultDate, defaultHour, defaultMinute, defaultWorkerId, defaultDuration, durationMinutes]);
   // Valeurs pré-remplies fournies par l'appelant (client / type / titre)
   useEffect(() => {
     if (!open) return;

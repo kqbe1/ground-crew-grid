@@ -44,7 +44,7 @@ export default function SignatureCanvas({ onSignatureChange, value }: SignatureC
       };
       img.src = value;
     }
-  }, []);
+  }, [getCtx, value]);
 
   const getPos = (e: React.TouchEvent | React.MouseEvent) => {
     const canvas = canvasRef.current;

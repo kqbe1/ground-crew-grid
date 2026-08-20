@@ -26,12 +26,16 @@ export function useSignedUrls(urls: string[], bucket?: string): string[] {
   const [signed, setSigned] = useState<string[]>(urls);
 
   useEffect(() => {
-    if (!urls || urls.length === 0) { setSigned([]); return; }
+    if (!urls || urls.length === 0) {
+      setSigned([]);
+      return;
+    }
 
     let cancelled = false;
 
     (async () => {
       const results: string[] = [];
+
       for (const url of urls) {
         if (!url) { results.push(""); continue; }
 
@@ -57,7 +61,7 @@ export function useSignedUrls(urls: string[], bucket?: string): string[] {
     })();
 
     return () => { cancelled = true; };
-  }, [JSON.stringify(urls), bucket]);
+  }, [urls, bucket]);
 
   return signed;
 }

@@ -13,6 +13,13 @@ import { occurrencesInYears } from "@/lib/recurrence";
 
 const ENTRETIEN_TYPES = Object.entries(INTERVENTION_TYPE_LABELS).filter(([k]) => k.startsWith("entretien_"));
 
+const statusLabels: Record<string, string> = {
+  planifie: "Planifié",
+  termine: "Terminé",
+  a_replanifier: "À replanifier",
+  piece_a_commander: "Pièce à commander",
+};
+
 const typeColors: Record<string, string> = {
   entretien_gaz: "bg-type-gaz",
   entretien_mazout: "bg-type-mazout",
@@ -181,7 +188,7 @@ export default function AdminStatsTab() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Export CSV téléchargé");
-  }, [schedules, taskStats, sheets, workers, projections, monthlyActivity, workerStats, currentYear]);
+  }, [schedules, taskStats, sheets, workers, projections, monthlyActivity, workerStats, currentYear, ENTRETIEN_TYPES]);
 
 
   if (loading) {
@@ -192,12 +199,7 @@ export default function AdminStatsTab() {
     );
   }
 
-  const statusLabels: Record<string, string> = {
-    planifie: "Planifié",
-    termine: "Terminé",
-    a_replanifier: "À replanifier",
-    piece_a_commander: "Pièce à commander",
-  };
+  const ENTRETIEN_TYPES = Object.entries(INTERVENTION_TYPE_LABELS).filter(([k]) => k.startsWith("entretien_"));
 
   const statusColors: Record<string, string> = {
     planifie: "badge-status-planifie",

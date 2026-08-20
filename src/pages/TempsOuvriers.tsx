@@ -171,8 +171,8 @@ export default function TempsOuvriers() {
     fetchData();
   }, []);
 
-  const now = new Date();
   const periodRange = useMemo(() => {
+    const now = new Date();
     switch (period) {
       case "week":
         return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
@@ -297,6 +297,7 @@ export default function TempsOuvriers() {
 
   // Chart data: daily trend
   const dailyTrend = useMemo(() => {
+    const now = new Date();
     const days = eachDayOfInterval({ start: periodRange.start, end: periodRange.end > now ? now : periodRange.end });
     return days.map((day) => {
       const daySheets = filteredSheets.filter((s) => isSameDay(getSheetDate(s), day));

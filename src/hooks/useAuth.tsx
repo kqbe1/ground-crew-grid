@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { purgeAllDrafts, pruneStaleFicheDrafts } from "@/lib/draftStorage";
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  const fetchUserData = async (session: Session) => {
+  const fetchUserData = useCallback(async (session: Session) => {
     applySessionFallback(session);
     setCompany(null);
 
@@ -151,9 +151,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       company_id: data.company_id ?? extractSessionCompanyId(session),
       can_create_devis: data.can_create_devis ?? false,
     });
-  };
+  }, []);
 
-  const syncAuthState = async (session: Session | null) => {
+  const syncAuthState = useCallback(async (session: Session | null) => {
     const requestId = ++syncRequestRef.current;
 
     setSession(session);
@@ -173,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (syncRequestRef.current !== requestId) return;
 
     setLoading(false);
-  };
+  }, [fetchUserData]);
 
   useEffect(() => {
     let isActive = true;
@@ -232,7 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("focus", revive);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [syncAuthState]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
