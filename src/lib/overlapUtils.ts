@@ -8,11 +8,26 @@ interface TaskTimeSlot {
   scheduled_date: string;
   start_time: string;
   duration_minutes: number;
+  second_assigned_to?: string | null;
+  title?: string | null;
 }
 
 function toMinutes(time: string): number {
   const [h, m] = time.split(":").map(Number);
   return h * 60 + (m || 0);
+}
+
+function involvesWorker(task: TaskTimeSlot, workerId: string): boolean {
+  return task.assigned_to === workerId || task.second_assigned_to === workerId;
+}
+
+/** "08:00" + 90 => "09:30" */
+export function slotLabel(startTime: string, durationMinutes: number): string {
+  const start = toMinutes(startTime);
+  const end = start + durationMinutes;
+  const fmt = (m: number) =>
+    `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  return `${fmt(start)} – ${fmt(end)}`;
 }
 
 /**
@@ -34,7 +49,7 @@ export function findOverlaps(
 
   return allTasks.filter((t) => {
     if (t.id === excludeTaskId) return false;
-    if (t.assigned_to !== workerId) return false;
+    if (!involvesWorker(t, workerId)) return false;
     if (t.scheduled_date !== date) return false;
     if (!t.start_time) return false;
 
@@ -44,6 +59,36 @@ export function findOverlaps(
     // Overlap: ranges intersect if newStart < tEnd && newEnd > tStart
     return newStart < tEnd && newEnd > tStart;
   });
+}
+
+export interface WorkerConflict {
+  workerId: string;
+  task: TaskTimeSlot;
+}
+
+/**
+ * Same as findOverlaps but for several workers at once (principal + second + extras).
+ */
+export function findOverlapsForWorkers(
+  workerIds: (string | null | undefined)[],
+  date: string,
+  startTime: string,
+  durationMinutes: number,
+  allTasks: TaskTimeSlot[],
+  excludeTaskId?: string
+): WorkerConflict[] {
+  const unique = Array.from(new Set(workerIds.filter(Boolean) as string[]));
+  const out: WorkerConflict[] = [];
+  const seen = new Set<string>();
+  for (const workerId of unique) {
+    for (const task of findOverlaps(workerId, date, startTime, durationMinutes, allTasks, excludeTaskId)) {
+      const key = `${workerId}-${task.id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ workerId, task });
+    }
+  }
+  return out;
 }
 
 /**

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import { TASK_STATUS_LABELS, QUOTE_STATUS_LABELS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
 import { fetchQuotes, invalidateQuotesCache } from "@/lib/quotesQuery";
 import { normalizeSearch } from "@/lib/searchUtils";
@@ -20,6 +21,7 @@ import type { BureauFilterType, FicheType, UnifiedFiche } from "./types";
 interface Worker { id: string; full_name: string; }
 
 export default function BureauDashboard() {
+  const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState<BureauFilterType>("received");
   const [typeFilter, setTypeFilter] = useState<FicheType | "all">("all");
   const [techFilter, setTechFilter] = useState("all");
@@ -47,7 +49,7 @@ export default function BureauDashboard() {
     const { data: sheetsRaw } = await supabase
       .from("intervention_sheets")
       .select(`
-        id, created_at, final_status, is_draft, entretien_type, arrival_time,
+        id, created_at, updated_at, bureau_received_at, final_status, is_draft, entretien_type, arrival_time,
         worker_id,
         work_tasks!inner(title, intervention_type, scheduled_date, start_time, status,
           clients(id, name, address_intervention),
@@ -57,7 +59,7 @@ export default function BureauDashboard() {
       `)
       .eq("is_draft", false)
       .eq("bureau_archived", false)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false }) as any;
 
     // Fetch quotes (logique partagée avec la page Devis)
     let quotesRaw: any[] = [];
@@ -86,7 +88,8 @@ export default function BureauDashboard() {
         clientId: task?.clients?.id ?? null,
         techName: s.profiles?.full_name ?? "—",
         techLevel: s.profiles?.worker_level ?? null,
-        date: s.created_at,
+        date: s.bureau_received_at ?? s.updated_at ?? s.created_at,
+        receivedAt: s.bureau_received_at ?? s.updated_at ?? s.created_at,
         time: s.arrival_time ? new Date(s.arrival_time).toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit" }) : null,
         status: s.final_status,
         statusLabel: TASK_STATUS_LABELS[s.final_status] ?? s.final_status,
@@ -104,6 +107,7 @@ export default function BureauDashboard() {
       techName: q.profiles?.full_name ?? "—",
       techLevel: q.profiles?.worker_level ?? null,
       date: q.created_at,
+      receivedAt: q.created_at,
       time: null,
       status: q.status,
       statusLabel: QUOTE_STATUS_LABELS[q.status] ?? q.status,
@@ -115,7 +119,7 @@ export default function BureauDashboard() {
 
     // Compute counts
     const now24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const receivedCount = all.filter((f) => f.date >= now24h).length;
+    const receivedCount = all.filter((f) => f.receivedAt >= now24h).length;
 
     const enAttenteCount = all.filter((f) => {
       if (f.sourceTable === "quotes") return f.status === "en_attente";
@@ -226,7 +230,7 @@ export default function BureauDashboard() {
     const now24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     switch (activeFilter) {
       case "received":
-        result = result.filter((f) => f.date >= now24h);
+        result = result.filter((f) => f.receivedAt >= now24h);
         break;
       case "en_attente":
         result = result.filter((f) => {
@@ -299,6 +303,23 @@ export default function BureauDashboard() {
     }
   };
 
+  const handleArchive = async (fiche: UnifiedFiche) => {
+    if (fiche.sourceTable !== "intervention_sheets") return;
+    const { error } = await supabase
+      .from("intervention_sheets")
+      .update({
+        bureau_archived: true,
+        bureau_archived_at: new Date().toISOString(),
+        bureau_archived_by: user?.id ?? null,
+      })
+      .eq("id", fiche.id);
+    if (error) toast.error("Erreur lors de l'archivage");
+    else {
+      toast.success("Fiche archivée — disponible dans l'onglet Fiches");
+      fetchData();
+    }
+  };
+
   return (
     <div className="p-6 space-y-5">
       {/* Header */}
@@ -363,7 +384,7 @@ export default function BureauDashboard() {
       ) : activeFilter === "dossier_en_cours" ? (
         <BureauDossierAccordion fiches={filteredFiches} onDelete={handleDelete} />
       ) : (
-        <BureauFicheTable fiches={filteredFiches} onDelete={handleDelete} />
+        <BureauFicheTable fiches={filteredFiches} onDelete={handleDelete} onArchive={handleArchive} />
       )}
     </div>
   );

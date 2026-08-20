@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ import { TASK_STATUS_LABELS } from "@/lib/constants";
 import { useWorkerLabels } from "@/hooks/useWorkerLabels";
 import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
 import ClientCombobox from "@/components/forms/ClientCombobox";
+import { findOverlapsForWorkers } from "@/lib/overlapUtils";
+import ConflictAlert from "@/components/planning/ConflictAlert";
 
 const SIMPLIFIED_INTERVENTION_LABELS: Record<string, string> = {
   depannage: "Dépannage",
@@ -72,6 +74,8 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
   const [workers, setWorkers] = useState<{ id: string; full_name: string }[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string; address_intervention?: string | null }[]>([]);
   const [binomes, setBinomes] = useState<{ id: string; name: string; code: string; kind: string }[]>([]);
+  const [dayTasks, setDayTasks] = useState<any[]>([]);
+  const startTimeRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!task) return;
@@ -108,8 +112,44 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
     fetchData();
   }, [task, canEdit]);
 
+  // Tâches du jour sélectionné : détection des conflits horaires
+  useEffect(() => {
+    if (!task || !canEdit || !editing || !scheduledDate) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("work_tasks")
+        .select("id, title, assigned_to, second_assigned_to, scheduled_date, start_time, duration_minutes")
+        .eq("scheduled_date", scheduledDate);
+      if (!cancelled) setDayTasks(data ?? []);
+    })();
+    return () => { cancelled = true; };
+  }, [task, canEdit, editing, scheduledDate]);
+
+  const conflicts = useMemo(() => {
+    if (!task || !editing || !startTime) return [];
+    return findOverlapsForWorkers(
+      [assignedTo, secondAssignedTo !== "none" ? secondAssignedTo : null],
+      scheduledDate,
+      startTime,
+      durationMinutes,
+      dayTasks,
+      task.id,
+    );
+  }, [task, editing, assignedTo, secondAssignedTo, scheduledDate, startTime, durationMinutes, dayTasks]);
+
+  const workerNames = useMemo(
+    () => Object.fromEntries(workers.map((w) => [w.id, w.full_name])),
+    [workers],
+  );
+
   const handleSave = async () => {
     if (!task) return;
+    if (conflicts.length > 0) {
+      toast.error("Conflit horaire : modifiez l'horaire ou l'ouvrier avant d'enregistrer");
+      startTimeRef.current?.focus();
+      return;
+    }
     setLoading(true);
     const { error } = await supabase.from("work_tasks").update({
       title,
@@ -349,6 +389,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
                 <Label>Heure de début</Label>
                 <Input
                   type="time"
+                  ref={startTimeRef}
                   value={startTime}
                   onChange={(e) => {
                     const v = e.target.value;
@@ -386,10 +427,16 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
               <Textarea value={memoSecretariat} onChange={(e) => setMemoSecretariat(e.target.value)} rows={2} />
             </div>
 
+            <ConflictAlert
+              conflicts={conflicts}
+              workerNames={workerNames}
+              onFix={() => startTimeRef.current?.focus()}
+            />
+
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setEditing(false)} className="flex-1">Annuler</Button>
-              <Button onClick={handleSave} disabled={loading} className="flex-1">
-                {loading ? "Sauvegarde..." : "Enregistrer"}
+              <Button onClick={handleSave} disabled={loading || conflicts.length > 0} className="flex-1">
+                {loading ? "Sauvegarde..." : conflicts.length > 0 ? "Conflit horaire" : "Enregistrer"}
               </Button>
             </div>
           </div>

@@ -16,4 +16,6 @@ export interface UnifiedFiche {
   status: string;
   statusLabel: string;
   sourceTable: "intervention_sheets" | "quotes";
+  /** Date de réception réelle côté Bureau (finalisation de la fiche) */
+  receivedAt: string;
 }

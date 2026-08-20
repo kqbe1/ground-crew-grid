@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,11 +15,11 @@ const SIMPLIFIED_TYPES: Record<string, string> = {
   rdv_divers: "RDV Divers",
   autre: "Autre",
 };
-import { Plus, AlertTriangle } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { findOverlaps } from "@/lib/overlapUtils";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { findOverlapsForWorkers } from "@/lib/overlapUtils";
+import ConflictAlert from "@/components/planning/ConflictAlert";
 import { computeEndTime, computeDurationMinutes } from "@/lib/timeRange";
 import { WorkerMultiSelectField } from "@/components/forms/WorkerMultiSelect";
 import ClientCombobox from "@/components/forms/ClientCombobox";
@@ -94,6 +94,7 @@ export default function CreateTaskDialog({
   const [templateId, setTemplateId] = useState<string>("");
   const [clients, setClients] = useState<{ id: string; name: string; address_intervention?: string | null }[]>([]);
   const [existingTasks, setExistingTasks] = useState<any[]>([]);
+  const startTimeRef = useRef<HTMLInputElement | null>(null);
 
   // Persist draft as user types / opens dialog
   useEffect(() => {
@@ -147,17 +148,28 @@ export default function CreateTaskDialog({
     const fetchTasks = async () => {
       const { data } = await supabase
         .from("work_tasks")
-        .select("id, assigned_to, scheduled_date, start_time, duration_minutes")
+        .select("id, title, assigned_to, second_assigned_to, scheduled_date, start_time, duration_minutes")
         .eq("scheduled_date", scheduledDate);
       setExistingTasks(data ?? []);
     };
     fetchTasks();
   }, [open, scheduledDate]);
 
-  const overlaps = useMemo(() => {
-    if (!assignedTo || !startTime) return [];
-    return findOverlaps(assignedTo, scheduledDate, startTime, durationMinutes, existingTasks);
-  }, [assignedTo, scheduledDate, startTime, durationMinutes, existingTasks]);
+  const conflicts = useMemo(() => {
+    if (!startTime) return [];
+    return findOverlapsForWorkers(
+      [assignedTo, ...extraWorkers],
+      scheduledDate,
+      startTime,
+      durationMinutes,
+      existingTasks,
+    );
+  }, [assignedTo, extraWorkers, scheduledDate, startTime, durationMinutes, existingTasks]);
+
+  const workerNames = useMemo(
+    () => Object.fromEntries(workers.map((w) => [w.id, w.full_name])),
+    [workers],
+  );
 
   // Reset defaults when dialog opens. Le contexte (clic sur un créneau) est toujours
   // prioritaire sur le brouillon précédent.
@@ -186,6 +198,11 @@ export default function CreateTaskDialog({
   const handleSubmit = async () => {
     if (!title.trim() || !user) {
       toast.error("Le titre est obligatoire");
+      return;
+    }
+    if (conflicts.length > 0) {
+      toast.error("Conflit horaire : modifiez l'horaire ou l'ouvrier avant de valider");
+      startTimeRef.current?.focus();
       return;
     }
     setLoading(true);
@@ -327,6 +344,7 @@ export default function CreateTaskDialog({
               <Label>Heure de début</Label>
               <Input
                 type="time"
+                ref={startTimeRef}
                 value={startTime}
                 onChange={(e) => {
                   const v = e.target.value;
@@ -359,17 +377,14 @@ export default function CreateTaskDialog({
             <Textarea value={memoSecretariat} onChange={(e) => setMemoSecretariat(e.target.value)} rows={2} />
           </div>
 
-          {overlaps.length > 0 && (
-            <Alert variant="destructive" className="border-destructive/50">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                ⚠️ Chevauchement détecté : {overlaps.length} tâche{overlaps.length > 1 ? "s" : ""} sur ce créneau pour cet ouvrier.
-              </AlertDescription>
-            </Alert>
-          )}
+          <ConflictAlert
+            conflicts={conflicts}
+            workerNames={workerNames}
+            onFix={() => startTimeRef.current?.focus()}
+          />
 
-          <Button onClick={handleSubmit} disabled={loading} className="w-full">
-            {loading ? "Création..." : overlaps.length > 0 ? "Créer malgré le chevauchement" : "Créer la tâche"}
+          <Button onClick={handleSubmit} disabled={loading || conflicts.length > 0} className="w-full">
+            {loading ? "Création..." : conflicts.length > 0 ? "Conflit horaire à résoudre" : "Créer la tâche"}
           </Button>
         </div>
       </DialogContent>
