@@ -29,6 +29,10 @@ export default function DevisDetail() {
   const [pdfSettings, setPdfSettings] = useState<any>(null);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [planUrls, setPlanUrls] = useState<string[]>([]);
+  const [voiceUrls, setVoiceUrls] = useState<string[]>([]);
+
 
   const fetchQuote = useCallback(async () => {
     if (!id) return;
