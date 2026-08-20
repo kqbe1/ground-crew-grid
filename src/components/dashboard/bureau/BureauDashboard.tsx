@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import { TASK_STATUS_LABELS, QUOTE_STATUS_LABELS, ENTRETIEN_SUBTYPES } from "@/lib/constants";
 import { fetchQuotes, invalidateQuotesCache } from "@/lib/quotesQuery";
 import { normalizeSearch } from "@/lib/searchUtils";
@@ -20,6 +21,7 @@ import type { BureauFilterType, FicheType, UnifiedFiche } from "./types";
 interface Worker { id: string; full_name: string; }
 
 export default function BureauDashboard() {
+  const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState<BureauFilterType>("received");
   const [typeFilter, setTypeFilter] = useState<FicheType | "all">("all");
   const [techFilter, setTechFilter] = useState("all");
@@ -301,6 +303,23 @@ export default function BureauDashboard() {
     }
   };
 
+  const handleArchive = async (fiche: UnifiedFiche) => {
+    if (fiche.sourceTable !== "intervention_sheets") return;
+    const { error } = await supabase
+      .from("intervention_sheets")
+      .update({
+        bureau_archived: true,
+        bureau_archived_at: new Date().toISOString(),
+        bureau_archived_by: user?.id ?? null,
+      })
+      .eq("id", fiche.id);
+    if (error) toast.error("Erreur lors de l'archivage");
+    else {
+      toast.success("Fiche archivée — disponible dans l'onglet Fiches");
+      fetchData();
+    }
+  };
+
   return (
     <div className="p-6 space-y-5">
       {/* Header */}
@@ -365,7 +384,7 @@ export default function BureauDashboard() {
       ) : activeFilter === "dossier_en_cours" ? (
         <BureauDossierAccordion fiches={filteredFiches} onDelete={handleDelete} />
       ) : (
-        <BureauFicheTable fiches={filteredFiches} onDelete={handleDelete} />
+        <BureauFicheTable fiches={filteredFiches} onDelete={handleDelete} onArchive={handleArchive} />
       )}
     </div>
   );

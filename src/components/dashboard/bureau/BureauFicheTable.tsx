@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Trash2, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, ArrowUpDown, Archive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -33,9 +33,10 @@ const PAGE_SIZE = 20;
 interface Props {
   fiches: UnifiedFiche[];
   onDelete: (fiche: UnifiedFiche) => void;
+  onArchive?: (fiche: UnifiedFiche) => void;
 }
 
-export default function BureauFicheTable({ fiches, onDelete }: Props) {
+export default function BureauFicheTable({ fiches, onDelete, onArchive }: Props) {
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [sortCol, setSortCol] = useState<SortColumn>("date");
@@ -87,7 +88,7 @@ export default function BureauFicheTable({ fiches, onDelete }: Props) {
               <TableHead className="hidden md:table-cell">Localité</TableHead>
               <TableHead><SortButton col="date">Date & Heure</SortButton></TableHead>
               <TableHead><SortButton col="status">Statut</SortButton></TableHead>
-              <TableHead className="w-[60px]">Actions</TableHead>
+              <TableHead className="w-[90px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -125,6 +126,19 @@ export default function BureauFicheTable({ fiches, onDelete }: Props) {
                   <Badge className={`text-[10px] ${STATUS_COLORS[f.status] || ""}`}>{f.statusLabel}</Badge>
                 </TableCell>
                 <TableCell>
+                  <div className="flex items-center gap-0.5">
+                  {onArchive && f.sourceTable === "intervention_sheets" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="Archiver la fiche"
+                      aria-label="Archiver la fiche"
+                      onClick={(e) => { e.stopPropagation(); onArchive(f); }}
+                    >
+                      <Archive className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => e.stopPropagation()}>
@@ -142,6 +156,7 @@ export default function BureauFicheTable({ fiches, onDelete }: Props) {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
