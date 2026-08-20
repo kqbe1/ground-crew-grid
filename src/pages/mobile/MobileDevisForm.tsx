@@ -135,9 +135,10 @@ export default function MobileDevisForm() {
     const path = `${user!.id}/${folder}/${Date.now()}.${ext}`;
     const { data, error } = await supabase.storage.from("quote-assets").upload(path, file);
     if (error) throw error;
-    const { data: urlData } = supabase.storage.from("quote-assets").getPublicUrl(data.path);
-    return urlData.publicUrl;
+    // Le bucket est privé : on ne stocke que le path Storage en base.
+    return data.path;
   };
+
 
   const handleSubmit = async () => {
     setSubmitting(true);
