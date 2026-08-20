@@ -104,7 +104,7 @@ export default function BureauDashboard() {
       type: "FD" as FicheType,
       clientName: q.client_name ?? "—",
       clientCity: q.client_city ?? extractCity(q.client_address),
-      taskTitle: q.work_description ?? null,
+      taskTitle: null,
       clientId: null,
       techName: q.profiles?.full_name ?? "—",
       techLevel: q.profiles?.worker_level ?? null,
