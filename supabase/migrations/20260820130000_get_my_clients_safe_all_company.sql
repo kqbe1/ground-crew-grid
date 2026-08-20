@@ -1,3 +1,4 @@
+-- (resync) migration get_my_clients_safe
 -- Remplace get_my_clients_safe() : retourne tous les clients de l'entreprise
 -- de l'utilisateur connecte (isolation assuree par la RLS de public.clients,
 -- la fonction restant en SECURITY INVOKER).
