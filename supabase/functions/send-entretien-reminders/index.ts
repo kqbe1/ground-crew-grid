@@ -53,9 +53,11 @@ Deno.serve(async (req) => {
     // Legacy : rappel déjà envoyé avant l'introduction de reminder_sent_for_date
     if (s.reminder_sent_at && !s.reminder_sent_for_date) { skipped++; continue }
     const settings = settingsByCompany.get(s.company_id) ?? settingsByCompany.get('global')
-    if (!settings?.auto_reminder_enabled) { skipped++; continue }
 
-    const days = settings.reminder_days_before ?? 30
+    const autoReminderEnabled = settings?.auto_reminder_enabled ?? true
+    if (!autoReminderEnabled) { skipped++; continue }
+
+    const days = settings?.reminder_days_before ?? 30
     const limit = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10)
     if (s.next_due_date > limit) { skipped++; continue }
 
