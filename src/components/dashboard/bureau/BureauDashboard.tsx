@@ -88,7 +88,7 @@ export default function BureauDashboard() {
         clientId: task?.clients?.id ?? null,
         techName: s.profiles?.full_name ?? "—",
         techLevel: s.profiles?.worker_level ?? null,
-        date: s.created_at,
+        date: s.bureau_received_at ?? s.updated_at ?? s.created_at,
         receivedAt: s.bureau_received_at ?? s.updated_at ?? s.created_at,
         time: s.arrival_time ? new Date(s.arrival_time).toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit" }) : null,
         status: s.final_status,
