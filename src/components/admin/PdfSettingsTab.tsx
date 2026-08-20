@@ -209,7 +209,9 @@ export default function PdfSettingsTab() {
               const reader = new FileReader();
               reader.onloadend = () => setLogoDataUrl(reader.result as string);
               reader.readAsDataURL(blob);
-            } catch {}
+            } catch {
+              // Ignore storage/browser errors
+            }
           }
         }
       setLoading(false);

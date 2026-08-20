@@ -76,7 +76,9 @@ function PlanningInner() {
         hiddenTypes: Array.from(hiddenTypes),
         visibleWorkerIds: visibleWorkerIds ? Array.from(visibleWorkerIds) : null,
       }));
-    } catch {}
+    } catch {
+        // Ignore storage/browser errors
+      }
   }, [viewMode, currentDate, hiddenTypes, visibleWorkerIds]);
 
   const openTaskDetail = (task: any) => routerNavigate(`/taches/${task.id}`);

@@ -33,7 +33,7 @@ function loadDraft(): any | null {
   } catch { return null; }
 }
 function clearDraft() {
-  try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
+  try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* Ignore storage errors */ }
 }
 
 interface CreateTaskDialogProps {
@@ -61,7 +61,7 @@ export default function CreateTaskDialog({
   // Si le dialog était ouvert via clic créneau, on ne restaure pas son état "open"
   const [openState, setOpenState] = useState<boolean>(false);
   const open = openProp ?? openState;
-  const setOpen = (v: boolean) => { onOpenChangeProp ? onOpenChangeProp(v) : setOpenState(v); };
+  const setOpen = (v: boolean) => { if (onOpenChangeProp) { onOpenChangeProp(v); } else { setOpenState(v); } };
   const [loading, setLoading] = useState(false);
 
   const [title, setTitle] = useState<string>(_draft?.title ?? "");
@@ -103,7 +103,7 @@ export default function CreateTaskDialog({
         title, interventionType, assignedTo, binomeId, scheduledDate, startTime, endTime,
         durationMinutes, clientId, description, memoSecretariat,
       }));
-    } catch {}
+    } catch { /* Ignore storage errors */ }
   }, [title, interventionType, assignedTo, binomeId, scheduledDate, startTime, endTime, durationMinutes, clientId, description, memoSecretariat]);
 
   useEffect(() => {

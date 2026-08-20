@@ -29,7 +29,9 @@ function loadDraft(taskId?: string): any | null {
   } catch { return null; }
 }
 function clearDraft(taskId?: string) {
-  try { localStorage.removeItem(draftKey(taskId)); } catch {}
+  try { localStorage.removeItem(draftKey(taskId)); } catch {
+    // Ignore storage/browser errors
+  }
 }
 
 export default function MobileFicheEntretienForm() {

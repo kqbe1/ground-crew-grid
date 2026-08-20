@@ -16,7 +16,9 @@ function extractPathFromSignedUrl(url: string): { bucket: string; path: string }
     // Pattern: /storage/v1/object/public/<bucket>/<path>
     const pubMatch = u.pathname.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
     if (pubMatch) return { bucket: pubMatch[1], path: decodeURIComponent(pubMatch[2]) };
-  } catch {}
+  } catch {
+      // Ignore storage/browser errors
+    }
   return null;
 }
 

@@ -97,7 +97,13 @@ Deno.serve(async (req) => {
       parsed = JSON.parse(content);
     } catch {
       const m = content.match(/\{[\s\S]*\}/);
-      if (m) { try { parsed = JSON.parse(m[0]); } catch {} }
+      if (m) {
+        try {
+          parsed = JSON.parse(m[0]);
+        } catch {
+          // Ignore invalid JSON extracted from the model response
+        }
+      }
     }
 
     // Normalise : uniquement les clés attendues, valeurs en chaînes ("" si null/absent)

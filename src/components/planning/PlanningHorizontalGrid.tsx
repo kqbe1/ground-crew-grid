@@ -96,7 +96,9 @@ export default function PlanningHorizontalGrid({
 
   const handleRowPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!selectingRef.current) return;
-    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {
+      // Ignore storage/browser errors
+    }
     const sel = selection;
     selectingRef.current = null;
     setSelection(null);
