@@ -14,6 +14,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { downloadDevisPdf } from "@/lib/generateDevisPdf";
 import { loadPdfConfigAndLogo } from "@/lib/pdfConfig";
+import { resolveQuoteAssetUrls, withQuotePdfPhotos } from "@/lib/quoteAssets";
+
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const statuses = ["en_attente"] as const;
@@ -27,6 +29,10 @@ export default function DevisDetail() {
   const [pdfSettings, setPdfSettings] = useState<any>(null);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [planUrls, setPlanUrls] = useState<string[]>([]);
+  const [voiceUrls, setVoiceUrls] = useState<string[]>([]);
+
 
   const fetchQuote = useCallback(async () => {
     if (!id) return;
@@ -45,6 +51,26 @@ export default function DevisDetail() {
       setLogoDataUrl(logo);
     })();
   }, [quote]);
+
+  // Bucket privé : on génère des signed URLs à l'affichage (compatible anciennes URLs).
+  useEffect(() => {
+    if (!quote) return;
+    let cancelled = false;
+    (async () => {
+      const [p, pl, v] = await Promise.all([
+        resolveQuoteAssetUrls(quote.photos),
+        resolveQuoteAssetUrls(quote.plan_photos),
+        resolveQuoteAssetUrls(quote.voice_notes),
+      ]);
+      if (cancelled) return;
+      setPhotoUrls(p);
+      setPlanUrls(pl);
+      setVoiceUrls(v);
+    })();
+    return () => { cancelled = true; };
+  }, [quote]);
+
+
 
   const updateStatus = async (status: string) => {
     const { error } = await supabase.from("quotes").update({ status } as any).eq("id", id);
@@ -76,7 +102,8 @@ export default function DevisDetail() {
   const handleDownloadPdf = async () => {
     setDownloading(true);
     try {
-      downloadDevisPdf(quote, pdfSettings ? {
+      const quoteForPdf = await withQuotePdfPhotos(quote);
+      downloadDevisPdf(quoteForPdf, pdfSettings ? {
         company_name: pdfSettings.company_name, company_address: pdfSettings.company_address,
         company_phone: pdfSettings.company_phone, company_email: pdfSettings.company_email,
         company_website: pdfSettings.company_website, company_vat: pdfSettings.company_vat,
@@ -91,9 +118,9 @@ export default function DevisDetail() {
   if (!quote) return <LayoutDetail notFound resourceLabel="Devis">{null}</LayoutDetail>;
 
   const rooms = Array.isArray(quote.rooms_data) ? quote.rooms_data : [];
-  const photos = Array.isArray(quote.photos) ? quote.photos : [];
-  const planPhotos = Array.isArray(quote.plan_photos) ? quote.plan_photos : [];
-  const voiceNotes = Array.isArray(quote.voice_notes) ? quote.voice_notes : [];
+  const photos = photoUrls;
+  const planPhotos = planUrls;
+  const voiceNotes = voiceUrls;
   const comments = Array.isArray(quote.internal_comments) ? quote.internal_comments : [];
 
   return (

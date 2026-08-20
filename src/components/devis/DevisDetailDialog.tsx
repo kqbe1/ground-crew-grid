@@ -13,6 +13,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { downloadDevisPdf } from "@/lib/generateDevisPdf";
 import { loadPdfConfigAndLogo } from "@/lib/pdfConfig";
+import { resolveQuoteAssetUrls, withQuotePdfPhotos } from "@/lib/quoteAssets";
+
 
 interface Props {
   quote: any;
@@ -28,6 +30,9 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
   const [pdfSettings, setPdfSettings] = useState<any>(null);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [planUrls, setPlanUrls] = useState<string[]>([]);
+  const [voiceUrls, setVoiceUrls] = useState<string[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -37,6 +42,25 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
       setLogoDataUrl(logo);
     })();
   }, [open]);
+
+  // Bucket privé : signed URLs générées à l'affichage (anciennes URLs conservées telles quelles).
+  useEffect(() => {
+    if (!open || !quote) return;
+    let cancelled = false;
+    (async () => {
+      const [p, pl, v] = await Promise.all([
+        resolveQuoteAssetUrls(quote.photos),
+        resolveQuoteAssetUrls(quote.plan_photos),
+        resolveQuoteAssetUrls(quote.voice_notes),
+      ]);
+      if (cancelled) return;
+      setPhotoUrls(p);
+      setPlanUrls(pl);
+      setVoiceUrls(v);
+    })();
+    return () => { cancelled = true; };
+  }, [open, quote]);
+
 
   if (!quote) return null;
 
@@ -65,8 +89,9 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
   const handleDownloadPdf = async () => {
     setDownloading(true);
     try {
+      const quoteForPdf = await withQuotePdfPhotos(quote);
       downloadDevisPdf(
-        quote,
+        quoteForPdf,
         pdfSettings ? {
           company_name: pdfSettings.company_name,
           company_address: pdfSettings.company_address,
@@ -90,9 +115,9 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
   };
 
   const rooms = Array.isArray(quote.rooms_data) ? quote.rooms_data : [];
-  const photos = Array.isArray(quote.photos) ? quote.photos : [];
-  const planPhotos = Array.isArray(quote.plan_photos) ? quote.plan_photos : [];
-  const voiceNotes = Array.isArray(quote.voice_notes) ? quote.voice_notes : [];
+  const photos = photoUrls;
+  const planPhotos = planUrls;
+  const voiceNotes = voiceUrls;
   const comments = Array.isArray(quote.internal_comments) ? quote.internal_comments : [];
 
   return (
