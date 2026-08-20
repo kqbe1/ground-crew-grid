@@ -14,6 +14,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { downloadDevisPdf } from "@/lib/generateDevisPdf";
 import { loadPdfConfigAndLogo } from "@/lib/pdfConfig";
+import { resolveQuoteAssetUrls, withQuotePdfPhotos } from "@/lib/quoteAssets";
+
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const statuses = ["en_attente"] as const;
