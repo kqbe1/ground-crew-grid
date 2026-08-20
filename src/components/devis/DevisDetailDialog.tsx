@@ -30,6 +30,9 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
   const [pdfSettings, setPdfSettings] = useState<any>(null);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [planUrls, setPlanUrls] = useState<string[]>([]);
+  const [voiceUrls, setVoiceUrls] = useState<string[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -39,6 +42,25 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
       setLogoDataUrl(logo);
     })();
   }, [open]);
+
+  // Bucket privé : signed URLs générées à l'affichage (anciennes URLs conservées telles quelles).
+  useEffect(() => {
+    if (!open || !quote) return;
+    let cancelled = false;
+    (async () => {
+      const [p, pl, v] = await Promise.all([
+        resolveQuoteAssetUrls(quote.photos),
+        resolveQuoteAssetUrls(quote.plan_photos),
+        resolveQuoteAssetUrls(quote.voice_notes),
+      ]);
+      if (cancelled) return;
+      setPhotoUrls(p);
+      setPlanUrls(pl);
+      setVoiceUrls(v);
+    })();
+    return () => { cancelled = true; };
+  }, [open, quote]);
+
 
   if (!quote) return null;
 
