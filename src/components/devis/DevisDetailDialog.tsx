@@ -115,9 +115,9 @@ export default function DevisDetailDialog({ quote, open, onOpenChange, onUpdated
   };
 
   const rooms = Array.isArray(quote.rooms_data) ? quote.rooms_data : [];
-  const photos = Array.isArray(quote.photos) ? quote.photos : [];
-  const planPhotos = Array.isArray(quote.plan_photos) ? quote.plan_photos : [];
-  const voiceNotes = Array.isArray(quote.voice_notes) ? quote.voice_notes : [];
+  const photos = photoUrls;
+  const planPhotos = planUrls;
+  const voiceNotes = voiceUrls;
   const comments = Array.isArray(quote.internal_comments) ? quote.internal_comments : [];
 
   return (
