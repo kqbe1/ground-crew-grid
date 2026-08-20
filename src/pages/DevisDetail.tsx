@@ -102,7 +102,8 @@ export default function DevisDetail() {
   const handleDownloadPdf = async () => {
     setDownloading(true);
     try {
-      downloadDevisPdf(quote, pdfSettings ? {
+      const quoteForPdf = await withQuotePdfPhotos(quote);
+      downloadDevisPdf(quoteForPdf, pdfSettings ? {
         company_name: pdfSettings.company_name, company_address: pdfSettings.company_address,
         company_phone: pdfSettings.company_phone, company_email: pdfSettings.company_email,
         company_website: pdfSettings.company_website, company_vat: pdfSettings.company_vat,
