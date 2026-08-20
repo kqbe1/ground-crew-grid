@@ -47,7 +47,7 @@ export default function BureauDashboard() {
     const { data: sheetsRaw } = await supabase
       .from("intervention_sheets")
       .select(`
-        id, created_at, final_status, is_draft, entretien_type, arrival_time,
+        id, created_at, updated_at, bureau_received_at, final_status, is_draft, entretien_type, arrival_time,
         worker_id,
         work_tasks!inner(title, intervention_type, scheduled_date, start_time, status,
           clients(id, name, address_intervention),
@@ -57,7 +57,7 @@ export default function BureauDashboard() {
       `)
       .eq("is_draft", false)
       .eq("bureau_archived", false)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false }) as any;
 
     // Fetch quotes (logique partagée avec la page Devis)
     let quotesRaw: any[] = [];
@@ -87,6 +87,7 @@ export default function BureauDashboard() {
         techName: s.profiles?.full_name ?? "—",
         techLevel: s.profiles?.worker_level ?? null,
         date: s.created_at,
+        receivedAt: s.bureau_received_at ?? s.updated_at ?? s.created_at,
         time: s.arrival_time ? new Date(s.arrival_time).toLocaleTimeString("fr-BE", { hour: "2-digit", minute: "2-digit" }) : null,
         status: s.final_status,
         statusLabel: TASK_STATUS_LABELS[s.final_status] ?? s.final_status,
@@ -104,6 +105,7 @@ export default function BureauDashboard() {
       techName: q.profiles?.full_name ?? "—",
       techLevel: q.profiles?.worker_level ?? null,
       date: q.created_at,
+      receivedAt: q.created_at,
       time: null,
       status: q.status,
       statusLabel: QUOTE_STATUS_LABELS[q.status] ?? q.status,
@@ -115,7 +117,7 @@ export default function BureauDashboard() {
 
     // Compute counts
     const now24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const receivedCount = all.filter((f) => f.date >= now24h).length;
+    const receivedCount = all.filter((f) => f.receivedAt >= now24h).length;
 
     const enAttenteCount = all.filter((f) => {
       if (f.sourceTable === "quotes") return f.status === "en_attente";
@@ -226,7 +228,7 @@ export default function BureauDashboard() {
     const now24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     switch (activeFilter) {
       case "received":
-        result = result.filter((f) => f.date >= now24h);
+        result = result.filter((f) => f.receivedAt >= now24h);
         break;
       case "en_attente":
         result = result.filter((f) => {
