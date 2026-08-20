@@ -8,6 +8,7 @@ export interface UnifiedFiche {
   type: FicheType;
   clientName: string;
   clientCity: string;
+  taskTitle: string | null;
   clientId: string | null;
   techName: string;
   techLevel: string | null;

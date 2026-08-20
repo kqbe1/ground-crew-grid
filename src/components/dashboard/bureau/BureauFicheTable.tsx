@@ -85,7 +85,7 @@ export default function BureauFicheTable({ fiches, onDelete, onArchive }: Props)
               <TableHead className="w-[80px]"><SortButton col="type">Type</SortButton></TableHead>
               <TableHead className="w-[60px]">Tech</TableHead>
               <TableHead><SortButton col="client">Client</SortButton></TableHead>
-              <TableHead className="hidden md:table-cell">Localité</TableHead>
+              <TableHead className="hidden md:table-cell">Intervention</TableHead>
               <TableHead><SortButton col="date">Date & Heure</SortButton></TableHead>
               <TableHead><SortButton col="status">Statut</SortButton></TableHead>
               <TableHead className="w-[90px]">Actions</TableHead>
@@ -117,7 +117,7 @@ export default function BureauFicheTable({ fiches, onDelete, onArchive }: Props)
                   <div className="font-medium text-sm truncate max-w-[200px]">{f.clientName}</div>
                   <div className="text-xs text-muted-foreground truncate max-w-[200px]">{f.techName}</div>
                 </TableCell>
-                <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{f.clientCity || "—"}</TableCell>
+                <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{f.taskTitle || "—"}</TableCell>
                 <TableCell className="text-sm">
                   {format(new Date(f.date), "dd/MM/yy", { locale: fr })}
                   {f.time && <span className="text-muted-foreground ml-1 text-xs">{f.time}</span>}
