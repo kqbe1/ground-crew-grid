@@ -389,6 +389,7 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
                 <Label>Heure de début</Label>
                 <Input
                   type="time"
+                  ref={startTimeRef}
                   value={startTime}
                   onChange={(e) => {
                     const v = e.target.value;
@@ -426,10 +427,16 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
               <Textarea value={memoSecretariat} onChange={(e) => setMemoSecretariat(e.target.value)} rows={2} />
             </div>
 
+            <ConflictAlert
+              conflicts={conflicts}
+              workerNames={workerNames}
+              onFix={() => startTimeRef.current?.focus()}
+            />
+
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setEditing(false)} className="flex-1">Annuler</Button>
-              <Button onClick={handleSave} disabled={loading} className="flex-1">
-                {loading ? "Sauvegarde..." : "Enregistrer"}
+              <Button onClick={handleSave} disabled={loading || conflicts.length > 0} className="flex-1">
+                {loading ? "Sauvegarde..." : conflicts.length > 0 ? "Conflit horaire" : "Enregistrer"}
               </Button>
             </div>
           </div>

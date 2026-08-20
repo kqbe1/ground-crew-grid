@@ -14,13 +14,19 @@ export default function MobileTaskNotifications() {
   useEffect(() => {
     if (!user || role !== "ouvrier") return;
 
+    // Un ouvrier peut être assigné en principal OU en second : on écoute toutes
+    // les tâches et on filtre côté client (la RLS ne renvoie que les siennes).
+    const concernsMe = (task: any) =>
+      task?.assigned_to === user.id || task?.second_assigned_to === user.id;
+
     channelRef.current = supabase
       .channel("mobile-task-changes")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "work_tasks", filter: `assigned_to=eq.${user.id}` },
+        { event: "INSERT", schema: "public", table: "work_tasks" },
         async (payload) => {
           const task = payload.new as any;
+          if (!concernsMe(task)) return;
           let client: any = null;
           if (task.client_id) {
             const { data: clients } = await supabase.rpc("get_my_clients_safe");
@@ -35,10 +41,20 @@ export default function MobileTaskNotifications() {
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "work_tasks", filter: `assigned_to=eq.${user.id}` },
+        { event: "UPDATE", schema: "public", table: "work_tasks" },
         async (payload) => {
           const task = payload.new as any;
           const old = payload.old as any;
+          if (!concernsMe(task) && !concernsMe(old)) return;
+
+          // Nouvelle assignation (ajout en principal ou en second) : notifier
+          if (concernsMe(task) && !concernsMe(old)) {
+            toast.info("📋 Nouvelle tâche assignée", {
+              description: task.title,
+              duration: 6000,
+            });
+            return;
+          }
 
           // Don't notify for status changes made by the ouvrier themselves
           // (e.g. when they complete a task via intervention sheet)
