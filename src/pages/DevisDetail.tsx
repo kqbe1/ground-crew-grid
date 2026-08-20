@@ -52,6 +52,26 @@ export default function DevisDetail() {
     })();
   }, [quote]);
 
+  // Bucket privé : on génère des signed URLs à l'affichage (compatible anciennes URLs).
+  useEffect(() => {
+    if (!quote) return;
+    let cancelled = false;
+    (async () => {
+      const [p, pl, v] = await Promise.all([
+        resolveQuoteAssetUrls(quote.photos),
+        resolveQuoteAssetUrls(quote.plan_photos),
+        resolveQuoteAssetUrls(quote.voice_notes),
+      ]);
+      if (cancelled) return;
+      setPhotoUrls(p);
+      setPlanUrls(pl);
+      setVoiceUrls(v);
+    })();
+    return () => { cancelled = true; };
+  }, [quote]);
+
+
+
   const updateStatus = async (status: string) => {
     const { error } = await supabase.from("quotes").update({ status } as any).eq("id", id);
     if (error) { toast.error(error.message); return; }
