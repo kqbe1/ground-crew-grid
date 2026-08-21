@@ -59,7 +59,17 @@ const Email = ({
         <Section style={card}>
           <Text style={label}>Nous contacter</Text>
           {contactPhone && <Text style={row}>📞 {contactPhone}</Text>}
-          {contactEmail && <Text style={row}>✉️ {contactEmail}</Text>}
+          {contactEmail && (
+            <Text style={row}>
+              ✉️{' '}
+              <a
+                href={`mailto:${contactEmail}`}
+                style={{ color: '#2563eb', textDecoration: 'underline' }}
+              >
+                {contactEmail}
+              </a>
+            </Text>
+          )}
         </Section>
 
         <Hr style={hr} />
