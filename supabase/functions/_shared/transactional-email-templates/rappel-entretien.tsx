@@ -1,4 +1,4 @@
-/// <reference types="npm:@types/react@18.3.1" />
+﻿/// <reference types="npm:@types/react@18.3.1" />
 import * as React from 'npm:react@18.3.1'
 import {
   Body,
@@ -34,7 +34,7 @@ const Email = ({
   dueDate = '',
   contactPhone = '',
   contactEmail = '',
-  introText = "Nous vous contactons pour convenir d'une date pour votre prochain entretien. Merci de nous répondre à cet email ou de nous téléphoner afin de fixer un rendez-vous.",
+  introText = "Nous vous contactons pour convenir d'une date pour votre prochain entretien. Merci de nous rÃ©pondre Ã  cet email ou de nous tÃ©lÃ©phoner afin de fixer un rendez-vous.",
   footerText = 'Merci de votre confiance,',
 }: Props) => (
   <Html lang="fr" dir="ltr">
@@ -51,17 +51,17 @@ const Email = ({
 
         <Section style={card}>
           <Text style={row}><strong>Type&nbsp;:</strong> {interventionType}</Text>
-          {equipmentName && <Text style={row}><strong>Équipement&nbsp;:</strong> {equipmentName}</Text>}
-          {energyType && <Text style={row}><strong>Énergie&nbsp;:</strong> {energyType}</Text>}
-          {dueDate && <Text style={row}><strong>Échéance conseillée&nbsp;:</strong> {dueDate}</Text>}
+          {equipmentName && <Text style={row}><strong>Ã‰quipement&nbsp;:</strong> {equipmentName}</Text>}
+          {energyType && <Text style={row}><strong>Ã‰nergie&nbsp;:</strong> {energyType}</Text>}
+          {dueDate && <Text style={row}><strong>Date d&#39;échéance&nbsp;:</strong> {dueDate}</Text>}
         </Section>
 
         <Section style={card}>
           <Text style={label}>Nous contacter</Text>
-          {contactPhone && <Text style={row}>📞 {contactPhone}</Text>}
+          {contactPhone && <Text style={row}>ðŸ“ž {contactPhone}</Text>}
           {contactEmail && (
             <Text style={row}>
-              ✉️{' '}
+              âœ‰ï¸{' '}
               <a
                 href={`mailto:${contactEmail}`}
                 style={{ color: '#2563eb', textDecoration: 'underline' }}
@@ -83,11 +83,11 @@ export const template = {
   component: Email,
   subject: (data: Props) =>
     data?.customSubject?.trim() ||
-    `Votre entretien — planifions un rendez-vous`,
+    `Votre entretien â€” planifions un rendez-vous`,
   displayName: "Rappel d'entretien (client)",
   previewData: {
     clientName: 'Dupont Jean',
-    equipmentName: 'Chaudière Vaillant',
+    equipmentName: 'ChaudiÃ¨re Vaillant',
     energyType: 'Gaz',
     interventionType: 'Entretien annuel',
     dueDate: '15/09/2026',
@@ -105,3 +105,7 @@ const row = { color: 'hsl(220, 30%, 12%)', fontSize: '14px', margin: '4px 0' }
 const label = { color: 'hsl(220, 10%, 46%)', fontSize: '12px', textTransform: 'uppercase' as const, letterSpacing: '0.05em', margin: '0 0 6px' }
 const hr = { borderColor: 'hsl(220, 13%, 88%)', margin: '24px 0' }
 const footer = { color: 'hsl(220, 10%, 46%)', fontSize: '12px', margin: 0 }
+
+
+
+

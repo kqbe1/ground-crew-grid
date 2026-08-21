@@ -43,3 +43,27 @@ export function occurrencesInYears(
   }
   return out;
 }
+
+/**
+ * Ajuste une date proposée au client au dernier jour ouvrable
+ * lorsque l'échéance tombe un week-end.
+ * La date d'échéance réelle en base n'est jamais modifiée.
+ */
+export function getWeekdayProposal(value: string): string {
+  const date = parseDueDate(value);
+  if (!date) return value;
+
+  const day = date.getDay();
+
+  if (day === 6) {
+    date.setDate(date.getDate() - 1); // samedi ? vendredi
+  } else if (day === 0) {
+    date.setDate(date.getDate() - 2); // dimanche ? vendredi
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const dayOfMonth = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${dayOfMonth}`;
+}

@@ -188,7 +188,7 @@ export default function AdminStatsTab() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Export CSV téléchargé");
-  }, [schedules, taskStats, sheets, workers, projections, monthlyActivity, workerStats, currentYear, ENTRETIEN_TYPES]);
+  }, [schedules, taskStats, sheets, workers, projections, monthlyActivity, workerStats, currentYear]);
 
 
   if (loading) {

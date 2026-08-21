@@ -1,6 +1,16 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 
+function getWeekdayProposal(value: string): string {
+  const date = new Date(`${value}T12:00:00`)
+  const day = date.getDay()
+
+  if (day === 6) date.setDate(date.getDate() - 1) // samedi → vendredi
+  if (day === 0) date.setDate(date.getDate() - 2) // dimanche → vendredi
+
+  return date.toISOString().slice(0, 10)
+}
+
 const INTERVENTION_LABELS: Record<string, string> = {
   entretien_gaz: 'Entretien gaz',
   entretien_mazout: 'Entretien mazout',
@@ -79,7 +89,7 @@ Deno.serve(async (req) => {
           equipmentName: [equipment.name, equipment.brand, equipment.model].filter(Boolean).join(' '),
           energyType: equipment.energy_type ?? '',
           interventionType: INTERVENTION_LABELS[s.intervention_type] ?? 'Entretien',
-          dueDate: s.next_due_date,
+          dueDate: getWeekdayProposal(s.next_due_date),
           contactPhone: settings?.contact_phone ?? '',
           contactEmail: settings?.contact_email ?? '',
           customSubject: settings?.subject ?? '',
