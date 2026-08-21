@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -52,8 +52,29 @@ export default function SendFicheDialog({ sheet, open, onOpenChange, onSent }: P
   const [previewing, setPreviewing] = useState(false);
   const [emailSubject, setEmailSubject] = useState<string>("");
   const [recipient, setRecipient] = useState<string>("");
+  const emailRef = useRef<HTMLInputElement>(null);
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient.trim());
+
+  // Android/Capacitor: keep the focused email field visible above the soft keyboard.
+  // Scoped to this dialog only — listener is attached on focus and removed on blur.
+  const keepEmailVisible = () => {
+    emailRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  };
+
+  const handleEmailFocus = () => {
+    // Initial nudge once the keyboard animation starts
+    setTimeout(keepEmailVisible, 250);
+    window.visualViewport?.addEventListener("resize", keepEmailVisible);
+  };
+
+  const handleEmailBlur = () => {
+    window.visualViewport?.removeEventListener("resize", keepEmailVisible);
+  };
+
+  useEffect(() => {
+    return () => window.visualViewport?.removeEventListener("resize", keepEmailVisible);
+  }, []);
 
   useEffect(() => {
     if (!open || !sheet) return;
@@ -118,7 +139,7 @@ export default function SendFicheDialog({ sheet, open, onOpenChange, onSent }: P
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85dvh] overflow-y-auto overscroll-contain">
         <DialogHeader>
           <DialogTitle>Envoyer la fiche au client</DialogTitle>
           <DialogDescription>Vérifiez l'adresse du destinataire avant l'envoi.</DialogDescription>
@@ -136,9 +157,15 @@ export default function SendFicheDialog({ sheet, open, onOpenChange, onSent }: P
               </Label>
               <Input
                 id="fiche-recipient"
+                ref={emailRef}
                 type="email"
+                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
+                onFocus={handleEmailFocus}
+                onBlur={handleEmailBlur}
                 placeholder="client@exemple.be"
               />
               {!isValidEmail && (
