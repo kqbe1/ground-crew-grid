@@ -326,7 +326,7 @@ export default function TempsOuvriers() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `temps-travail-${period}-${format(now, "yyyy-MM-dd")}.csv`;
+    a.download = `temps-travail-${period}-${format(new Date(), "yyyy-MM-dd")}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
