@@ -199,8 +199,6 @@ export default function AdminStatsTab() {
     );
   }
 
-  const ENTRETIEN_TYPES = Object.entries(INTERVENTION_TYPE_LABELS).filter(([k]) => k.startsWith("entretien_"));
-
   const statusColors: Record<string, string> = {
     planifie: "badge-status-planifie",
     termine: "badge-status-termine",
