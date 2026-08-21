@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ground-crew-grid</string>
+    <string name="title_activity_main">ground-crew-grid</string>
+    <string name="package_name">app.lovable.c2f1872aa377467385d4a9b0eb3a58b4</string>
+    <string name="custom_url_scheme">app.lovable.c2f1872aa377467385d4a9b0eb3a58b4</string>
+</resources>

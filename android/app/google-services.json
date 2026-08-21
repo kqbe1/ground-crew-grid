@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1031620929188",
+    "project_id": "pme-terrain",
+    "storage_bucket": "pme-terrain.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1031620929188:android:bdbffb8e76a575ab8e6831",
+        "android_client_info": {
+          "package_name": "app.lovable.c2f1872aa377467385d4a9b0eb3a58b4"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVyo2_Xp2Arp-tdAGRJYTmvN-DCpB_Apk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
