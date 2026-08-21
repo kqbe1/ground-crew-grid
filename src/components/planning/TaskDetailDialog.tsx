@@ -173,6 +173,35 @@ export default function TaskDetailDialog({ task, onClose, onUpdated }: TaskDetai
       toast.error("Erreur: " + error.message);
       return;
     }
+const assigneeIds = Array.from(
+  new Set(
+    [
+      assignedTo,
+      secondAssignedTo && secondAssignedTo !== "none"
+        ? secondAssignedTo
+        : null,
+    ].filter(Boolean)
+  )
+) as string[];
+
+if (assigneeIds.length > 0) {
+  const { error: pushError } = await supabase.functions.invoke("send-push", {
+    body: {
+      user_ids: assigneeIds,
+      title: "Intervention modifiée",
+      body: `${title.trim()} — ${scheduledDate} à ${startTime}`,
+      data: {
+        route: "/mobile",
+        task_id: task.id,
+        type: "task_updated",
+      },
+    },
+  });
+
+  if (pushError) {
+    console.error("Failed to send task update push:", pushError);
+  }
+}
     toast.success("Tâche mise à jour");
     setEditing(false);
     onUpdated();
