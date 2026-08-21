@@ -233,7 +233,10 @@ export default function CreateTaskDialog({
           work_task_id: created.id,
           user_id: uid,
         })),
-        { onConflict: "work_task_id,user_id" }
+        {
+          onConflict: "work_task_id,user_id",
+          ignoreDuplicates: true,
+        }
       );
     }
 
