@@ -228,8 +228,12 @@ export default function CreateTaskDialog({
     }
     const allAssignees = Array.from(new Set([assignedTo, ...extraWorkers].filter(Boolean)));
     if (created?.id && allAssignees.length > 0) {
-      await supabase.from("work_task_assignees" as any).insert(
-        allAssignees.map((uid) => ({ work_task_id: created.id, user_id: uid })),
+      await supabase.from("work_task_assignees" as any).upsert(
+        allAssignees.map((uid) => ({
+          work_task_id: created.id,
+          user_id: uid,
+        })),
+        { onConflict: "work_task_id,user_id" }
       );
     }
 
