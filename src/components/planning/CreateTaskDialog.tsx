@@ -232,6 +232,26 @@ export default function CreateTaskDialog({
         allAssignees.map((uid) => ({ work_task_id: created.id, user_id: uid })),
       );
     }
+
+    if (allAssignees.length > 0) {
+      const { error: pushError } = await supabase.functions.invoke("send-push", {
+        body: {
+        user_ids: allAssignees,
+        title: "Nouvelle intervention",
+        body: `${title.trim()} — ${scheduledDate} à ${startTime}`,
+        data: {
+          route: "/mobile",
+          task_id: created?.id ?? "",
+          type: "task_created",
+        },
+      },
+    });
+
+    if (pushError) {
+      console.error("Failed to send push notification:", pushError);
+      }
+    }
+
     toast.success("Tâche créée");
     setTitle("");
     setDescription("");

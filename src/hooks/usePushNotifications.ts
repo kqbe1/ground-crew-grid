@@ -22,6 +22,15 @@ export function usePushNotifications() {
 
         if (!Capacitor.isNativePlatform()) return;
 
+        // Android 8+ requires a notification channel for system notifications
+        await PushNotifications.createChannel({
+          id: "planning_pro_notifications",
+          name: "Planning Pro",
+          description: "Notifications des interventions Planning Pro",
+          importance: 5,
+          vibration: true,
+        });
+
         // Request permission
         const permResult = await PushNotifications.requestPermissions();
         if (permResult.receive !== "granted") {
@@ -29,8 +38,6 @@ export function usePushNotifications() {
           return;
         }
 
-        // Register with FCM
-        await PushNotifications.register();
 
         // Listen for token
         PushNotifications.addListener("registration", async (token) => {
@@ -56,6 +63,9 @@ export function usePushNotifications() {
         PushNotifications.addListener("registrationError", (err) => {
           console.error("Push registration error:", err);
         });
+
+        // Register with FCM
+        await PushNotifications.register();
 
         // Handle incoming notifications when app is in foreground
         PushNotifications.addListener("pushNotificationReceived", (notification) => {
