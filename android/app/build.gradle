@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "app.lovable.c2f1872aa377467385d4a9b0eb3a58b4"
+    namespace = "be.planningpro.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "app.lovable.c2f1872aa377467385d4a9b0eb3a58b4"
+        applicationId "be.planningpro.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
