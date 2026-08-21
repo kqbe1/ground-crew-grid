@@ -139,7 +139,7 @@ export default function SendFicheDialog({ sheet, open, onOpenChange, onSent }: P
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85dvh] overflow-y-auto overscroll-contain">
         <DialogHeader>
           <DialogTitle>Envoyer la fiche au client</DialogTitle>
           <DialogDescription>Vérifiez l'adresse du destinataire avant l'envoi.</DialogDescription>
@@ -157,9 +157,15 @@ export default function SendFicheDialog({ sheet, open, onOpenChange, onSent }: P
               </Label>
               <Input
                 id="fiche-recipient"
+                ref={emailRef}
                 type="email"
+                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
+                onFocus={handleEmailFocus}
+                onBlur={handleEmailBlur}
                 placeholder="client@exemple.be"
               />
               {!isValidEmail && (
